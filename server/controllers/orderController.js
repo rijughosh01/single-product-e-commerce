@@ -1,10 +1,10 @@
-const Order = require('../models/Order');
-const Cart = require('../models/Cart');
-const Product = require('../models/Product');
-const ErrorHandler = require('../utils/errorHandler');
-const Razorpay = require('razorpay');
-const sendEmail = require('../utils/sendEmail');
-const crypto = require('crypto');
+const Order = require("../models/Order");
+const Cart = require("../models/Cart");
+const Product = require("../models/Product");
+const ErrorHandler = require("../utils/errorHandler");
+const Razorpay = require("razorpay");
+const sendEmail = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -22,7 +22,7 @@ exports.newOrder = async (req, res, next) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-      paymentInfo
+      paymentInfo,
     } = req.body;
 
     const order = await Order.create({
@@ -34,7 +34,7 @@ exports.newOrder = async (req, res, next) => {
       totalPrice,
       paymentInfo,
       paidAt: Date.now(),
-      user: req.user.id
+      user: req.user.id,
     });
 
     // Update product stock
@@ -46,17 +46,13 @@ exports.newOrder = async (req, res, next) => {
       }
     }
 
-    // Clear user's cart
-    await Cart.findOneAndUpdate(
-      { user: req.user.id },
-      { items: [] }
-    );
+    await Cart.findOneAndUpdate({ user: req.user.id }, { items: [] });
 
     // Send order confirmation email
     try {
       await sendEmail({
         email: req.user.email,
-        subject: 'Order Confirmation - Ghee E-commerce',
+        subject: "Order Confirmation - Ghee E-commerce",
         message: `Thank you for your order! Your order ID is ${order._id}. We will process your order soon.`,
         html: `
           <h2>Order Confirmation</h2>
@@ -66,15 +62,28 @@ exports.newOrder = async (req, res, next) => {
           <p><strong>Total Amount:</strong> ₹${totalPrice}</p>
           <p>We will process your order and ship it to you soon.</p>
           <p>Best regards,<br>Ghee E-commerce Team</p>
-        `
+        `,
       });
     } catch (error) {
-      console.log('Email sending failed:', error);
+      console.log("Email sending failed:", error);
+    }
+
+    // Send real-time notification to admins
+    if (global.wss) {
+      global.wss.sendToAdmins({
+        type: "new_order",
+        title: "New Order Received",
+        message: `Order #${order._id} placed by ${req.user.name} for ₹${totalPrice}`,
+        orderId: order._id,
+        customerName: req.user.name,
+        amount: totalPrice,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     res.status(201).json({
       success: true,
-      order
+      order,
     });
   } catch (error) {
     next(error);
@@ -85,17 +94,17 @@ exports.newOrder = async (req, res, next) => {
 exports.getSingleOrder = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).populate(
-      'user',
-      'name email'
+      "user",
+      "name email"
     );
 
     if (!order) {
-      return next(new ErrorHandler('Order not found', 404));
+      return next(new ErrorHandler("Order not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      order
+      order,
     });
   } catch (error) {
     next(error);
@@ -109,7 +118,7 @@ exports.myOrders = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      orders
+      orders,
     });
   } catch (error) {
     next(error);
@@ -119,17 +128,17 @@ exports.myOrders = async (req, res, next) => {
 // Get all orders - Admin => /api/v1/admin/orders
 exports.allOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find().populate('user', 'name email');
+    const orders = await Order.find().populate("user", "name email");
 
     let totalAmount = 0;
-    orders.forEach(order => {
+    orders.forEach((order) => {
       totalAmount += order.totalPrice;
     });
 
     res.status(200).json({
       success: true,
       totalAmount,
-      orders
+      orders,
     });
   } catch (error) {
     next(error);
@@ -142,11 +151,13 @@ exports.updateOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return next(new ErrorHandler('Order not found', 404));
+      return next(new ErrorHandler("Order not found", 404));
     }
 
-    if (order.orderStatus === 'Delivered') {
-      return next(new ErrorHandler('You have already delivered this order', 400));
+    if (order.orderStatus === "Delivered") {
+      return next(
+        new ErrorHandler("You have already delivered this order", 400)
+      );
     }
 
     order.orderStatus = req.body.status;
@@ -167,14 +178,14 @@ exports.updateOrder = async (req, res, next) => {
           <p><strong>Order ID:</strong> ${order._id}</p>
           <p>Thank you for choosing us!</p>
           <p>Best regards,<br>Ghee E-commerce Team</p>
-        `
+        `,
       });
     } catch (error) {
-      console.log('Email sending failed:', error);
+      console.log("Email sending failed:", error);
     }
 
     res.status(200).json({
-      success: true
+      success: true,
     });
   } catch (error) {
     next(error);
@@ -187,13 +198,13 @@ exports.deleteOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return next(new ErrorHandler('Order not found', 404));
+      return next(new ErrorHandler("Order not found", 404));
     }
 
     await order.deleteOne();
 
     res.status(200).json({
-      success: true
+      success: true,
     });
   } catch (error) {
     next(error);
@@ -206,17 +217,17 @@ exports.createPaymentOrder = async (req, res, next) => {
     const { amount } = req.body;
 
     const options = {
-      amount: amount * 100, // Razorpay expects amount in paise
-      currency: 'INR',
+      amount: amount * 100,
+      currency: "INR",
       receipt: `receipt_${Date.now()}`,
-      payment_capture: 1
+      payment_capture: 1,
     };
 
     const order = await razorpay.orders.create(options);
 
     res.status(200).json({
       success: true,
-      order
+      order,
     });
   } catch (error) {
     next(error);
@@ -226,21 +237,22 @@ exports.createPaymentOrder = async (req, res, next) => {
 // Verify payment => /api/v1/payment/verify
 exports.verifyPayment = async (req, res, next) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
-    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSign = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(sign.toString())
-      .digest('hex');
+      .digest("hex");
 
     if (razorpay_signature === expectedSign) {
       res.status(200).json({
         success: true,
-        message: 'Payment verified successfully'
+        message: "Payment verified successfully",
       });
     } else {
-      return next(new ErrorHandler('Payment verification failed', 400));
+      return next(new ErrorHandler("Payment verification failed", 400));
     }
   } catch (error) {
     next(error);
@@ -252,17 +264,17 @@ exports.getOrderStats = async (req, res, next) => {
   try {
     const totalOrders = await Order.countDocuments();
     const totalRevenue = await Order.aggregate([
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+      { $group: { _id: null, total: { $sum: "$totalPrice" } } },
     ]);
 
     const ordersByStatus = await Order.aggregate([
-      { $group: { _id: '$orderStatus', count: { $sum: 1 } } }
+      { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
     ]);
 
     const recentOrders = await Order.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate('user', 'name email');
+      .populate("user", "name email");
 
     res.status(200).json({
       success: true,
@@ -270,8 +282,8 @@ exports.getOrderStats = async (req, res, next) => {
         totalOrders,
         totalRevenue: totalRevenue[0]?.total || 0,
         ordersByStatus,
-        recentOrders
-      }
+        recentOrders,
+      },
     });
   } catch (error) {
     next(error);
@@ -284,18 +296,22 @@ exports.cancelOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
-      return next(new ErrorHandler('Order not found', 404));
+      return next(new ErrorHandler("Order not found", 404));
     }
 
     if (order.user.toString() !== req.user.id) {
-      return next(new ErrorHandler('You are not authorized to cancel this order', 403));
+      return next(
+        new ErrorHandler("You are not authorized to cancel this order", 403)
+      );
     }
 
-    if (order.orderStatus === 'Delivered' || order.orderStatus === 'Shipped') {
-      return next(new ErrorHandler('Order cannot be cancelled at this stage', 400));
+    if (order.orderStatus === "Delivered" || order.orderStatus === "Shipped") {
+      return next(
+        new ErrorHandler("Order cannot be cancelled at this stage", 400)
+      );
     }
 
-    order.orderStatus = 'Cancelled';
+    order.orderStatus = "Cancelled";
     await order.save();
 
     // Restore product stock
@@ -309,7 +325,7 @@ exports.cancelOrder = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Order cancelled successfully'
+      message: "Order cancelled successfully",
     });
   } catch (error) {
     next(error);

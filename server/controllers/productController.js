@@ -1,5 +1,6 @@
-const Product = require('../models/Product');
-const ErrorHandler = require('../utils/errorHandler');
+const Product = require("../models/Product");
+const ErrorHandler = require("../utils/errorHandler");
+const { uploadMultipleImages, deleteImage } = require("../utils/cloudinary");
 
 // Get all products => /api/v1/products
 exports.getProducts = async (req, res, next) => {
@@ -22,7 +23,7 @@ exports.getProducts = async (req, res, next) => {
       productsCount,
       resPerPage,
       filteredProductsCount,
-      products
+      products,
     });
   } catch (error) {
     next(error);
@@ -35,12 +36,12 @@ exports.getSingleProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return next(new ErrorHandler('Product not found', 404));
+      return next(new ErrorHandler("Product not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      product
+      product,
     });
   } catch (error) {
     next(error);
@@ -52,11 +53,25 @@ exports.newProduct = async (req, res, next) => {
   try {
     req.body.user = req.user.id;
 
+    // Handle image uploads if images are provided
+    if (req.body.images && req.body.images.length > 0) {
+      const imageUrls = [];
+      for (const image of req.body.images) {
+        if (image.startsWith("data:image")) {
+          const result = await uploadMultipleImages([image], "products");
+          imageUrls.push(result[0].url);
+        } else {
+          imageUrls.push(image);
+        }
+      }
+      req.body.images = imageUrls;
+    }
+
     const product = await Product.create(req.body);
 
     res.status(201).json({
       success: true,
-      product
+      product,
     });
   } catch (error) {
     next(error);
@@ -69,18 +84,32 @@ exports.updateProduct = async (req, res, next) => {
     let product = await Product.findById(req.params.id);
 
     if (!product) {
-      return next(new ErrorHandler('Product not found', 404));
+      return next(new ErrorHandler("Product not found", 404));
+    }
+
+    // Handle image uploads if images are provided
+    if (req.body.images && req.body.images.length > 0) {
+      const imageUrls = [];
+      for (const image of req.body.images) {
+        if (image.startsWith("data:image")) {
+          const result = await uploadMultipleImages([image], "products");
+          imageUrls.push(result[0].url);
+        } else {
+          imageUrls.push(image);
+        }
+      }
+      req.body.images = imageUrls;
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-      useFindAndModify: false
+      useFindAndModify: false,
     });
 
     res.status(200).json({
       success: true,
-      product
+      product,
     });
   } catch (error) {
     next(error);
@@ -93,14 +122,14 @@ exports.deleteProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return next(new ErrorHandler('Product not found', 404));
+      return next(new ErrorHandler("Product not found", 404));
     }
 
     await product.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Product deleted successfully'
+      message: "Product deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -116,17 +145,17 @@ exports.createProductReview = async (req, res, next) => {
       user: req.user._id,
       name: req.user.name,
       rating: Number(rating),
-      comment
+      comment,
     };
 
     const product = await Product.findById(productId);
 
     const isReviewed = product.reviews.find(
-      r => r.user.toString() === req.user._id.toString()
+      (r) => r.user.toString() === req.user._id.toString()
     );
 
     if (isReviewed) {
-      product.reviews.forEach(review => {
+      product.reviews.forEach((review) => {
         if (review.user.toString() === req.user._id.toString()) {
           review.comment = comment;
           review.rating = rating;
@@ -137,12 +166,14 @@ exports.createProductReview = async (req, res, next) => {
       product.numOfReviews = product.reviews.length;
     }
 
-    product.ratings = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+    product.ratings =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length;
 
     await product.save({ validateBeforeSave: false });
 
     res.status(200).json({
-      success: true
+      success: true,
     });
   } catch (error) {
     next(error);
@@ -156,7 +187,7 @@ exports.getProductReviews = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      reviews: product.reviews
+      reviews: product.reviews,
     });
   } catch (error) {
     next(error);
@@ -168,24 +199,32 @@ exports.deleteReview = async (req, res, next) => {
   try {
     const product = await Product.findById(req.query.productId);
 
-    const reviews = product.reviews.filter(review => review._id.toString() !== req.query.id.toString());
+    const reviews = product.reviews.filter(
+      (review) => review._id.toString() !== req.query.id.toString()
+    );
 
     const numOfReviews = reviews.length;
 
-    const ratings = product.reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
+    const ratings =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      reviews.length;
 
-    await Product.findByIdAndUpdate(req.query.productId, {
-      reviews,
-      ratings,
-      numOfReviews
-    }, {
-      new: true,
-      runValidators: true,
-      useFindAndModify: false
-    });
+    await Product.findByIdAndUpdate(
+      req.query.productId,
+      {
+        reviews,
+        ratings,
+        numOfReviews,
+      },
+      {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+      }
+    );
 
     res.status(200).json({
-      success: true
+      success: true,
     });
   } catch (error) {
     next(error);
@@ -195,11 +234,14 @@ exports.deleteReview = async (req, res, next) => {
 // Get products by type => /api/v1/products/type/:type
 exports.getProductsByType = async (req, res, next) => {
   try {
-    const products = await Product.find({ type: req.params.type, isActive: true });
+    const products = await Product.find({
+      type: req.params.type,
+      isActive: true,
+    });
 
     res.status(200).json({
       success: true,
-      products
+      products,
     });
   } catch (error) {
     next(error);
@@ -209,11 +251,14 @@ exports.getProductsByType = async (req, res, next) => {
 // Get products by size => /api/v1/products/size/:size
 exports.getProductsBySize = async (req, res, next) => {
   try {
-    const products = await Product.find({ size: req.params.size, isActive: true });
+    const products = await Product.find({
+      size: req.params.size,
+      isActive: true,
+    });
 
     res.status(200).json({
       success: true,
-      products
+      products,
     });
   } catch (error) {
     next(error);
@@ -223,11 +268,14 @@ exports.getProductsBySize = async (req, res, next) => {
 // Get featured products => /api/v1/products/featured
 exports.getFeaturedProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ featured: true, isActive: true }).limit(6);
+    const products = await Product.find({
+      featured: true,
+      isActive: true,
+    }).limit(6);
 
     res.status(200).json({
       success: true,
-      products
+      products,
     });
   } catch (error) {
     next(error);
@@ -242,22 +290,24 @@ class APIFeatures {
   }
 
   search() {
-    const keyword = this.queryStr.keyword ? {
-      $or: [
-        {
-          name: {
-            $regex: this.queryStr.keyword,
-            $options: 'i'
-          }
-        },
-        {
-          description: {
-            $regex: this.queryStr.keyword,
-            $options: 'i'
-          }
+    const keyword = this.queryStr.keyword
+      ? {
+          $or: [
+            {
+              name: {
+                $regex: this.queryStr.keyword,
+                $options: "i",
+              },
+            },
+            {
+              description: {
+                $regex: this.queryStr.keyword,
+                $options: "i",
+              },
+            },
+          ],
         }
-      ]
-    } : {};
+      : {};
 
     this.query = this.query.find({ ...keyword });
     return this;
@@ -265,12 +315,12 @@ class APIFeatures {
 
   filter() {
     const queryCopy = { ...this.queryStr };
-    const removeFields = ['keyword', 'limit', 'page'];
-    removeFields.forEach(el => delete queryCopy[el]);
+    const removeFields = ["keyword", "limit", "page"];
+    removeFields.forEach((el) => delete queryCopy[el]);
 
     // Advanced filter for price, ratings etc
     let queryStr = JSON.stringify(queryCopy);
-    queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, match => `$${match}`);
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`);
 
     this.query = this.query.find(JSON.parse(queryStr));
     return this;

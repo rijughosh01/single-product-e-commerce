@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 // Protect routes
 exports.isAuthenticatedUser = async (req, res, next) => {
@@ -9,7 +9,7 @@ exports.isAuthenticatedUser = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Login first to access this resource'
+        message: "Login first to access this resource",
       });
     }
 
@@ -19,7 +19,7 @@ exports.isAuthenticatedUser = async (req, res, next) => {
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: 'Token is invalid or expired'
+      message: "Token is invalid or expired",
     });
   }
 };
@@ -30,7 +30,7 @@ exports.authorizeRoles = (...roles) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `Role (${req.user.role}) is not allowed to access this resource`
+        message: `Role (${req.user.role}) is not allowed to access this resource`,
       });
     }
     next();

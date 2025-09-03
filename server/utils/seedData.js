@@ -319,10 +319,8 @@ const seedAdminUser = {
 
 const seedDatabase = async () => {
   try {
-    // Connect to database
     await connectDB();
 
-    // Clear existing data
     await Product.deleteMany();
     console.log("Cleared existing products");
 

@@ -22,6 +22,7 @@ import {
 import { productsAPI } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import WishlistButton from '@/components/WishlistButton';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -291,18 +292,18 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {featuredProducts.slice(0, 4).map((product) => (
-                <Card key={product._id} className="card-hover group">
+                <Card key={product._id} className="group card-hover">
                   <CardHeader className="pb-4">
-                    <div className="relative overflow-hidden rounded-lg mb-4">
-          <Image
+                    <div className="relative overflow-hidden rounded-xl mb-4">
+                      <Image
                         src={product.images[0]?.url || '/placeholder-ghee.jpg'}
                         alt={product.name}
                         width={300}
                         height={200}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       {product.discount > 0 && (
-                        <Badge className="absolute top-2 right-2 bg-red-500">
+                        <Badge className="absolute top-2 right-2 bg-red-500 text-white shadow-sm">
                           {product.discount}% OFF
                         </Badge>
                       )}
@@ -345,9 +346,7 @@ export default function Home() {
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Add to Cart
                       </Button>
-                      <Button variant="outline" size="icon">
-                        <Heart className="w-4 h-4" />
-                      </Button>
+                      <WishlistButton productId={product._id} />
                     </div>
                   </CardContent>
                 </Card>

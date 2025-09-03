@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { authAPI } from '@/lib/api';
-import { toast } from 'sonner';
+import { createContext, useContext, useEffect, useState } from "react";
+import { authAPI } from "@/lib/api";
+import { toast } from "sonner";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -25,15 +25,15 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
         const response = await authAPI.getProfile();
         setUser(response.data.user);
         setIsAuthenticated(true);
       }
     } catch (error) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     } finally {
       setLoading(false);
     }
@@ -43,17 +43,17 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.login(credentials);
       const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
       setUser(user);
       setIsAuthenticated(true);
-      toast.success('Login successful!');
-      
+      toast.success("Login successful!");
+
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      const message = error.response?.data?.message || "Login failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -63,17 +63,19 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register(userData);
       const { token, user } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
       setUser(user);
       setIsAuthenticated(true);
-      toast.success('Registration successful! Please check your email for verification.');
-      
+      toast.success(
+        "Registration successful! Please check your email for verification."
+      );
+
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed';
+      const message = error.response?.data?.message || "Registration failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -83,13 +85,13 @@ export const AuthProvider = ({ children }) => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       setUser(null);
       setIsAuthenticated(false);
-      toast.success('Logged out successfully');
+      toast.success("Logged out successfully");
     }
   };
 
@@ -97,14 +99,14 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.updateProfile(userData);
       const updatedUser = response.data.user;
-      
+
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      toast.success('Profile updated successfully');
-      
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      toast.success("Profile updated successfully");
+
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Profile update failed';
+      const message = error.response?.data?.message || "Profile update failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -113,10 +115,11 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (email) => {
     try {
       await authAPI.forgotPassword(email);
-      toast.success('Password reset link sent to your email');
+      toast.success("Password reset link sent to your email");
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to send reset link';
+      const message =
+        error.response?.data?.message || "Failed to send reset link";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -125,10 +128,10 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = async (token, password) => {
     try {
       await authAPI.resetPassword(token, password);
-      toast.success('Password reset successfully');
+      toast.success("Password reset successfully");
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Password reset failed';
+      const message = error.response?.data?.message || "Password reset failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -147,9 +150,5 @@ export const AuthProvider = ({ children }) => {
     checkAuth,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

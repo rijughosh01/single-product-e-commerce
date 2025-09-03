@@ -1,5 +1,5 @@
-const Coupon = require('../models/Coupon');
-const ErrorHandler = require('../utils/errorHandler');
+const Coupon = require("../models/Coupon");
+const ErrorHandler = require("../utils/errorHandler");
 
 // Validate coupon => /api/v1/coupon/validate
 exports.validateCoupon = async (req, res, next) => {
@@ -7,21 +7,25 @@ exports.validateCoupon = async (req, res, next) => {
     const { code, orderAmount } = req.body;
 
     if (!code || !orderAmount) {
-      return next(new ErrorHandler('Coupon code and order amount are required', 400));
+      return next(
+        new ErrorHandler("Coupon code and order amount are required", 400)
+      );
     }
 
     const coupon = await Coupon.findOne({ code: code.toUpperCase() });
 
     if (!coupon) {
-      return next(new ErrorHandler('Invalid coupon code', 404));
+      return next(new ErrorHandler("Invalid coupon code", 404));
     }
 
     if (!coupon.isValid()) {
-      return next(new ErrorHandler('Coupon is not valid or has expired', 400));
+      return next(new ErrorHandler("Coupon is not valid or has expired", 400));
     }
 
     if (!coupon.canBeUsedByUser(req.user?.id, orderAmount)) {
-      return next(new ErrorHandler('Coupon cannot be applied to this order', 400));
+      return next(
+        new ErrorHandler("Coupon cannot be applied to this order", 400)
+      );
     }
 
     const discount = coupon.calculateDiscount(orderAmount);
@@ -35,8 +39,8 @@ exports.validateCoupon = async (req, res, next) => {
         discountValue: coupon.discountValue,
         discount: discount,
         minimumOrderAmount: coupon.minimumOrderAmount,
-        maximumDiscount: coupon.maximumDiscount
-      }
+        maximumDiscount: coupon.maximumDiscount,
+      },
     });
   } catch (error) {
     next(error);
@@ -50,7 +54,7 @@ exports.getAllCoupons = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      coupons
+      coupons,
     });
   } catch (error) {
     next(error);
@@ -64,7 +68,7 @@ exports.createCoupon = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      coupon
+      coupon,
     });
   } catch (error) {
     next(error);
@@ -77,12 +81,12 @@ exports.getCoupon = async (req, res, next) => {
     const coupon = await Coupon.findById(req.params.id);
 
     if (!coupon) {
-      return next(new ErrorHandler('Coupon not found', 404));
+      return next(new ErrorHandler("Coupon not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      coupon
+      coupon,
     });
   } catch (error) {
     next(error);
@@ -95,18 +99,18 @@ exports.updateCoupon = async (req, res, next) => {
     let coupon = await Coupon.findById(req.params.id);
 
     if (!coupon) {
-      return next(new ErrorHandler('Coupon not found', 404));
+      return next(new ErrorHandler("Coupon not found", 404));
     }
 
     coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-      useFindAndModify: false
+      useFindAndModify: false,
     });
 
     res.status(200).json({
       success: true,
-      coupon
+      coupon,
     });
   } catch (error) {
     next(error);
@@ -119,14 +123,14 @@ exports.deleteCoupon = async (req, res, next) => {
     const coupon = await Coupon.findById(req.params.id);
 
     if (!coupon) {
-      return next(new ErrorHandler('Coupon not found', 404));
+      return next(new ErrorHandler("Coupon not found", 404));
     }
 
     await coupon.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Coupon deleted successfully'
+      message: "Coupon deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -139,7 +143,7 @@ exports.getCouponStats = async (req, res, next) => {
     const totalCoupons = await Coupon.countDocuments();
     const activeCoupons = await Coupon.countDocuments({ isActive: true });
     const expiredCoupons = await Coupon.countDocuments({
-      validUntil: { $lt: new Date() }
+      validUntil: { $lt: new Date() },
     });
 
     const mostUsedCoupon = await Coupon.findOne().sort({ usedCount: -1 });
@@ -150,11 +154,13 @@ exports.getCouponStats = async (req, res, next) => {
         totalCoupons,
         activeCoupons,
         expiredCoupons,
-        mostUsedCoupon: mostUsedCoupon ? {
-          code: mostUsedCoupon.code,
-          usedCount: mostUsedCoupon.usedCount
-        } : null
-      }
+        mostUsedCoupon: mostUsedCoupon
+          ? {
+              code: mostUsedCoupon.code,
+              usedCount: mostUsedCoupon.usedCount,
+            }
+          : null,
+      },
     });
   } catch (error) {
     next(error);

@@ -304,12 +304,10 @@ export default function Cart() {
                   </div>
                 )}
 
-                {/* Checkout Button */}
-                <Link href="/checkout">
-                  <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3">
-                    Proceed to Checkout
-                  </Button>
-                </Link>
+                {/* Checkout removed as requested */}
+                <Button className="w-full bg-gray-300 text-gray-700 cursor-not-allowed" disabled>
+                  Checkout disabled
+                </Button>
 
                 {/* Security Badges */}
                 <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">

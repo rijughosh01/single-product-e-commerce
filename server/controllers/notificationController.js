@@ -1,13 +1,13 @@
-const Notification = require('../models/Notification');
-const ErrorHandler = require('../utils/errorHandler');
+const Notification = require("../models/Notification");
+const ErrorHandler = require("../utils/errorHandler");
 
 // Get user's notifications => /api/v1/notifications
 exports.getNotifications = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, unreadOnly = false } = req.query;
-    
+
     const query = { user: req.user.id };
-    if (unreadOnly === 'true') {
+    if (unreadOnly === "true") {
       query.isRead = false;
     }
 
@@ -23,7 +23,7 @@ exports.getNotifications = async (req, res, next) => {
       notifications,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      total
+      total,
     });
   } catch (error) {
     next(error);
@@ -36,11 +36,13 @@ exports.markAsRead = async (req, res, next) => {
     const notification = await Notification.findById(req.params.id);
 
     if (!notification) {
-      return next(new ErrorHandler('Notification not found', 404));
+      return next(new ErrorHandler("Notification not found", 404));
     }
 
     if (notification.user.toString() !== req.user.id) {
-      return next(new ErrorHandler('Not authorized to access this notification', 403));
+      return next(
+        new ErrorHandler("Not authorized to access this notification", 403)
+      );
     }
 
     notification.markAsRead();
@@ -48,7 +50,7 @@ exports.markAsRead = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Notification marked as read'
+      message: "Notification marked as read",
     });
   } catch (error) {
     next(error);
@@ -65,7 +67,7 @@ exports.markAllAsRead = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'All notifications marked as read'
+      message: "All notifications marked as read",
     });
   } catch (error) {
     next(error);
@@ -78,18 +80,20 @@ exports.deleteNotification = async (req, res, next) => {
     const notification = await Notification.findById(req.params.id);
 
     if (!notification) {
-      return next(new ErrorHandler('Notification not found', 404));
+      return next(new ErrorHandler("Notification not found", 404));
     }
 
     if (notification.user.toString() !== req.user.id) {
-      return next(new ErrorHandler('Not authorized to delete this notification', 403));
+      return next(
+        new ErrorHandler("Not authorized to delete this notification", 403)
+      );
     }
 
     await notification.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Notification deleted successfully'
+      message: "Notification deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -101,12 +105,12 @@ exports.getUnreadCount = async (req, res, next) => {
   try {
     const count = await Notification.countDocuments({
       user: req.user.id,
-      isRead: false
+      isRead: false,
     });
 
     res.status(200).json({
       success: true,
-      unreadCount: count
+      unreadCount: count,
     });
   } catch (error) {
     next(error);
@@ -116,7 +120,16 @@ exports.getUnreadCount = async (req, res, next) => {
 // Create notification (internal use) => /api/v1/admin/notification/create
 exports.createNotification = async (req, res, next) => {
   try {
-    const { userId, title, message, type, priority, actionUrl, actionText, metadata } = req.body;
+    const {
+      userId,
+      title,
+      message,
+      type,
+      priority,
+      actionUrl,
+      actionText,
+      metadata,
+    } = req.body;
 
     const notification = await Notification.create({
       user: userId,
@@ -126,12 +139,12 @@ exports.createNotification = async (req, res, next) => {
       priority,
       actionUrl,
       actionText,
-      metadata
+      metadata,
     });
 
     res.status(201).json({
       success: true,
-      notification
+      notification,
     });
   } catch (error) {
     next(error);
@@ -142,14 +155,14 @@ exports.createNotification = async (req, res, next) => {
 exports.getAllNotifications = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, userId, type, isRead } = req.query;
-    
+
     const query = {};
     if (userId) query.user = userId;
     if (type) query.type = type;
-    if (isRead !== undefined) query.isRead = isRead === 'true';
+    if (isRead !== undefined) query.isRead = isRead === "true";
 
     const notifications = await Notification.find(query)
-      .populate('user', 'name email')
+      .populate("user", "name email")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -161,7 +174,7 @@ exports.getAllNotifications = async (req, res, next) => {
       notifications,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      total
+      total,
     });
   } catch (error) {
     next(error);

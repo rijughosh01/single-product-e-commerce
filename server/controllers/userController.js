@@ -1,5 +1,5 @@
-const User = require('../models/User');
-const ErrorHandler = require('../utils/errorHandler');
+const User = require("../models/User");
+const ErrorHandler = require("../utils/errorHandler");
 
 // Get all users - Admin => /api/v1/admin/users
 exports.allUsers = async (req, res, next) => {
@@ -8,7 +8,7 @@ exports.allUsers = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      users
+      users,
     });
   } catch (error) {
     next(error);
@@ -21,12 +21,12 @@ exports.getUserDetails = async (req, res, next) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return next(new ErrorHandler("User not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
   } catch (error) {
     next(error);
@@ -39,18 +39,18 @@ exports.updateUser = async (req, res, next) => {
     const newUserData = {
       name: req.body.name,
       email: req.body.email,
-      role: req.body.role
+      role: req.body.role,
     };
 
     const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
       new: true,
       runValidators: true,
-      useFindAndModify: false
+      useFindAndModify: false,
     });
 
     res.status(200).json({
       success: true,
-      user
+      user,
     });
   } catch (error) {
     next(error);
@@ -63,14 +63,14 @@ exports.deleteUser = async (req, res, next) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return next(new ErrorHandler("User not found", 404));
     }
 
     await user.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully'
+      message: "User deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -80,26 +80,16 @@ exports.deleteUser = async (req, res, next) => {
 // Add address => /api/v1/address/add
 exports.addAddress = async (req, res, next) => {
   try {
-    let {
-      name,
-      phone,
-      address,
-      city,
-      state,
-      pincode,
-      isDefault
-    } = req.body;
+    let { name, phone, address, city, state, pincode, isDefault } = req.body;
 
     const user = await User.findById(req.user.id);
 
-    // If this is the first address, make it default
     if (user.addresses.length === 0) {
       isDefault = true;
     }
 
-    // If this address is set as default, remove default from other addresses
     if (isDefault) {
-      user.addresses.forEach(addr => {
+      user.addresses.forEach((addr) => {
         addr.isDefault = false;
       });
     }
@@ -111,7 +101,7 @@ exports.addAddress = async (req, res, next) => {
       city,
       state,
       pincode,
-      isDefault
+      isDefault,
     };
 
     user.addresses.push(newAddress);
@@ -119,7 +109,7 @@ exports.addAddress = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
     next(error);
@@ -133,7 +123,7 @@ exports.getAddresses = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
     next(error);
@@ -143,28 +133,19 @@ exports.getAddresses = async (req, res, next) => {
 // Update address => /api/v1/address/:id
 exports.updateAddress = async (req, res, next) => {
   try {
-    const {
-      name,
-      phone,
-      address,
-      city,
-      state,
-      pincode,
-      isDefault
-    } = req.body;
+    const { name, phone, address, city, state, pincode, isDefault } = req.body;
 
     const user = await User.findById(req.user.id);
     const addressIndex = user.addresses.findIndex(
-      addr => addr._id.toString() === req.params.id
+      (addr) => addr._id.toString() === req.params.id
     );
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Address not found', 404));
+      return next(new ErrorHandler("Address not found", 404));
     }
 
-    // If this address is set as default, remove default from other addresses
     if (isDefault) {
-      user.addresses.forEach(addr => {
+      user.addresses.forEach((addr) => {
         addr.isDefault = false;
       });
     }
@@ -176,14 +157,14 @@ exports.updateAddress = async (req, res, next) => {
       city,
       state,
       pincode,
-      isDefault
+      isDefault,
     };
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
     next(error);
@@ -195,18 +176,17 @@ exports.deleteAddress = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     const addressIndex = user.addresses.findIndex(
-      addr => addr._id.toString() === req.params.id
+      (addr) => addr._id.toString() === req.params.id
     );
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Address not found', 404));
+      return next(new ErrorHandler("Address not found", 404));
     }
 
     const deletedAddress = user.addresses[addressIndex];
 
     user.addresses.splice(addressIndex, 1);
 
-    // If deleted address was default and there are other addresses, make first one default
     if (deletedAddress.isDefault && user.addresses.length > 0) {
       user.addresses[0].isDefault = true;
     }
@@ -215,7 +195,7 @@ exports.deleteAddress = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
     next(error);
@@ -227,26 +207,24 @@ exports.setDefaultAddress = async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id);
     const addressIndex = user.addresses.findIndex(
-      addr => addr._id.toString() === req.params.id
+      (addr) => addr._id.toString() === req.params.id
     );
 
     if (addressIndex === -1) {
-      return next(new ErrorHandler('Address not found', 404));
+      return next(new ErrorHandler("Address not found", 404));
     }
 
-    // Remove default from all addresses
-    user.addresses.forEach(addr => {
+    user.addresses.forEach((addr) => {
       addr.isDefault = false;
     });
 
-    // Set selected address as default
     user.addresses[addressIndex].isDefault = true;
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      addresses: user.addresses
+      addresses: user.addresses,
     });
   } catch (error) {
     next(error);
@@ -259,18 +237,18 @@ exports.getUserStats = async (req, res, next) => {
     const totalUsers = await User.countDocuments();
     const newUsersThisMonth = await User.countDocuments({
       createdAt: {
-        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      }
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      },
     });
 
     const usersByRole = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } }
+      { $group: { _id: "$role", count: { $sum: 1 } } },
     ]);
 
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('name email createdAt');
+      .select("name email createdAt");
 
     res.status(200).json({
       success: true,
@@ -278,8 +256,8 @@ exports.getUserStats = async (req, res, next) => {
         totalUsers,
         newUsersThisMonth,
         usersByRole,
-        recentUsers
-      }
+        recentUsers,
+      },
     });
   } catch (error) {
     next(error);

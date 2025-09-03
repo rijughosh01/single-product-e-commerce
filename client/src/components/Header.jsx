@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,12 +18,14 @@ import {
   LogOut,
   Package,
   Truck,
-  Star
+  Star,
+  Settings
 } from 'lucide-react';
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -137,6 +140,11 @@ const Header = () => {
             {/* Wishlist */}
             <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors">
               <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                  {wishlistCount}
+                </Badge>
+              )}
             </Link>
 
             {/* Cart */}
@@ -175,6 +183,15 @@ const Header = () => {
                   >
                     Wishlist
                   </Link>
+                  {user?.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 border-t border-gray-100"
+                    >
+                      <Settings className="w-4 h-4 inline mr-2" />
+                      Admin Panel
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600"
@@ -286,6 +303,16 @@ const Header = () => {
                 >
                   Wishlist
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    href="/admin"
+                    className="block px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md border-t border-gray-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings className="w-4 h-4 inline mr-2" />
+                    Admin Panel
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md"

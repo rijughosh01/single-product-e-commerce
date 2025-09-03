@@ -1,5 +1,5 @@
-const ShippingRule = require('../models/ShippingRule');
-const ErrorHandler = require('../utils/errorHandler');
+const ShippingRule = require("../models/ShippingRule");
+const ErrorHandler = require("../utils/errorHandler");
 
 // Get shipping charges for a pincode => /api/v1/shipping/calculate
 exports.calculateShipping = async (req, res, next) => {
@@ -7,17 +7,20 @@ exports.calculateShipping = async (req, res, next) => {
     const { pincode, orderAmount } = req.body;
 
     if (!pincode || !orderAmount) {
-      return next(new ErrorHandler('Pincode and order amount are required', 400));
+      return next(
+        new ErrorHandler("Pincode and order amount are required", 400)
+      );
     }
 
     // Validate pincode format
     if (!/^[1-9][0-9]{5}$/.test(pincode)) {
-      return next(new ErrorHandler('Please enter a valid pincode', 400));
+      return next(new ErrorHandler("Please enter a valid pincode", 400));
     }
 
     // Find applicable shipping rules
-    const shippingRules = await ShippingRule.find({ isActive: true })
-      .sort({ priority: 1 });
+    const shippingRules = await ShippingRule.find({ isActive: true }).sort({
+      priority: 1,
+    });
 
     let applicableRule = null;
     let shippingCharges = 0;
@@ -35,7 +38,9 @@ exports.calculateShipping = async (req, res, next) => {
 
     // If no specific rule found, use default rule
     if (!applicableRule) {
-      const defaultRule = shippingRules.find(rule => rule.pincodeType === 'all');
+      const defaultRule = shippingRules.find(
+        (rule) => rule.pincodeType === "all"
+      );
       if (defaultRule) {
         applicableRule = defaultRule;
         shippingCharges = defaultRule.getShippingCharges(orderAmount);
@@ -45,8 +50,12 @@ exports.calculateShipping = async (req, res, next) => {
 
     // Calculate delivery dates
     const currentDate = new Date();
-    const minDeliveryDate = new Date(currentDate.getTime() + estimatedDelivery.min * 24 * 60 * 60 * 1000);
-    const maxDeliveryDate = new Date(currentDate.getTime() + estimatedDelivery.max * 24 * 60 * 60 * 1000);
+    const minDeliveryDate = new Date(
+      currentDate.getTime() + estimatedDelivery.min * 24 * 60 * 60 * 1000
+    );
+    const maxDeliveryDate = new Date(
+      currentDate.getTime() + estimatedDelivery.max * 24 * 60 * 60 * 1000
+    );
 
     res.status(200).json({
       success: true,
@@ -58,14 +67,16 @@ exports.calculateShipping = async (req, res, next) => {
         estimatedDelivery: {
           min: estimatedDelivery.min,
           max: estimatedDelivery.max,
-          minDate: minDeliveryDate.toISOString().split('T')[0],
-          maxDate: maxDeliveryDate.toISOString().split('T')[0]
+          minDate: minDeliveryDate.toISOString().split("T")[0],
+          maxDate: maxDeliveryDate.toISOString().split("T")[0],
         },
-        rule: applicableRule ? {
-          name: applicableRule.name,
-          description: applicableRule.description
-        } : null
-      }
+        rule: applicableRule
+          ? {
+              name: applicableRule.name,
+              description: applicableRule.description,
+            }
+          : null,
+      },
     });
   } catch (error) {
     next(error);
@@ -79,7 +90,7 @@ exports.getShippingRules = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      shippingRules
+      shippingRules,
     });
   } catch (error) {
     next(error);
@@ -93,7 +104,7 @@ exports.createShippingRule = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      shippingRule
+      shippingRule,
     });
   } catch (error) {
     next(error);
@@ -106,18 +117,22 @@ exports.updateShippingRule = async (req, res, next) => {
     let shippingRule = await ShippingRule.findById(req.params.id);
 
     if (!shippingRule) {
-      return next(new ErrorHandler('Shipping rule not found', 404));
+      return next(new ErrorHandler("Shipping rule not found", 404));
     }
 
-    shippingRule = await ShippingRule.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-      useFindAndModify: false
-    });
+    shippingRule = await ShippingRule.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+      }
+    );
 
     res.status(200).json({
       success: true,
-      shippingRule
+      shippingRule,
     });
   } catch (error) {
     next(error);
@@ -130,14 +145,14 @@ exports.deleteShippingRule = async (req, res, next) => {
     const shippingRule = await ShippingRule.findById(req.params.id);
 
     if (!shippingRule) {
-      return next(new ErrorHandler('Shipping rule not found', 404));
+      return next(new ErrorHandler("Shipping rule not found", 404));
     }
 
     await shippingRule.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Shipping rule deleted successfully'
+      message: "Shipping rule deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -150,12 +165,12 @@ exports.getShippingRule = async (req, res, next) => {
     const shippingRule = await ShippingRule.findById(req.params.id);
 
     if (!shippingRule) {
-      return next(new ErrorHandler('Shipping rule not found', 404));
+      return next(new ErrorHandler("Shipping rule not found", 404));
     }
 
     res.status(200).json({
       success: true,
-      shippingRule
+      shippingRule,
     });
   } catch (error) {
     next(error);
@@ -168,7 +183,9 @@ exports.bulkCreateShippingRules = async (req, res, next) => {
     const { rules } = req.body;
 
     if (!Array.isArray(rules) || rules.length === 0) {
-      return next(new ErrorHandler('Please provide an array of shipping rules', 400));
+      return next(
+        new ErrorHandler("Please provide an array of shipping rules", 400)
+      );
     }
 
     const createdRules = await ShippingRule.insertMany(rules);
@@ -176,7 +193,7 @@ exports.bulkCreateShippingRules = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: `${createdRules.length} shipping rules created successfully`,
-      shippingRules: createdRules
+      shippingRules: createdRules,
     });
   } catch (error) {
     next(error);
@@ -189,11 +206,12 @@ exports.testPincode = async (req, res, next) => {
     const { pincode } = req.body;
 
     if (!pincode) {
-      return next(new ErrorHandler('Pincode is required', 400));
+      return next(new ErrorHandler("Pincode is required", 400));
     }
 
-    const shippingRules = await ShippingRule.find({ isActive: true })
-      .sort({ priority: 1 });
+    const shippingRules = await ShippingRule.find({ isActive: true }).sort({
+      priority: 1,
+    });
 
     const matchingRules = [];
 
@@ -206,7 +224,7 @@ exports.testPincode = async (req, res, next) => {
           shippingCharges: rule.shippingCharges,
           freeShippingThreshold: rule.freeShippingThreshold,
           estimatedDeliveryDays: rule.estimatedDeliveryDays,
-          priority: rule.priority
+          priority: rule.priority,
         });
       }
     }
@@ -216,7 +234,7 @@ exports.testPincode = async (req, res, next) => {
       pincode,
       matchingRules,
       totalRules: shippingRules.length,
-      matchedRules: matchingRules.length
+      matchedRules: matchingRules.length,
     });
   } catch (error) {
     next(error);

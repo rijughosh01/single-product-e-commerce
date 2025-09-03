@@ -1,130 +1,142 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
-  orderItems: [{
-    name: {
-      type: String,
-      required: true
+  orderItems: [
+    {
+      name: {
+        type: String,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+      },
+      image: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      product: {
+        type: mongoose.Schema.ObjectId,
+        ref: "Product",
+        required: true,
+      },
     },
-    quantity: {
-      type: Number,
-      required: true
-    },
-    image: {
-      type: String,
-      required: true
-    },
-    price: {
-      type: Number,
-      required: true
-    },
-    product: {
-      type: mongoose.Schema.ObjectId,
-      ref: 'Product',
-      required: true
-    }
-  }],
+  ],
   user: {
     type: mongoose.Schema.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   shippingInfo: {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     phone: {
       type: String,
-      required: true
+      required: true,
     },
     address: {
       type: String,
-      required: true
+      required: true,
     },
     city: {
       type: String,
-      required: true
+      required: true,
     },
     state: {
       type: String,
-      required: true
+      required: true,
     },
     pincode: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   paymentInfo: {
     id: {
       type: String,
-      required: true
+      required: true,
     },
     status: {
       type: String,
-      required: true
+      required: true,
     },
     method: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   paidAt: {
     type: Date,
-    required: true
+    required: true,
   },
   itemsPrice: {
     type: Number,
     required: true,
-    default: 0.0
+    default: 0.0,
   },
   taxPrice: {
     type: Number,
     required: true,
-    default: 0.0
+    default: 0.0,
   },
   shippingPrice: {
     type: Number,
     required: true,
-    default: 0.0
+    default: 0.0,
   },
   totalPrice: {
     type: Number,
     required: true,
-    default: 0.0
+    default: 0.0,
   },
   orderStatus: {
     type: String,
     required: true,
-    default: 'Processing',
-    enum: ['Processing', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned']
+    default: "Processing",
+    enum: [
+      "Processing",
+      "Confirmed",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+      "Returned",
+    ],
   },
   deliveredAt: Date,
   trackingNumber: {
     type: String,
-    default: null
+    default: null,
   },
   estimatedDelivery: {
     type: Date,
-    default: null
+    default: null,
   },
   notes: {
     type: String,
-    default: ''
+    default: "",
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 // Calculate delivery date (3-5 days from order)
-orderSchema.pre('save', function(next) {
+orderSchema.pre("save", function (next) {
   if (this.isNew && !this.estimatedDelivery) {
-    const deliveryDays = Math.floor(Math.random() * 3) + 3; // 3-5 days
-    this.estimatedDelivery = new Date(Date.now() + deliveryDays * 24 * 60 * 60 * 1000);
+    const deliveryDays = Math.floor(Math.random() * 3) + 3;
+    this.estimatedDelivery = new Date(
+      Date.now() + deliveryDays * 24 * 60 * 60 * 1000
+    );
   }
   next();
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

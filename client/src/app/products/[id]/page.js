@@ -21,12 +21,20 @@ import {
   CheckCircle,
   Calendar,
   Weight,
-  Leaf
+  Leaf,
+  Copy,
+  Facebook,
+  Twitter,
+  Instagram,
+  WhatsApp,
+  Mail
 } from 'lucide-react';
 import { productsAPI } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import WishlistButton from '@/components/WishlistButton';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -38,10 +46,32 @@ export default function ProductDetail() {
   
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [sort, setSort] = useState('recent');
+  const [pageSize, setPageSize] = useState(10);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     fetchProduct();
   }, [id]);
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showShareMenu && !event.target.closest('.share-menu-container')) {
+        setShowShareMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showShareMenu]);
 
   const fetchProduct = async () => {
     try {
@@ -54,6 +84,26 @@ export default function ProductDetail() {
     }
   };
 
+  const submitReview = async () => {
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+      return;
+    }
+    if (reviewRating < 1 || reviewRating > 5 || !reviewComment.trim()) return;
+    setSubmitting(true);
+    try {
+      await productsAPI.addReview({ rating: reviewRating, comment: reviewComment, productId: product._id });
+      setShowReviewForm(false);
+      setReviewRating(0);
+      setReviewComment('');
+      await fetchProduct();
+    } catch (e) {
+      console.error('Failed to submit review', e);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       window.location.href = '/login';
@@ -62,16 +112,104 @@ export default function ProductDetail() {
     await addToCart(product._id, quantity);
   };
 
-  const handleAddToWishlist = () => {
-    // TODO: Implement wishlist functionality
-    console.log('Add to wishlist:', product._id);
-  };
+  // Buy Now removed as requested
+
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
     if (newQuantity >= 1 && newQuantity <= product.stock) {
       setQuantity(newQuantity);
     }
+  };
+
+  // Share functionality
+  const getShareData = () => {
+    const url = `${window.location.origin}/products/${product._id}`;
+    const title = `${product.name} - Pure Ghee Store`;
+    const text = `Check out this amazing ${product.name} from Pure Ghee Store! ${product.description?.substring(0, 100)}...`;
+    
+    return { url, title, text };
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        const { url, title, text } = getShareData();
+        await navigator.share({
+          title,
+          text,
+          url,
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+        }
+      }
+    } else {
+      setShowShareMenu(true);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      const { url } = getShareData();
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        textArea.remove();
+      }
+      
+      setShareCopied(true);
+      toast.success('Link copied to clipboard!');
+      setTimeout(() => setShareCopied(false), 2000);
+      setShowShareMenu(false);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const shareToSocial = (platform) => {
+    const { url, title, text } = getShareData();
+    let shareUrl = '';
+
+    switch (platform) {
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'whatsapp':
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+        break;
+      case 'instagram':
+        // Instagram doesn't support direct URL sharing, so we'll copy the URL
+        copyToClipboard();
+        toast.success('Link copied for Instagram!');
+        return;
+      case 'email':
+        shareUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`;
+        break;
+      default:
+        return;
+    }
+
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    setShowShareMenu(false);
+    toast.success(`Opening ${platform}...`);
   };
 
   if (loading) {
@@ -132,6 +270,27 @@ export default function ProductDetail() {
     }
   ];
 
+  // Derived reviews view: sort and slice for UX controls
+  const sortedAndSlicedReviews = (() => {
+    const list = Array.isArray(product?.reviews) ? [...product.reviews] : [];
+    if (sort === 'top') {
+      list.sort((a, b) => {
+        const r = Number(b.rating || 0) - Number(a.rating || 0);
+        if (r !== 0) return r;
+        const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bd - ad;
+      });
+    } else {
+      list.sort((a, b) => {
+        const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bd - ad;
+      });
+    }
+    return list.slice(0, pageSize);
+  })();
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,12 +307,12 @@ export default function ProductDetail() {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
-              <Image
-                src={product.images[selectedImage]?.url || '/placeholder-ghee.jpg'}
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
+                             <Image
+                 src={product.images?.[selectedImage]?.url || '/placeholder-ghee.jpg'}
+                 alt={product.name}
+                 fill
+                 className="object-cover"
+               />
               {product.discount > 0 && (
                 <Badge className="absolute top-4 left-4 bg-red-500">
                   {product.discount}% OFF
@@ -172,12 +331,12 @@ export default function ProductDetail() {
                       selectedImage === index ? 'border-amber-500' : 'border-gray-200'
                     }`}
                   >
-                    <Image
-                      src={image.url}
-                      alt={`${product.name} ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
+                                         <Image
+                       src={image?.url || '/placeholder-ghee.jpg'}
+                       alt={`${product.name} ${index + 1}`}
+                       fill
+                       className="object-cover"
+                     />
                   </button>
                 ))}
               </div>
@@ -289,15 +448,70 @@ export default function ProductDetail() {
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleAddToWishlist}
-                >
-                  <Heart className="w-4 h-4" />
-                </Button>
-                <Button variant="outline">
-                  <Share2 className="w-4 h-4" />
-                </Button>
+                {/* Buy Now removed */}
+                <WishlistButton productId={product._id} size="default" />
+                <div className="relative share-menu-container">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleNativeShare}
+                    className="relative"
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                  
+                  {/* Share Menu Dropdown */}
+                  {showShareMenu && (
+                    <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                      <div className="p-3">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3">Share this product</h4>
+                        <div className="space-y-2">
+                          <button
+                            onClick={copyToClipboard}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <Copy className="w-4 h-4" />
+                            <span>{shareCopied ? 'Copied!' : 'Copy Link'}</span>
+                          </button>
+                          <button
+                            onClick={() => shareToSocial('facebook')}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <Facebook className="w-4 h-4 text-blue-600" />
+                            <span>Share on Facebook</span>
+                          </button>
+                          <button
+                            onClick={() => shareToSocial('twitter')}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <Twitter className="w-4 h-4 text-blue-400" />
+                            <span>Share on Twitter</span>
+                          </button>
+                          <button
+                            onClick={() => shareToSocial('whatsapp')}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <WhatsApp className="w-4 h-4 text-green-500" />
+                            <span>Share on WhatsApp</span>
+                          </button>
+                          <button
+                            onClick={() => shareToSocial('instagram')}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <Instagram className="w-4 h-4 text-pink-500" />
+                            <span>Copy for Instagram</span>
+                          </button>
+                          <button
+                            onClick={() => shareToSocial('email')}
+                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                          >
+                            <Mail className="w-4 h-4 text-gray-500" />
+                            <span>Share via Email</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -411,17 +625,103 @@ export default function ProductDetail() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="font-semibold text-gray-900">Customer Reviews</h4>
-                  <Button variant="outline">Write a Review</Button>
+                  <Button variant="outline" onClick={() => setShowReviewForm(true)}>Write a Review</Button>
                 </div>
+
+                {/* Rating Summary */}
+                {product.reviews && product.reviews.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <Card className="md:col-span-1">
+                      <CardContent className="p-6 flex items-center space-x-4">
+                        <div className="text-4xl font-bold text-green-600">
+                          {Number(product.ratings || 0).toFixed(1)}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star key={i} className={`w-5 h-5 ${i < Math.round(product.ratings) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                            ))}
+                          </div>
+                          <div className="text-sm text-gray-600">{product.reviews.length} reviews</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="md:col-span-2">
+                      <CardContent className="p-6 space-y-2">
+                        {([5,4,3,2,1]).map(star => {
+                          const count = product.reviews.filter(r => Number(r.rating) === star).length;
+                          const percent = Math.round((count / product.reviews.length) * 100);
+                          return (
+                            <div key={star} className="flex items-center space-x-3">
+                              <div className="w-5 text-sm text-gray-700">{star}</div>
+                              <Star className="w-4 h-4 text-yellow-500" />
+                              <div className="flex-1 h-2 bg-gray-200 rounded">
+                                <div className="h-2 bg-green-500 rounded" style={{ width: `${percent}%` }}></div>
+                              </div>
+                              <div className="w-10 text-right text-sm text-gray-600">{count}</div>
+                            </div>
+                          )
+                        })}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+                {/* Controls */}
+                {product.reviews && product.reviews.length > 0 && (
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-gray-600">Sort:</span>
+                      <select className="border border-gray-200 rounded-md px-2 py-1" onChange={(e)=>setSort(e.target.value)} value={sort}>
+                        <option value="recent">Recent</option>
+                        <option value="top">Top Rated</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-gray-600">Show:</span>
+                      <select className="border border-gray-200 rounded-md px-2 py-1" onChange={(e)=>setPageSize(Number(e.target.value))} value={pageSize}>
+                        {[5,10,20,50,100].map(n=> (<option key={n} value={n}>{n}</option>))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                {showReviewForm && (
+                  <Card className="mb-6">
+                    <CardContent className="p-6 space-y-4">
+                      <div>
+                        <span className="block text-sm font-medium text-gray-700 mb-2">Your Rating</span>
+                        <div className="flex items-center space-x-2">
+                          {[1,2,3,4,5].map((i) => (
+                            <button key={i} type="button" onClick={() => setReviewRating(i)}>
+                              <Star className={`w-6 h-6 ${i <= reviewRating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="block text-sm font-medium text-gray-700 mb-2">Your Review</span>
+                        <textarea className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" rows="4" value={reviewComment} onChange={(e)=>setReviewComment(e.target.value)} placeholder="Share your experience..." />
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Button onClick={submitReview} disabled={submitting || reviewRating===0 || !reviewComment.trim()}>Submit</Button>
+                        <Button variant="outline" onClick={()=> setShowReviewForm(false)}>Cancel</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
                 
                 {product.reviews && product.reviews.length > 0 ? (
                   <div className="space-y-6">
-                    {product.reviews.map((review, index) => (
+                    {sortedAndSlicedReviews.map((review, index) => (
                       <Card key={index}>
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h5 className="font-medium text-gray-900">{review.name}</h5>
+                            <div className="flex items-start space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                                {review.name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+                              </div>
+                              <div>
+                                <h5 className="font-medium text-gray-900">{review.name}</h5>
                               <div className="flex items-center space-x-1 mt-1">
                                 {[...Array(5)].map((_, i) => (
                                   <Star
@@ -434,9 +734,10 @@ export default function ProductDetail() {
                                   />
                                 ))}
                               </div>
+                              </div>
                             </div>
                             <span className="text-sm text-gray-500">
-                              {new Date(review.createdAt).toLocaleDateString()}
+                              {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}
                             </span>
                           </div>
                           <p className="text-gray-600">{review.comment}</p>

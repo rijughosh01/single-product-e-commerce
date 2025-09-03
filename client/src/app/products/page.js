@@ -22,6 +22,7 @@ import {
 import { productsAPI } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import WishlistButton from '@/components/WishlistButton';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -114,10 +115,7 @@ export default function Products() {
     await addToCart(productId, 1);
   };
 
-  const handleAddToWishlist = (productId) => {
-    // TODO: Implement wishlist functionality
-    console.log('Add to wishlist:', productId);
-  };
+
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -307,32 +305,25 @@ export default function Products() {
               : 'grid-cols-1'
           }`}>
             {filteredProducts.map((product) => (
-              <Card key={product._id} className="card-hover group">
+              <Card key={product._id} className="group card-hover">
                 <CardHeader className="pb-4">
-                  <div className="relative overflow-hidden rounded-lg mb-4">
+                  <div className="relative overflow-hidden rounded-xl mb-4">
                     <Image
                       src={product.images[0]?.url || '/placeholder-ghee.jpg'}
                       alt={product.name}
                       width={300}
                       height={200}
-                      className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                      className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
                         viewMode === 'grid' ? 'h-48' : 'h-32'
                       }`}
                     />
                     {product.discount > 0 && (
-                      <Badge className="absolute top-2 right-2 bg-red-500">
+                      <Badge className="absolute top-2 right-2 bg-red-500 text-white shadow-sm">
                         {product.discount}% OFF
                       </Badge>
                     )}
                     <div className="absolute top-2 left-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 bg-white/80 hover:bg-white"
-                        onClick={() => handleAddToWishlist(product._id)}
-                      >
-                        <Heart className="w-4 h-4" />
-                      </Button>
+                      <WishlistButton productId={product._id} />
                     </div>
                   </div>
                   <CardTitle className={`line-clamp-2 ${viewMode === 'list' ? 'text-lg' : 'text-base'}`}>
