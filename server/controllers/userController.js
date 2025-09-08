@@ -39,14 +39,27 @@ exports.updateUser = async (req, res, next) => {
     const newUserData = {
       name: req.body.name,
       email: req.body.email,
+      phone: req.body.phone,
       role: req.body.role,
+      isEmailVerified: req.body.isEmailVerified,
     };
+
+    // Remove undefined fields
+    Object.keys(newUserData).forEach((key) => {
+      if (newUserData[key] === undefined) {
+        delete newUserData[key];
+      }
+    });
 
     const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
       new: true,
       runValidators: true,
       useFindAndModify: false,
     });
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
 
     res.status(200).json({
       success: true,

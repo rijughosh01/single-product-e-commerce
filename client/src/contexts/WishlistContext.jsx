@@ -19,10 +19,13 @@ const wishlistReducer = (state, action) => {
     case "SET_ERROR":
       return { ...state, error: action.payload, loading: false };
     case "SET_WISHLIST":
+      const products = (action.payload.products || []).filter(
+        (item) => item.product
+      );
       return {
         ...state,
-        wishlist: action.payload.products || [],
-        wishlistCount: (action.payload.products || []).length,
+        wishlist: products,
+        wishlistCount: products.length,
         loading: false,
         error: null,
       };
@@ -37,7 +40,7 @@ const wishlistReducer = (state, action) => {
       return {
         ...state,
         wishlist: state.wishlist.filter(
-          (item) => item.product._id !== action.payload
+          (item) => item.product && item.product._id !== action.payload
         ),
         wishlistCount: Math.max(0, state.wishlistCount - 1),
         error: null,
@@ -182,10 +185,11 @@ export const WishlistProvider = ({ children }) => {
 
   // Check if product is in wishlist
   const isInWishlist = (productId) => {
-    return state.wishlist.some((item) => item.product._id === productId);
+    return state.wishlist.some(
+      (item) => item.product && item.product._id === productId
+    );
   };
 
-  // Clear error
   const clearError = () => {
     dispatch({ type: "CLEAR_ERROR" });
   };

@@ -16,6 +16,16 @@ exports.getWishlist = async (req, res, next) => {
       });
     }
 
+    const validProducts = wishlist.products.filter(
+      (item) => item.product !== null
+    );
+
+    // Update wishlist if there were invalid products
+    if (validProducts.length !== wishlist.products.length) {
+      wishlist.products = validProducts;
+      await wishlist.save();
+    }
+
     res.status(200).json({
       success: true,
       wishlist,
@@ -59,6 +69,15 @@ exports.addToWishlist = async (req, res, next) => {
 
     await wishlist.populate("products.product");
 
+    // Filter out any null products
+    const validProducts = wishlist.products.filter(
+      (item) => item.product !== null
+    );
+    if (validProducts.length !== wishlist.products.length) {
+      wishlist.products = validProducts;
+      await wishlist.save();
+    }
+
     res.status(200).json({
       success: true,
       message: "Product added to wishlist",
@@ -88,6 +107,15 @@ exports.removeFromWishlist = async (req, res, next) => {
     await wishlist.save();
 
     await wishlist.populate("products.product");
+
+    // Filter out any null products
+    const validProducts = wishlist.products.filter(
+      (item) => item.product !== null
+    );
+    if (validProducts.length !== wishlist.products.length) {
+      wishlist.products = validProducts;
+      await wishlist.save();
+    }
 
     res.status(200).json({
       success: true,

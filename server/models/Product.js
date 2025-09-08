@@ -103,7 +103,7 @@ const productSchema = new mongoose.Schema({
   sku: {
     type: String,
     unique: true,
-    required: true,
+    required: false,
   },
   weight: {
     type: Number,
@@ -131,13 +131,36 @@ const productSchema = new mongoose.Schema({
 });
 
 // Generate SKU before saving
-productSchema.pre("save", function (next) {
+productSchema.pre("save", async function (next) {
   if (!this.sku) {
-    const sizeCode = this.size.replace(/[^0-9]/g, "");
-    const typeCode = this.type.substring(0, 3).toUpperCase();
-    this.sku = `GHEE-${typeCode}-${sizeCode}-${Date.now()
-      .toString()
-      .slice(-6)}`;
+    try {
+      const sizeCode = this.size.replace(/[^0-9]/g, "");
+      const typeCode = this.type.substring(0, 3).toUpperCase();
+      const timestamp = Date.now().toString().slice(-6);
+      const randomSuffix = Math.random()
+        .toString(36)
+        .substring(2, 5)
+        .toUpperCase();
+
+      this.sku = `GHEE-${typeCode}-${sizeCode}-${timestamp}-${randomSuffix}`;
+
+      // Ensure uniqueness by checking if SKU already exists
+      const existingProduct = await this.constructor.findOne({ sku: this.sku });
+      if (existingProduct) {
+        // If SKU exists, generate a new one
+        this.sku = `GHEE-${typeCode}-${sizeCode}-${timestamp}-${Math.random()
+          .toString(36)
+          .substring(2, 5)
+          .toUpperCase()}`;
+      }
+    } catch (error) {
+      console.error("Error generating SKU:", error);
+      // Fallback SKU generation
+      this.sku = `GHEE-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase()}`;
+    }
   }
   next();
 });

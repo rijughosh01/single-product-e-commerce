@@ -1,6 +1,10 @@
 const Product = require("../models/Product");
 const ErrorHandler = require("../utils/errorHandler");
-const { uploadMultipleImages, deleteImage } = require("../utils/cloudinary");
+const {
+  uploadMultipleImages,
+  deleteImage,
+  uploadImage,
+} = require("../utils/cloudinary");
 
 // Get all products => /api/v1/products
 exports.getProducts = async (req, res, next) => {
@@ -55,17 +59,103 @@ exports.newProduct = async (req, res, next) => {
 
     // Handle image uploads if images are provided
     if (req.body.images && req.body.images.length > 0) {
-      const imageUrls = [];
+      const processedImages = [];
       for (const image of req.body.images) {
-        if (image.startsWith("data:image")) {
-          const result = await uploadMultipleImages([image], "products");
-          imageUrls.push(result[0].url);
-        } else {
-          imageUrls.push(image);
+        const cloudConfigured = !!process.env.CLOUDINARY_CLOUD_NAME;
+
+        // Case 1: raw base64 string
+        if (typeof image === "string" && image.startsWith("data:image")) {
+          if (cloudConfigured) {
+            try {
+              const result = await uploadImage(image, "products");
+              processedImages.push({
+                public_id: result.public_id,
+                url: result.url,
+              });
+            } catch (error) {
+              console.error("Cloudinary upload error:", error);
+              processedImages.push({
+                public_id: `temp_${Date.now()}_${Math.random()}`,
+                url: "/placeholder-ghee.jpg",
+              });
+            }
+          } else {
+            processedImages.push({
+              public_id: `temp_${Date.now()}_${Math.random()}`,
+              url: "/placeholder-ghee.jpg",
+            });
+          }
+          continue;
+        }
+
+        // Case 2: object with url
+        if (typeof image === "object" && image.url) {
+          if (
+            image.url.startsWith &&
+            image.url.startsWith("data:image") &&
+            cloudConfigured
+          ) {
+            try {
+              const result = await uploadImage(image.url, "products");
+              processedImages.push({
+                public_id: result.public_id,
+                url: result.url,
+              });
+            } catch (error) {
+              console.error("Cloudinary upload error:", error);
+              processedImages.push({
+                public_id: `temp_${Date.now()}_${Math.random()}`,
+                url: "/placeholder-ghee.jpg",
+              });
+            }
+          } else {
+            processedImages.push({
+              public_id:
+                image.public_id || `temp_${Date.now()}_${Math.random()}`,
+              url: image.url,
+            });
+          }
         }
       }
-      req.body.images = imageUrls;
+      req.body.images = processedImages;
+    } else {
+      req.body.images = [
+        {
+          public_id: `default_${Date.now()}`,
+          url: "/placeholder-ghee.jpg",
+        },
+      ];
     }
+
+    // Validate required fields
+    const requiredFields = [
+      "name",
+      "description",
+      "price",
+      "originalPrice",
+      "size",
+      "type",
+      "category",
+      "stock",
+      "weight",
+      "manufacturingDate",
+      "expiryDate",
+    ];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
+
+    if (missingFields.length > 0) {
+      return next(
+        new ErrorHandler(
+          `Missing required fields: ${missingFields.join(", ")}`,
+          400
+        )
+      );
+    }
+
+    // Ensure SKU is not provided (it will be auto-generated)
+    delete req.body.sku;
+
+    console.log("Creating product with data:", req.body);
 
     const product = await Product.create(req.body);
 
@@ -74,6 +164,23 @@ exports.newProduct = async (req, res, next) => {
       product,
     });
   } catch (error) {
+    console.error("Product creation error:", error);
+
+    // Handle specific validation errors
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return next(
+        new ErrorHandler(`Validation Error: ${errors.join(", ")}`, 400)
+      );
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return next(
+        new ErrorHandler("Product with this information already exists", 400)
+      );
+    }
+
     next(error);
   }
 };
@@ -89,16 +196,43 @@ exports.updateProduct = async (req, res, next) => {
 
     // Handle image uploads if images are provided
     if (req.body.images && req.body.images.length > 0) {
-      const imageUrls = [];
+      const processedImages = [];
       for (const image of req.body.images) {
-        if (image.startsWith("data:image")) {
-          const result = await uploadMultipleImages([image], "products");
-          imageUrls.push(result[0].url);
-        } else {
-          imageUrls.push(image);
+        const cloudConfigured = !!process.env.CLOUDINARY_CLOUD_NAME;
+        if (typeof image === "string") {
+          if (image.startsWith("data:image") && cloudConfigured) {
+            const result = await uploadImage(image, "products");
+            processedImages.push({
+              public_id: result.public_id,
+              url: result.url,
+            });
+          } else {
+            processedImages.push({
+              public_id: `temp_${Date.now()}_${Math.random()}`,
+              url: image,
+            });
+          }
+        } else if (typeof image === "object" && image.url) {
+          if (
+            image.url.startsWith &&
+            image.url.startsWith("data:image") &&
+            cloudConfigured
+          ) {
+            const result = await uploadImage(image.url, "products");
+            processedImages.push({
+              public_id: result.public_id,
+              url: result.url,
+            });
+          } else {
+            processedImages.push({
+              public_id:
+                image.public_id || `temp_${Date.now()}_${Math.random()}`,
+              url: image.url,
+            });
+          }
         }
       }
-      req.body.images = imageUrls;
+      req.body.images = processedImages;
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {

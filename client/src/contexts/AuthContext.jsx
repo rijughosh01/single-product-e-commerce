@@ -26,14 +26,30 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem("token");
+
       if (token) {
         const response = await authAPI.getProfile();
         setUser(response.data.user);
         setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
       }
     } catch (error) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      console.error("Auth check failed:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } else if (error.message === "Network Error") {
+      }
+
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }

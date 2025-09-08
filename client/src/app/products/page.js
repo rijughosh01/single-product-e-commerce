@@ -1,46 +1,46 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
-  Star, 
-  Heart, 
-  ShoppingCart, 
-  Filter, 
-  Search, 
-  Grid, 
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  Filter,
+  Search,
+  Grid,
   List,
   ChevronDown,
-  SlidersHorizontal
-} from 'lucide-react';
-import { productsAPI } from '@/lib/api';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import WishlistButton from '@/components/WishlistButton';
+  SlidersHorizontal,
+} from "lucide-react";
+import { productsAPI } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import WishlistButton from "@/components/WishlistButton";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedSize, setSelectedSize] = useState('');
-  const [sortBy, setSortBy] = useState('featured');
-  const [viewMode, setViewMode] = useState('grid');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [sortBy, setSortBy] = useState("featured");
+  const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const type = searchParams.get('type');
+    const type = searchParams.get("type");
     if (type) {
       setSelectedType(type);
     }
@@ -56,7 +56,13 @@ export default function Products() {
       const response = await productsAPI.getAll();
       setProducts(response.data.products || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
     } finally {
       setLoading(false);
     }
@@ -67,38 +73,41 @@ export default function Products() {
 
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.type.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          product.type.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // Type filter
     if (selectedType) {
-      filtered = filtered.filter(product => product.type === selectedType);
+      filtered = filtered.filter((product) => product.type === selectedType);
     }
 
     // Size filter
     if (selectedSize) {
-      filtered = filtered.filter(product => product.size === selectedSize);
+      filtered = filtered.filter((product) => product.size === selectedSize);
     }
 
     // Sort
     switch (sortBy) {
-      case 'price-low':
+      case "price-low":
         filtered.sort((a, b) => a.price - b.price);
         break;
-      case 'price-high':
+      case "price-high":
         filtered.sort((a, b) => b.price - a.price);
         break;
-      case 'name':
+      case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'rating':
+      case "rating":
         filtered.sort((a, b) => b.ratings - a.ratings);
         break;
-      case 'featured':
+      case "featured":
       default:
         filtered.sort((a, b) => b.featured - a.featured);
         break;
@@ -109,23 +118,27 @@ export default function Products() {
 
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
     await addToCart(productId, 1);
   };
 
-
-
   const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedType('');
-    setSelectedSize('');
-    setSortBy('featured');
+    setSearchQuery("");
+    setSelectedType("");
+    setSelectedSize("");
+    setSortBy("featured");
   };
 
-  const gheeTypes = ['Pure Cow Ghee', 'Buffalo Ghee', 'Mixed Ghee', 'Organic Ghee', 'A2 Ghee'];
-  const sizes = ['250g', '500g', '1kg', '2kg', '5kg'];
+  const gheeTypes = [
+    "Pure Cow Ghee",
+    "Buffalo Ghee",
+    "Mixed Ghee",
+    "Organic Ghee",
+    "A2 Ghee",
+  ];
+  const sizes = ["250g", "500g", "1kg", "2kg", "5kg"];
 
   if (loading) {
     return (
@@ -156,7 +169,9 @@ export default function Products() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Our Products</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Our Products
+          </h1>
           <p className="text-gray-600">
             Discover our premium collection of authentic ghee products
           </p>
@@ -181,14 +196,22 @@ export default function Products() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 border rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`}
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded ${
+                    viewMode === "grid"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-gray-400"
+                  }`}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`}
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded ${
+                    viewMode === "list"
+                      ? "bg-amber-100 text-amber-600"
+                      : "text-gray-400"
+                  }`}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -201,7 +224,11 @@ export default function Products() {
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 <span>Filters</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
+                />
               </Button>
             </div>
           </div>
@@ -239,8 +266,10 @@ export default function Products() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="">All Types</option>
-                    {gheeTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    {gheeTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -256,8 +285,10 @@ export default function Products() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="">All Sizes</option>
-                    {sizes.map(size => (
-                      <option key={size} value={size}>{size}</option>
+                    {sizes.map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -290,7 +321,9 @@ export default function Products() {
             <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
               <Search className="w-12 h-12 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No products found
+            </h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search or filter criteria
             </p>
@@ -299,22 +332,24 @@ export default function Products() {
             </Button>
           </div>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1'
-          }`}>
+          <div
+            className={`grid gap-6 ${
+              viewMode === "grid"
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                : "grid-cols-1"
+            }`}
+          >
             {filteredProducts.map((product) => (
               <Card key={product._id} className="group card-hover">
                 <CardHeader className="pb-4">
                   <div className="relative overflow-hidden rounded-xl mb-4">
                     <Image
-                      src={product.images[0]?.url || '/placeholder-ghee.jpg'}
+                      src={product.images[0]?.url || "/placeholder-ghee.jpg"}
                       alt={product.name}
                       width={300}
                       height={200}
                       className={`w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-                        viewMode === 'grid' ? 'h-48' : 'h-32'
+                        viewMode === "grid" ? "h-48" : "h-32"
                       }`}
                     />
                     {product.discount > 0 && (
@@ -326,7 +361,11 @@ export default function Products() {
                       <WishlistButton productId={product._id} />
                     </div>
                   </div>
-                  <CardTitle className={`line-clamp-2 ${viewMode === 'list' ? 'text-lg' : 'text-base'}`}>
+                  <CardTitle
+                    className={`line-clamp-2 ${
+                      viewMode === "list" ? "text-lg" : "text-base"
+                    }`}
+                  >
                     {product.name}
                   </CardTitle>
                   <div className="flex items-center space-x-1">
@@ -335,8 +374,8 @@ export default function Products() {
                         key={i}
                         className={`w-4 h-4 ${
                           i < Math.floor(product.ratings)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
                         }`}
                       />
                     ))}
@@ -356,7 +395,11 @@ export default function Products() {
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      <span className={`font-bold text-amber-600 ${viewMode === 'list' ? 'text-xl' : 'text-lg'}`}>
+                      <span
+                        className={`font-bold text-amber-600 ${
+                          viewMode === "list" ? "text-xl" : "text-lg"
+                        }`}
+                      >
                         ₹{product.price}
                       </span>
                       {product.originalPrice > product.price && (
@@ -369,8 +412,8 @@ export default function Products() {
                       Stock: {product.stock}
                     </div>
                   </div>
-                  
-                  {viewMode === 'list' && (
+
+                  {viewMode === "list" && (
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                       {product.description}
                     </p>
@@ -383,12 +426,22 @@ export default function Products() {
                       disabled={product.stock === 0}
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                     </Button>
                     <Link href={`/products/${product._id}`}>
                       <Button variant="outline" size="icon">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
                         </svg>
                       </Button>
                     </Link>

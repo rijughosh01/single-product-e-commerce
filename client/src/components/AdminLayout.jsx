@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import { 
-  Package, 
-  Users, 
-  ShoppingCart, 
-  BarChart3, 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter, usePathname } from "next/navigation";
+import { toast } from "sonner";
+import Link from "next/link";
+import {
+  Package,
+  Users,
+  ShoppingCart,
+  BarChart3,
   Settings,
   Home,
   LogOut,
@@ -23,9 +23,9 @@ import {
   DollarSign,
   UserCheck,
   Shield,
-  Activity
-} from 'lucide-react';
-import NotificationBell from './NotificationBell';
+  Activity,
+} from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 const AdminLayout = ({ children }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -36,73 +36,74 @@ const AdminLayout = ({ children }) => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
-    if (user && user.role !== 'admin') {
-      toast.error('Access denied. Admin privileges required.');
-      router.push('/');
+    if (user && user.role !== "admin") {
+      toast.error("Access denied. Admin privileges required.");
+      router.push("/");
       return;
     }
   }, [isAuthenticated, user, router]);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/');
+    router.push("/");
   };
 
   const navigation = [
-    { 
-      name: 'Dashboard', 
-      href: '/admin', 
+    {
+      name: "Dashboard",
+      href: "/admin",
       icon: Home,
-      description: 'Overview and analytics'
+      description: "Overview and analytics",
     },
-    { 
-      name: 'Products', 
-      href: '/admin/products', 
+    {
+      name: "Products",
+      href: "/admin/products",
       icon: Package,
-      description: 'Manage product catalog'
+      description: "Manage product catalog",
     },
-    { 
-      name: 'Orders', 
-      href: '/admin/orders', 
+    {
+      name: "Orders",
+      href: "/admin/orders",
       icon: ShoppingCart,
-      description: 'Order management'
+      description: "Order management",
     },
-    { 
-      name: 'Users', 
-      href: '/admin/users', 
+    {
+      name: "Users",
+      href: "/admin/users",
       icon: Users,
-      description: 'Customer management'
+      description: "Customer management",
     },
-    { 
-      name: 'Analytics', 
-      href: '/admin/analytics', 
+    {
+      name: "Analytics",
+      href: "/admin/analytics",
       icon: BarChart3,
-      description: 'Business insights'
+      description: "Business insights",
     },
   ];
 
   const getPageTitle = () => {
-    const currentNav = navigation.find(nav => nav.href === pathname);
-    return currentNav ? currentNav.name : 'Admin Dashboard';
+    const currentNav = navigation.find((nav) => nav.href === pathname);
+    return currentNav ? currentNav.name : "Admin Dashboard";
   };
 
-  if (!isAuthenticated || (user && user.role !== 'admin')) {
+  if (!isAuthenticated || (user && user.role !== "admin")) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 lg:static lg:inset-0`}>
-        
+      <div
+        className={`fixed left-0 top-24 bottom-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col min-h-0 max-h-screen ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
+      >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-20 px-8 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-indigo-700">
+        <div className="flex items-center justify-between h-20 px-8 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-indigo-700 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
               <Shield className="w-6 h-6 text-white" />
@@ -121,7 +122,7 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-6 py-8 space-y-2">
+        <nav className="flex-1 px-6 py-8 space-y-2 overflow-y-auto min-h-0">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -130,54 +131,70 @@ const AdminLayout = ({ children }) => {
                 href={item.href}
                 className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-600"
                 }`}
               >
-                <item.icon className={`mr-4 h-5 w-5 ${
-                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'
-                }`} />
+                <item.icon
+                  className={`mr-4 h-5 w-5 ${
+                    isActive
+                      ? "text-white"
+                      : "text-gray-400 group-hover:text-blue-500"
+                  }`}
+                />
                 <div className="flex-1">
                   <div className="font-semibold">{item.name}</div>
-                  <div className={`text-xs ${
-                    isActive ? 'text-blue-100' : 'text-gray-500'
-                  }`}>
+                  <div
+                    className={`text-xs ${
+                      isActive ? "text-blue-100" : "text-gray-500"
+                    }`}
+                  >
                     {item.description}
                   </div>
                 </div>
-                {isActive && (
-                  <div className="w-2 h-2 bg-white rounded-full" />
-                )}
+                {isActive && <div className="w-2 h-2 bg-white rounded-full" />}
               </Link>
             );
           })}
         </nav>
 
         {/* User Section */}
-        <div className="p-6 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 bg-white flex-shrink-0">
           <div className="relative">
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="w-full flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-white">
                     {user?.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+                <div className="text-left min-w-0 flex-1">
+                  <p
+                    className="text-sm font-semibold text-gray-900 truncate"
+                    title={user?.name}
+                  >
+                    {user?.name}
+                  </p>
+                  <p
+                    className="text-xs text-gray-500 truncate"
+                    title={user?.email}
+                  >
+                    {user?.email}
+                  </p>
                 </div>
               </div>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${
-                userDropdownOpen ? 'rotate-180' : ''
-              }`} />
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${
+                  userDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 p-2 z-10">
                 <Link
                   href="/"
                   className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
@@ -207,7 +224,7 @@ const AdminLayout = ({ children }) => {
       )}
 
       {/* Main content */}
-      <div className="lg:pl-80">
+      <div className="pt-1 lg:pl-80">
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
@@ -219,11 +236,15 @@ const AdminLayout = ({ children }) => {
                 <Menu className="w-6 h-6" />
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
-                <p className="text-sm text-gray-500">Welcome back, {user?.name}</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {getPageTitle()}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Welcome back, {user?.name}
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Search */}
               <div className="hidden md:flex items-center space-x-2 px-4 py-2 bg-gray-50 rounded-lg">
@@ -255,9 +276,7 @@ const AdminLayout = ({ children }) => {
 
         {/* Page content */}
         <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </div>
