@@ -18,6 +18,7 @@ import {
   Eye,
   Heart,
 } from "lucide-react";
+import RatingStars from "@/components/RatingStars";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -309,19 +310,10 @@ export default function AdminProductView() {
             <div className="space-y-4">
               <div className="flex items-center">
                 <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(product.ratings || 0)
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+                  <RatingStars rating={product.ratings} className="h-5 w-5" />
                 </div>
                 <span className="ml-2 text-lg font-semibold text-gray-900">
-                  {product.ratings || 0}
+                  {Number(product.ratings || 0).toFixed(1)}
                 </span>
                 <span className="ml-1 text-sm text-gray-500">
                   ({product.numOfReviews || 0} reviews)
@@ -341,16 +333,10 @@ export default function AdminProductView() {
                           {review.name}
                         </span>
                         <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${
-                                i < review.rating
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
+                          <RatingStars
+                            rating={review.rating}
+                            className="h-3 w-3"
+                          />
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 mt-1">

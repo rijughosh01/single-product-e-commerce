@@ -48,10 +48,6 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // For now, we'll use mock data since the backend might not have all these endpoints
-      // In a real app, you'd call: const response = await adminAPI.getDashboardStats();
-      
-      // Mock data - replace with actual API calls
       setStats({
         totalProducts: 25,
         totalUsers: 150,

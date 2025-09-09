@@ -1,28 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Star, 
-  Truck, 
-  Shield, 
-  Leaf, 
-  Heart, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Star,
+  Truck,
+  Shield,
+  Leaf,
+  Heart,
   ShoppingCart,
   ArrowRight,
   CheckCircle,
   Package,
   Users,
-  Award
-} from 'lucide-react';
-import { productsAPI } from '@/lib/api';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import WishlistButton from '@/components/WishlistButton';
+  Award,
+} from "lucide-react";
+import RatingStars from "@/components/RatingStars";
+import { productsAPI } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import WishlistButton from "@/components/WishlistButton";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -39,7 +40,7 @@ export default function Home() {
       const response = await productsAPI.getFeatured();
       setFeaturedProducts(response.data.products || []);
     } catch (error) {
-      console.error('Error fetching featured products:', error);
+      console.error("Error fetching featured products:", error);
     } finally {
       setLoading(false);
     }
@@ -47,8 +48,7 @@ export default function Home() {
 
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
-      // Redirect to login
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
     await addToCart(productId, 1);
@@ -58,23 +58,23 @@ export default function Home() {
     {
       icon: <Truck className="w-8 h-8 text-amber-500" />,
       title: "Free Shipping",
-      description: "Free shipping on orders above ₹500"
+      description: "Free shipping on orders above ₹500",
     },
     {
       icon: <Shield className="w-8 h-8 text-amber-500" />,
       title: "Quality Guarantee",
-      description: "100% pure and authentic ghee products"
+      description: "100% pure and authentic ghee products",
     },
     {
       icon: <Leaf className="w-8 h-8 text-amber-500" />,
       title: "Organic Certified",
-      description: "Certified organic and natural ingredients"
+      description: "Certified organic and natural ingredients",
     },
     {
       icon: <Package className="w-8 h-8 text-amber-500" />,
       title: "Secure Packaging",
-      description: "Safe and hygienic packaging"
-    }
+      description: "Safe and hygienic packaging",
+    },
   ];
 
   const gheeTypes = [
@@ -84,7 +84,7 @@ export default function Home() {
       image: "/cow-ghee.jpg",
       price: "₹450",
       originalPrice: "₹550",
-      href: "/products?type=Pure Cow Ghee"
+      href: "/products?type=Pure Cow Ghee",
     },
     {
       name: "Buffalo Ghee",
@@ -92,7 +92,7 @@ export default function Home() {
       image: "/buffalo-ghee.jpg",
       price: "₹400",
       originalPrice: "₹500",
-      href: "/products?type=Buffalo Ghee"
+      href: "/products?type=Buffalo Ghee",
     },
     {
       name: "Organic Ghee",
@@ -100,7 +100,7 @@ export default function Home() {
       image: "/organic-ghee.jpg",
       price: "₹550",
       originalPrice: "₹650",
-      href: "/products?type=Organic Ghee"
+      href: "/products?type=Organic Ghee",
     },
     {
       name: "A2 Ghee",
@@ -108,29 +108,32 @@ export default function Home() {
       image: "/a2-ghee.jpg",
       price: "₹600",
       originalPrice: "₹700",
-      href: "/products?type=A2 Ghee"
-    }
+      href: "/products?type=A2 Ghee",
+    },
   ];
 
   const testimonials = [
     {
       name: "Priya Sharma",
       role: "Home Chef",
-      content: "The pure cow ghee has transformed my cooking. The aroma and taste are incredible!",
-      rating: 5
+      content:
+        "The pure cow ghee has transformed my cooking. The aroma and taste are incredible!",
+      rating: 5,
     },
     {
       name: "Rajesh Kumar",
       role: "Health Enthusiast",
-      content: "I've been using their organic ghee for months. Great quality and authentic taste.",
-      rating: 5
+      content:
+        "I've been using their organic ghee for months. Great quality and authentic taste.",
+      rating: 5,
     },
     {
       name: "Meera Patel",
       role: "Yoga Instructor",
-      content: "Perfect for my Ayurvedic practices. The A2 ghee is exactly what I was looking for.",
-      rating: 5
-    }
+      content:
+        "Perfect for my Ayurvedic practices. The A2 ghee is exactly what I was looking for.",
+      rating: 5,
+    },
   ];
 
   return (
@@ -141,7 +144,10 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
-                <Badge variant="secondary" className="text-amber-700 bg-amber-100">
+                <Badge
+                  variant="secondary"
+                  className="text-amber-700 bg-amber-100"
+                >
                   Premium Quality Ghee
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -149,13 +155,17 @@ export default function Home() {
                   <span className="text-amber-600 block">Ghee Products</span>
                 </h1>
                 <p className="text-xl text-gray-600 max-w-lg">
-                  Discover our premium collection of traditional ghee, sourced from the finest farms and prepared using age-old methods.
+                  Discover our premium collection of traditional ghee, sourced
+                  from the finest farms and prepared using age-old methods.
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/products">
-                  <Button size="lg" className="bg-amber-600 hover:bg-amber-700 text-white">
+                  <Button
+                    size="lg"
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
                     Shop Now
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
@@ -185,7 +195,7 @@ export default function Home() {
 
             <div className="relative">
               <div className="relative z-10">
-        <Image
+                <Image
                   src="/hero-ghee.jpg"
                   alt="Premium Ghee Collection"
                   width={600}
@@ -206,10 +216,10 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="text-center space-y-4">
-                <div className="flex justify-center">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
+                <div className="flex justify-center">{feature.icon}</div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {feature.title}
+                </h3>
                 <p className="text-gray-600 text-sm">{feature.description}</p>
               </div>
             ))}
@@ -225,7 +235,8 @@ export default function Home() {
               Our Premium Ghee Collection
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Choose from our carefully curated selection of premium ghee products
+              Choose from our carefully curated selection of premium ghee
+              products
             </p>
           </div>
 
@@ -234,7 +245,7 @@ export default function Home() {
               <Card key={index} className="card-hover group">
                 <CardHeader className="pb-4">
                   <div className="relative overflow-hidden rounded-lg mb-4">
-            <Image
+                    <Image
                       src={type.image}
                       alt={type.name}
                       width={300}
@@ -248,8 +259,12 @@ export default function Home() {
                 <CardContent>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-amber-600">{type.price}</span>
-                      <span className="text-gray-400 line-through">{type.originalPrice}</span>
+                      <span className="text-2xl font-bold text-amber-600">
+                        {type.price}
+                      </span>
+                      <span className="text-gray-400 line-through">
+                        {type.originalPrice}
+                      </span>
                     </div>
                   </div>
                   <Link href={type.href}>
@@ -296,7 +311,7 @@ export default function Home() {
                   <CardHeader className="pb-4">
                     <div className="relative overflow-hidden rounded-xl mb-4">
                       <Image
-                        src={product.images[0]?.url || '/placeholder-ghee.jpg'}
+                        src={product.images[0]?.url || "/placeholder-ghee.jpg"}
                         alt={product.name}
                         width={300}
                         height={200}
@@ -308,18 +323,14 @@ export default function Home() {
                         </Badge>
                       )}
                     </div>
-                    <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
+                    <CardTitle className="text-lg line-clamp-2">
+                      {product.name}
+                    </CardTitle>
                     <div className="flex items-center space-x-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(product.ratings)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
+                      <RatingStars
+                        rating={product.ratings}
+                        className="w-4 h-4"
+                      />
                       <span className="text-sm text-gray-600 ml-1">
                         ({product.numOfReviews})
                       </span>
@@ -373,7 +384,8 @@ export default function Home() {
               What Our Customers Say
             </h2>
             <p className="text-xl text-gray-600">
-              Don't just take our word for it - hear from our satisfied customers
+              Do not just take our word for it - hear from our satisfied
+              customers
             </p>
           </div>
 
@@ -383,12 +395,19 @@ export default function Home() {
                 <CardContent className="p-6">
                   <div className="flex justify-center mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      <Star
+                        key={i}
+                        className="w-5 h-5 text-yellow-400 fill-current"
+                      />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-4 italic">"{testimonial.content}"</p>
+                  <p className="text-gray-600 mb-4 italic">
+                    "{testimonial.content}"
+                  </p>
                   <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
+                    <p className="font-semibold text-gray-900">
+                      {testimonial.name}
+                    </p>
                     <p className="text-sm text-gray-500">{testimonial.role}</p>
                   </div>
                 </CardContent>
@@ -433,13 +452,20 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products">
-              <Button size="lg" className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Button
+                size="lg"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
                 Start Shopping
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
             <Link href="/contact">
-              <Button variant="outline" size="lg" className="text-white border-white hover:bg-white hover:text-gray-900">
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-black border-white hover:bg-gray-200"
+              >
                 Contact Us
               </Button>
             </Link>

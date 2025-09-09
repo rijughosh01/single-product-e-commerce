@@ -26,10 +26,12 @@ import {
   Facebook,
   Twitter,
   Instagram,
-  WhatsApp,
+  Whatsapp,
   Mail,
+  StarHalf,
 } from "lucide-react";
 import { productsAPI } from "@/lib/api";
+import RatingStars from "@/components/RatingStars";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WishlistButton from "@/components/WishlistButton";
@@ -54,6 +56,32 @@ export default function ProductDetail() {
   const [pageSize, setPageSize] = useState(10);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  
+  const renderStars = (rating, sizeClass = "w-5 h-5") => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      const threshold = i - 0.5;
+      if (rating >= i) {
+        stars.push(
+          <Star
+            key={i}
+            className={`${sizeClass} text-yellow-400 fill-current`}
+          />
+        );
+      } else if (rating >= threshold) {
+        stars.push(
+          <StarHalf
+            key={i}
+            className={`${sizeClass} text-yellow-400 fill-current`}
+          />
+        );
+      } else {
+        stars.push(<Star key={i} className={`${sizeClass} text-gray-300`} />);
+      }
+    }
+    return stars;
+  };
 
   useEffect(() => {
     fetchProduct();
@@ -377,16 +405,7 @@ export default function ProductDetail() {
               </h1>
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.ratings)
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+                  <RatingStars rating={product.ratings} className="w-5 h-5" />
                   <span className="text-sm text-gray-600 ml-1">
                     ({product.numOfReviews} reviews)
                   </span>
@@ -528,7 +547,7 @@ export default function ProductDetail() {
                             onClick={() => shareToSocial("whatsapp")}
                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                           >
-                            <WhatsApp className="w-4 h-4 text-green-500" />
+                            <Whatsapp className="w-4 h-4 text-green-500" />
                             <span>Share on WhatsApp</span>
                           </button>
                           <button
@@ -681,13 +700,13 @@ export default function ProductDetail() {
 
             {activeTab === "reviews" && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="font-semibold text-gray-900">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+                  <h4 className="font-semibold text-gray-900 text-xl">
                     Customer Reviews
                   </h4>
                   <Button
-                    variant="outline"
                     onClick={() => setShowReviewForm(true)}
+                    className="bg-amber-600 hover:bg-amber-700"
                   >
                     Write a Review
                   </Button>
@@ -695,53 +714,56 @@ export default function ProductDetail() {
 
                 {/* Rating Summary */}
                 {product.reviews && product.reviews.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card className="md:col-span-1">
-                      <CardContent className="p-6 flex items-center space-x-4">
-                        <div className="text-4xl font-bold text-green-600">
-                          {Number(product.ratings || 0).toFixed(1)}
-                        </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <Card className="lg:col-span-1">
+                      <CardContent className="p-6 flex items-center justify-between">
                         <div>
-                          <div className="flex items-center space-x-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-5 h-5 ${
-                                  i < Math.round(product.ratings)
-                                    ? "text-yellow-400 fill-current"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
+                          <div className="text-5xl font-bold text-gray-900 leading-none">
+                            {Number(product.ratings || 0).toFixed(1)}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {product.reviews.length} reviews
+                          <div className="mt-2 flex items-center space-x-1">
+                            <RatingStars
+                              rating={product.ratings}
+                              className="w-5 h-5"
+                            />
                           </div>
+                          <div className="mt-2 text-sm text-gray-500">
+                            Based on {product.reviews.length} reviews
+                          </div>
+                        </div>
+                        <div className="hidden sm:block w-px h-16 bg-gray-200" />
+                        <div className="flex flex-col items-end">
+                          <Badge
+                            variant="outline"
+                            className="text-green-700 bg-green-50"
+                          >
+                            Verified
+                          </Badge>
+                          <span className="mt-2 text-xs text-gray-500">
+                            Updated {new Date().toLocaleDateString()}
+                          </span>
                         </div>
                       </CardContent>
                     </Card>
 
-                    <Card className="md:col-span-2">
-                      <CardContent className="p-6 space-y-2">
+                    <Card className="lg:col-span-2">
+                      <CardContent className="p-6 space-y-3">
                         {[5, 4, 3, 2, 1].map((star) => {
                           const count = product.reviews.filter(
                             (r) => Number(r.rating) === star
                           ).length;
-                          const percent = Math.round(
-                            (count / product.reviews.length) * 100
-                          );
+                          const percent = product.reviews.length
+                            ? Math.round((count / product.reviews.length) * 100)
+                            : 0;
                           return (
-                            <div
-                              key={star}
-                              className="flex items-center space-x-3"
-                            >
-                              <div className="w-5 text-sm text-gray-700">
+                            <div key={star} className="flex items-center gap-3">
+                              <div className="w-6 text-sm text-gray-700">
                                 {star}
                               </div>
                               <Star className="w-4 h-4 text-yellow-500" />
-                              <div className="flex-1 h-2 bg-gray-200 rounded">
+                              <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-2 bg-green-500 rounded"
+                                  className={`h-full bg-gradient-to-r from-amber-400 to-amber-600`}
                                   style={{ width: `${percent}%` }}
                                 ></div>
                               </div>
@@ -757,22 +779,22 @@ export default function ProductDetail() {
                 )}
                 {/* Controls */}
                 {product.reviews && product.reviews.length > 0 && (
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="text-gray-600">Sort:</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Sort</span>
                       <select
-                        className="border border-gray-200 rounded-md px-2 py-1"
+                        className="border border-gray-200 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                         onChange={(e) => setSort(e.target.value)}
                         value={sort}
                       >
-                        <option value="recent">Recent</option>
-                        <option value="top">Top Rated</option>
+                        <option value="recent">Most recent</option>
+                        <option value="top">Top rated</option>
                       </select>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="text-gray-600">Show:</span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-600">Show</span>
                       <select
-                        className="border border-gray-200 rounded-md px-2 py-1"
+                        className="border border-gray-200 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                         onChange={(e) => setPageSize(Number(e.target.value))}
                         value={pageSize}
                       >
@@ -786,62 +808,76 @@ export default function ProductDetail() {
                   </div>
                 )}
                 {showReviewForm && (
-                  <Card className="mb-6">
-                    <CardContent className="p-6 space-y-4">
-                      <div>
-                        <span className="block text-sm font-medium text-gray-700 mb-2">
-                          Your Rating
-                        </span>
-                        <div className="flex items-center space-x-2">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => setReviewRating(i)}
-                            >
-                              <Star
-                                className={`w-6 h-6 ${
-                                  i <= reviewRating
-                                    ? "text-yellow-400 fill-current"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            </button>
-                          ))}
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-lg bg-white rounded-xl shadow-xl">
+                      <div className="px-6 py-4 border-b flex items-center justify-between">
+                        <h5 className="font-semibold text-gray-900">
+                          Write a review
+                        </h5>
+                        <button
+                          onClick={() => setShowReviewForm(false)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <div>
+                          <span className="block text-sm font-medium text-gray-700 mb-2">
+                            Your Rating
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setReviewRating(i)}
+                              >
+                                <Star
+                                  className={`w-7 h-7 ${
+                                    i <= reviewRating
+                                      ? "text-yellow-400 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="block text-sm font-medium text-gray-700 mb-2">
+                            Your Review
+                          </span>
+                          <textarea
+                            className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            rows="5"
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="Share your experience..."
+                          />
+                        </div>
+                        <div className="flex items-center justify-end gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowReviewForm(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="bg-amber-600 hover:bg-amber-700"
+                            onClick={submitReview}
+                            disabled={
+                              submitting ||
+                              reviewRating === 0 ||
+                              !reviewComment.trim()
+                            }
+                          >
+                            Submit
+                          </Button>
                         </div>
                       </div>
-                      <div>
-                        <span className="block text-sm font-medium text-gray-700 mb-2">
-                          Your Review
-                        </span>
-                        <textarea
-                          className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-                          rows="4"
-                          value={reviewComment}
-                          onChange={(e) => setReviewComment(e.target.value)}
-                          placeholder="Share your experience..."
-                        />
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Button
-                          onClick={submitReview}
-                          disabled={
-                            submitting ||
-                            reviewRating === 0 ||
-                            !reviewComment.trim()
-                          }
-                        >
-                          Submit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowReviewForm(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
 
                 {product.reviews && product.reviews.length > 0 ? (
@@ -849,9 +885,9 @@ export default function ProductDetail() {
                     {sortedAndSlicedReviews.map((review, index) => (
                       <Card key={index}>
                         <CardContent className="p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-start space-x-3">
-                              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-700">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-semibold">
                                 {review.name
                                   ?.split(" ")
                                   .map((w) => w[0])
@@ -860,20 +896,19 @@ export default function ProductDetail() {
                                   .toUpperCase()}
                               </div>
                               <div>
-                                <h5 className="font-medium text-gray-900">
-                                  {review.name}
-                                </h5>
-                                <div className="flex items-center space-x-1 mt-1">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? "text-yellow-400 fill-current"
-                                          : "text-gray-300"
-                                      }`}
-                                    />
-                                  ))}
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-medium text-gray-900">
+                                    {review.name}
+                                  </h5>
+                                  <span className="text-xs text-gray-500">
+                                    Verified Buyer
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <RatingStars
+                                    rating={review.rating}
+                                    className="w-4 h-4"
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -885,16 +920,27 @@ export default function ProductDetail() {
                                 : ""}
                             </span>
                           </div>
-                          <p className="text-gray-600">{review.comment}</p>
+                          <p className="text-gray-700 leading-relaxed">
+                            {review.comment}
+                          </p>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">
-                      No reviews yet. Be the first to review this product!
+                  <div className="text-center py-10 bg-white rounded-lg border">
+                    <p className="text-gray-700 mb-2 font-medium">
+                      No reviews yet
                     </p>
+                    <p className="text-gray-500 mb-4">
+                      Be the first to share your thoughts on this product.
+                    </p>
+                    <Button
+                      className="bg-amber-600 hover:bg-amber-700"
+                      onClick={() => setShowReviewForm(true)}
+                    >
+                      Write a Review
+                    </Button>
                   </div>
                 )}
               </div>

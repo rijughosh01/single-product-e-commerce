@@ -36,14 +36,6 @@ app.use(cookieParser());
 
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use("/api/", limiter);
-
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -53,6 +45,18 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
+
+app.options("*", cors());
+
+// Rate limiting
+if (process.env.NODE_ENV !== "development") {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests from this IP, please try again later.",
+  });
+  app.use("/api/", limiter);
+}
 
 // Logging middleware
 if (process.env.NODE_ENV === "development") {

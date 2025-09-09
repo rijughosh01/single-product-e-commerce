@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Star,
   Heart,
   ShoppingCart,
   Filter,
@@ -19,6 +18,7 @@ import {
   ChevronDown,
   SlidersHorizontal,
 } from "lucide-react";
+import RatingStars from "@/components/RatingStars";
 import { productsAPI } from "@/lib/api";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -369,16 +369,7 @@ export default function Products() {
                     {product.name}
                   </CardTitle>
                   <div className="flex items-center space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(product.ratings)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
+                    <RatingStars rating={product.ratings} className="w-4 h-4" />
                     <span className="text-sm text-gray-600 ml-1">
                       ({product.numOfReviews})
                     </span>
