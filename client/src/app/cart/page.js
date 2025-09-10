@@ -1,35 +1,45 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
-  Trash2, 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingCart,
   ArrowLeft,
   Truck,
   Shield,
   CreditCard,
-  Package
-} from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { couponsAPI } from '@/lib/api';
+  Package,
+} from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { couponsAPI, productsAPI } from "@/lib/api";
 
 export default function Cart() {
-  const { cart, cartTotal, cartCount, updateQuantity, removeFromCart, clearCart } = useCart();
+  const {
+    cart,
+    cartTotal,
+    cartCount,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    addToCart,
+  } = useCart();
   const { isAuthenticated } = useAuth();
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
-  const [couponError, setCouponError] = useState('');
+  const [couponError, setCouponError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recommended, setRecommended] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
 
   const shippingCost = cartTotal > 500 ? 0 : 50;
   const subtotal = cartTotal;
@@ -52,20 +62,20 @@ export default function Cart() {
     if (!couponCode.trim()) return;
 
     setLoading(true);
-    setCouponError('');
+    setCouponError("");
 
     try {
       const response = await couponsAPI.validateCoupon(couponCode);
       const coupon = response.data.coupon;
-      
+
       if (coupon) {
         const discount = (cartTotal * coupon.discountPercentage) / 100;
         setCouponDiscount(discount);
         setCouponApplied(true);
-        setCouponError('');
+        setCouponError("");
       }
     } catch (error) {
-      setCouponError(error.response?.data?.message || 'Invalid coupon code');
+      setCouponError(error.response?.data?.message || "Invalid coupon code");
       setCouponDiscount(0);
       setCouponApplied(false);
     } finally {
@@ -74,11 +84,36 @@ export default function Cart() {
   };
 
   const handleRemoveCoupon = () => {
-    setCouponCode('');
+    setCouponCode("");
     setCouponDiscount(0);
     setCouponApplied(false);
-    setCouponError('');
+    setCouponError("");
   };
+
+  // Fetch recommended products
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      try {
+        setLoadingRecommendations(true);
+        let response;
+        try {
+          response = await productsAPI.getFeatured();
+        } catch (e) {
+          response = await productsAPI.getAll({ limit: 8 });
+        }
+        const all = response?.data?.products || [];
+        const inCartIds = new Set(cart.map((i) => i.product._id));
+        const filtered = all.filter((p) => !inCartIds.has(p._id)).slice(0, 4);
+        setRecommended(filtered);
+      } catch (error) {
+        console.error("Failed to load recommendations:", error);
+        setRecommended([]);
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+    fetchRecommended();
+  }, [cart]);
 
   if (!isAuthenticated) {
     return (
@@ -86,8 +121,12 @@ export default function Cart() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Please Login</h2>
-            <p className="text-gray-600 mb-6">You need to be logged in to view your cart</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Please Login
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You need to be logged in to view your cart
+            </p>
             <Link href="/login">
               <Button className="bg-amber-600 hover:bg-amber-700">
                 Login to Continue
@@ -105,8 +144,12 @@ export default function Cart() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-6">Add some products to your cart to get started</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Your cart is empty
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Add some products to your cart to get started
+            </p>
             <Link href="/products">
               <Button className="bg-amber-600 hover:bg-amber-700">
                 Continue Shopping
@@ -131,7 +174,9 @@ export default function Cart() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Shopping Cart
+              </h1>
               <p className="text-gray-600">{cartCount} items in your cart</p>
             </div>
           </div>
@@ -150,21 +195,28 @@ export default function Cart() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {cart.map((item) => (
-                  <div key={item._id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <div
+                    key={item._id}
+                    className="flex items-center space-x-4 p-4 border rounded-lg"
+                  >
                     <div className="relative w-20 h-20 flex-shrink-0">
                       <Image
-                        src={item.product.images[0]?.url || '/placeholder-ghee.jpg'}
+                        src={
+                          item.product.images[0]?.url || "/placeholder-ghee.jpg"
+                        }
                         alt={item.product.name}
                         fill
                         className="object-cover rounded-lg"
                       />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
                         {item.product.name}
                       </h3>
-                      <p className="text-sm text-gray-600">{item.product.type} - {item.product.size}</p>
+                      <p className="text-sm text-gray-600">
+                        {item.product.type} - {item.product.size}
+                      </p>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="text-lg font-bold text-amber-600">
                           ₹{item.product.price}
@@ -181,16 +233,28 @@ export default function Cart() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                        onClick={() =>
+                          handleQuantityChange(
+                            item.product._id,
+                            item.quantity - 1
+                          )
+                        }
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
-                      <span className="w-12 text-center font-medium">{item.quantity}</span>
+                      <span className="w-12 text-center font-medium">
+                        {item.quantity}
+                      </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
+                        onClick={() =>
+                          handleQuantityChange(
+                            item.product._id,
+                            item.quantity + 1
+                          )
+                        }
                         disabled={item.quantity >= item.product.stock}
                       >
                         <Plus className="w-4 h-4" />
@@ -242,7 +306,7 @@ export default function Cart() {
                         disabled={loading || !couponCode.trim()}
                         size="sm"
                       >
-                        {loading ? 'Applying...' : 'Apply'}
+                        {loading ? "Applying..." : "Apply"}
                       </Button>
                     ) : (
                       <Button
@@ -258,7 +322,9 @@ export default function Cart() {
                     <p className="text-sm text-red-600 mt-1">{couponError}</p>
                   )}
                   {couponApplied && (
-                    <p className="text-sm text-green-600 mt-1">Coupon applied successfully!</p>
+                    <p className="text-sm text-green-600 mt-1">
+                      Coupon applied successfully!
+                    </p>
                   )}
                 </div>
 
@@ -268,21 +334,25 @@ export default function Cart() {
                     <span>Subtotal ({cartCount} items)</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
-                  
+
                   <div className="flex justify-between text-sm">
                     <span>Shipping</span>
-                    <span className={shippingCost === 0 ? 'text-green-600' : ''}>
-                      {shippingCost === 0 ? 'Free' : `₹${shippingCost.toFixed(2)}`}
+                    <span
+                      className={shippingCost === 0 ? "text-green-600" : ""}
+                    >
+                      {shippingCost === 0
+                        ? "Free"
+                        : `₹${shippingCost.toFixed(2)}`}
                     </span>
                   </div>
-                  
+
                   {couponDiscount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Coupon Discount</span>
                       <span>-₹{couponDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  
+
                   <div className="border-t pt-3">
                     <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
@@ -300,12 +370,17 @@ export default function Cart() {
                 ) : (
                   <div className="flex items-center space-x-2 text-gray-600 text-sm">
                     <Truck className="w-4 h-4" />
-                    <span>Add ₹{(500 - cartTotal).toFixed(2)} more for free shipping</span>
+                    <span>
+                      Add ₹{(500 - cartTotal).toFixed(2)} more for free shipping
+                    </span>
                   </div>
                 )}
 
                 {/* Checkout removed as requested */}
-                <Button className="w-full bg-gray-300 text-gray-700 cursor-not-allowed" disabled>
+                <Button
+                  className="w-full bg-gray-300 text-gray-700 cursor-not-allowed"
+                  disabled
+                >
                   Checkout disabled
                 </Button>
 
@@ -331,19 +406,74 @@ export default function Cart() {
 
         {/* Recommended Products */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">You might also like</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            You might also like
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Placeholder for recommended products */}
-            {[...Array(4)].map((_, index) => (
-              <Card key={index} className="card-hover">
-                <div className="h-32 bg-gray-200 rounded-t-lg"></div>
-                <CardContent className="p-4">
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-8 bg-gray-200 rounded"></div>
-                </CardContent>
-              </Card>
-            ))}
+            {loadingRecommendations ? (
+              [...Array(4)].map((_, index) => (
+                <Card key={index} className="card-hover">
+                  <div className="h-32 bg-gray-200 rounded-t-lg"></div>
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : recommended.length === 0 ? (
+              <div className="text-gray-600">
+                No recommendations available right now.
+              </div>
+            ) : (
+              recommended.map((product) => (
+                <Card
+                  key={product._id}
+                  className="group card-hover overflow-hidden"
+                >
+                  <div className="relative h-40 bg-gray-100">
+                    <Image
+                      src={product.images?.[0]?.url || "/placeholder-ghee.jpg"}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <CardContent className="p-4 space-y-2">
+                    <Link href={`/products/${product._id}`} className="block">
+                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-amber-600 font-bold">
+                        ₹{product.price}
+                      </span>
+                      {product.originalPrice > product.price && (
+                        <span className="text-gray-400 line-through text-xs">
+                          ₹{product.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-amber-600 hover:bg-amber-700"
+                        onClick={() => addToCart(product._id, 1)}
+                        disabled={product.stock === 0}
+                      >
+                        {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                      </Button>
+                      <Link href={`/products/${product._id}`}>
+                        <Button size="sm" variant="outline">
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </div>

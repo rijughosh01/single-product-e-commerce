@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,6 +17,7 @@ import {
   List,
   ChevronDown,
   SlidersHorizontal,
+  X,
 } from "lucide-react";
 import RatingStars from "@/components/RatingStars";
 import { productsAPI } from "@/lib/api";
@@ -34,6 +35,13 @@ export default function Products() {
   const [sortBy, setSortBy] = useState("featured");
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [minRating, setMinRating] = useState(0);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [discountOnly, setDiscountOnly] = useState(false);
+
+  const debouncedSearchQuery = useMemo(() => searchQuery, [searchQuery]);
 
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
@@ -46,10 +54,6 @@ export default function Products() {
     }
     fetchProducts();
   }, [searchParams]);
-
-  useEffect(() => {
-    filterAndSortProducts();
-  }, [products, searchQuery, selectedType, selectedSize, sortBy]);
 
   const fetchProducts = async () => {
     try {
@@ -68,29 +72,60 @@ export default function Products() {
     }
   };
 
-  const filterAndSortProducts = () => {
+  const filterAndSortProducts = useCallback(() => {
     let filtered = [...products];
 
     // Search filter
-    if (searchQuery) {
+    if (debouncedSearchQuery) {
       filtered = filtered.filter(
         (product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.name
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase()) ||
           product.description
             .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          product.type.toLowerCase().includes(searchQuery.toLowerCase())
+            .includes(debouncedSearchQuery.toLowerCase()) ||
+          product.type
+            .toLowerCase()
+            .includes(debouncedSearchQuery.toLowerCase())
       );
     }
 
-    // Type filter
     if (selectedType) {
       filtered = filtered.filter((product) => product.type === selectedType);
     }
 
-    // Size filter
     if (selectedSize) {
       filtered = filtered.filter((product) => product.size === selectedSize);
+    }
+
+    // Price range filter
+    if (minPrice > 0) {
+      filtered = filtered.filter(
+        (product) => Number(product.price) >= Number(minPrice)
+      );
+    }
+    if (maxPrice > 0) {
+      filtered = filtered.filter(
+        (product) => Number(product.price) <= Number(maxPrice)
+      );
+    }
+
+    // Rating filter
+    if (minRating > 0) {
+      filtered = filtered.filter(
+        (product) => Number(product.ratings || 0) >= Number(minRating)
+      );
+    }
+
+    // Stock and discount filters
+    if (inStockOnly) {
+      filtered = filtered.filter((product) => Number(product.stock || 0) > 0);
+    }
+    if (discountOnly) {
+      filtered = filtered.filter(
+        (product) => Number(product.discount || 0) > 0
+      );
     }
 
     // Sort
@@ -114,7 +149,22 @@ export default function Products() {
     }
 
     setFilteredProducts(filtered);
-  };
+  }, [
+    products,
+    debouncedSearchQuery,
+    selectedType,
+    selectedSize,
+    minPrice,
+    maxPrice,
+    minRating,
+    inStockOnly,
+    discountOnly,
+    sortBy,
+  ]);
+
+  useEffect(() => {
+    filterAndSortProducts();
+  }, [filterAndSortProducts]);
 
   const handleAddToCart = async (productId) => {
     if (!isAuthenticated) {
@@ -129,6 +179,11 @@ export default function Products() {
     setSelectedType("");
     setSelectedSize("");
     setSortBy("featured");
+    setMinPrice(0);
+    setMaxPrice(0);
+    setMinRating(0);
+    setInStockOnly(false);
+    setDiscountOnly(false);
   };
 
   const gheeTypes = [
@@ -293,6 +348,68 @@ export default function Products() {
                   </select>
                 </div>
 
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Price Range (₹)
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Min"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Max"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Rating
+                  </label>
+                  <select
+                    value={minRating}
+                    onChange={(e) => setMinRating(Number(e.target.value))}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value={0}>Any</option>
+                    <option value={1}>1+</option>
+                    <option value={2}>2+</option>
+                    <option value={3}>3+</option>
+                    <option value={4}>4+</option>
+                    <option value={5}>5</option>
+                  </select>
+                </div>
+
+                {/* Toggles */}
+                <div className="flex flex-col gap-3">
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={inStockOnly}
+                      onChange={(e) => setInStockOnly(e.target.checked)}
+                    />
+                    In stock only
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={discountOnly}
+                      onChange={(e) => setDiscountOnly(e.target.checked)}
+                    />
+                    Discounted only
+                  </label>
+                </div>
+
                 {/* Clear Filters */}
                 <div className="flex items-end">
                   <Button
@@ -303,6 +420,122 @@ export default function Products() {
                     Clear Filters
                   </Button>
                 </div>
+              </div>
+
+              {/* Active filters chips */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                {selectedType && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Type: {selectedType}
+                    <button
+                      type="button"
+                      aria-label="Remove type filter"
+                      onClick={() => setSelectedType("")}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {selectedSize && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Size: {selectedSize}
+                    <button
+                      type="button"
+                      aria-label="Remove size filter"
+                      onClick={() => setSelectedSize("")}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {minPrice > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Min ₹{minPrice}
+                    <button
+                      type="button"
+                      aria-label="Remove min price filter"
+                      onClick={() => setMinPrice(0)}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {maxPrice > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Max ₹{maxPrice}
+                    <button
+                      type="button"
+                      aria-label="Remove max price filter"
+                      onClick={() => setMaxPrice(0)}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {minRating > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Rating {minRating}+
+                    <button
+                      type="button"
+                      aria-label="Remove rating filter"
+                      onClick={() => setMinRating(0)}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {inStockOnly && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    In stock
+                    <button
+                      type="button"
+                      aria-label="Remove in stock filter"
+                      onClick={() => setInStockOnly(false)}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
+                {discountOnly && (
+                  <Badge
+                    variant="secondary"
+                    className="inline-flex items-center gap-2"
+                  >
+                    Discounted
+                    <button
+                      type="button"
+                      aria-label="Remove discounted filter"
+                      onClick={() => setDiscountOnly(false)}
+                      className="hover:text-amber-700"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                )}
               </div>
             </div>
           )}
