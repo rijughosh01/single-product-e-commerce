@@ -263,9 +263,9 @@ exports.getCartSummary = async (req, res, next) => {
         if (
           coupon &&
           coupon.isValid() &&
-          coupon.canBeUsedByUser(req.user.id, subtotal)
+          (await coupon.canBeUsedByUser(req.user?.id, Number(subtotal)))
         ) {
-          discount = coupon.calculateDiscount(subtotal);
+          discount = coupon.calculateDiscount(Number(subtotal));
           couponDetails = {
             code: coupon.code,
             description: coupon.description,

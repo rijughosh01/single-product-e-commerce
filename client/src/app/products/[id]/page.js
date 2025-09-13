@@ -57,7 +57,6 @@ export default function ProductDetail() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
-  
   const renderStars = (rating, sizeClass = "w-5 h-5") => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -144,7 +143,15 @@ export default function ProductDetail() {
     await addToCart(product._id, quantity);
   };
 
-  // Buy Now removed as requested
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      window.location.href = "/login";
+      return;
+    }
+
+    await addToCart(product._id, quantity);
+    window.location.href = "/checkout";
+  };
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
@@ -503,7 +510,13 @@ export default function ProductDetail() {
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                 </Button>
-                {/* Buy Now removed */}
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                >
+                  Buy Now
+                </Button>
                 <WishlistButton productId={product._id} size="default" />
                 <div className="relative share-menu-container">
                   <Button

@@ -23,6 +23,7 @@ exports.newOrder = async (req, res, next) => {
       shippingPrice,
       totalPrice,
       paymentInfo,
+      coupon: appliedCoupon,
     } = req.body;
 
     const order = await Order.create({
@@ -35,6 +36,7 @@ exports.newOrder = async (req, res, next) => {
       paymentInfo,
       paidAt: Date.now(),
       user: req.user.id,
+      coupon: appliedCoupon || undefined,
     });
 
     // Update product stock
@@ -48,7 +50,20 @@ exports.newOrder = async (req, res, next) => {
 
     await Cart.findOneAndUpdate({ user: req.user.id }, { items: [] });
 
-    // Send order confirmation email
+    // If coupon used, increment coupon counters
+    try {
+      if (appliedCoupon && appliedCoupon.code) {
+        const Coupon = require("../models/Coupon");
+        const couponDoc = await Coupon.findOne({
+          code: appliedCoupon.code.toUpperCase(),
+        });
+        if (couponDoc) {
+          couponDoc.usedCount = (couponDoc.usedCount || 0) + 1;
+          await couponDoc.save();
+        }
+      }
+    } catch (err) {}
+
     try {
       await sendEmail({
         email: req.user.email,

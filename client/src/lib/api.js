@@ -103,6 +103,14 @@ export const cartAPI = {
     api.put("/cart/update", { productId, quantity }),
   removeFromCart: (productId) => api.delete(`/cart/remove/${productId}`),
   clearCart: () => api.delete("/cart/clear"),
+
+  getCartSummary: (couponCode = null, pincode = null) => {
+    const params = new URLSearchParams();
+    if (couponCode) params.append("couponCode", couponCode);
+    if (pincode) params.append("pincode", pincode);
+    const query = params.toString();
+    return api.get(`/cart/summary${query ? `?${query}` : ""}`);
+  },
 };
 
 // Wishlist API
@@ -112,6 +120,7 @@ export const wishlistAPI = {
   removeFromWishlist: (productId) =>
     api.delete(`/wishlist/remove/${productId}`),
   clearWishlist: () => api.delete("/wishlist/clear"),
+  checkWishlistItem: (productId) => api.get(`/wishlist/check/${productId}`),
 };
 
 // Orders API
@@ -121,26 +130,50 @@ export const ordersAPI = {
   getOrderById: (id) => api.get(`/order/${id}`),
   cancelOrder: (id) => api.put(`/order/${id}/cancel`),
   getOrderInvoice: (id) => api.get(`/order/${id}/invoice`),
+  createPaymentOrder: (orderData) =>
+    api.post("/payment/create-order", orderData),
+  verifyPayment: (paymentData) => api.post("/payment/verify", paymentData),
 };
 
 // Coupons API
 export const couponsAPI = {
-  validateCoupon: (code) => api.post("/coupon/validate", { code }),
+  validateCoupon: (data) => api.post("/coupon/validate", data),
   getCoupons: () => api.get("/admin/coupons"),
+  getEligibleCoupons: (orderAmount = 0) =>
+    api.get(`/coupons/eligible?orderAmount=${Number(orderAmount) || 0}`),
+  createCoupon: (couponData) => api.post("/admin/coupon/new", couponData),
+  updateCoupon: (id, couponData) => api.put(`/admin/coupon/${id}`, couponData),
+  deleteCoupon: (id) => api.delete(`/admin/coupon/${id}`),
+  getCoupon: (id) => api.get(`/admin/coupon/${id}`),
+  getCouponStats: () => api.get("/admin/coupons/stats"),
 };
 
 // Shipping API
 export const shippingAPI = {
-  getShippingRules: () => api.get("/shipping/rules"),
+  getShippingRules: () => api.get("/admin/shipping/rules"),
   calculateShipping: (address) => api.post("/shipping/calculate", address),
+  createShippingRule: (ruleData) =>
+    api.post("/admin/shipping/rule/new", ruleData),
+  updateShippingRule: (id, ruleData) =>
+    api.put(`/admin/shipping/rule/${id}`, ruleData),
+  deleteShippingRule: (id) => api.delete(`/admin/shipping/rule/${id}`),
+  getShippingRule: (id) => api.get(`/admin/shipping/rule/${id}`),
+  bulkCreateShippingRules: (rulesData) =>
+    api.post("/admin/shipping/rules/bulk", rulesData),
+  testPincode: (pincode) =>
+    api.post("/admin/shipping/test-pincode", { pincode }),
 };
 
 // Notifications API
 export const notificationsAPI = {
   getNotifications: () => api.get("/notifications"),
-  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAsRead: (id) => api.put(`/notification/${id}/read`),
   markAllAsRead: () => api.put("/notifications/read-all"),
-  deleteNotification: (id) => api.delete(`/notifications/${id}`),
+  deleteNotification: (id) => api.delete(`/notification/${id}`),
+  getUnreadCount: () => api.get("/notifications/unread-count"),
+  createNotification: (notificationData) =>
+    api.post("/admin/notification/create", notificationData),
+  getAllNotifications: () => api.get("/admin/notifications"),
 };
 
 // Subscriptions API
@@ -148,8 +181,13 @@ export const subscriptionsAPI = {
   createSubscription: (subscriptionData) =>
     api.post("/subscription/new", subscriptionData),
   getSubscriptions: () => api.get("/subscriptions"),
-  cancelSubscription: (id) => api.put(`/subscription/${id}/cancel`),
+  getSubscription: (id) => api.get(`/subscription/${id}`),
   updateSubscription: (id, data) => api.put(`/subscription/${id}`, data),
+  pauseSubscription: (id) => api.put(`/subscription/${id}/pause`),
+  resumeSubscription: (id) => api.put(`/subscription/${id}/resume`),
+  cancelSubscription: (id) => api.put(`/subscription/${id}/cancel`),
+  getAllSubscriptions: () => api.get("/admin/subscriptions"),
+  processDueSubscriptions: () => api.post("/admin/subscriptions/process"),
 };
 
 // Profile API
@@ -160,6 +198,19 @@ export const profileAPI = {
   deleteAddress: (id) => api.delete(`/address/${id}`),
   setDefaultAddress: (id) => api.put(`/address/${id}/default`),
   updatePassword: (passwords) => api.put("/password/update", passwords),
+};
+
+// Invoice API
+export const invoiceAPI = {
+  generateInvoice: (orderId) => api.post(`/invoice/generate/${orderId}`),
+  getInvoice: (id) => api.get(`/invoice/${id}`),
+  getMyInvoices: () => api.get("/invoices/me"),
+  downloadInvoicePDF: (id) =>
+    api.get(`/invoice/${id}/pdf`, { responseType: "blob" }),
+  getAllInvoices: () => api.get("/admin/invoices"),
+  updateInvoice: (id, invoiceData) =>
+    api.put(`/admin/invoice/${id}`, invoiceData),
+  deleteInvoice: (id) => api.delete(`/admin/invoice/${id}`),
 };
 
 // Admin API

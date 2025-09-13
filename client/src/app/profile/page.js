@@ -1,23 +1,34 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import ProfileOverview from '@/components/profile/ProfileOverview';
-import ProfileEdit from '@/components/profile/ProfileEdit';
-import AddressManagement from '@/components/profile/AddressManagement';
-import OrderHistory from '@/components/profile/OrderHistory';
-import PasswordChange from '@/components/profile/PasswordChange';
-import { User, Edit, MapPin, ShoppingBag, Lock, Settings } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import ProfileOverview from "@/components/profile/ProfileOverview";
+import ProfileEdit from "@/components/profile/ProfileEdit";
+import AddressManagement from "@/components/profile/AddressManagement";
+import OrderHistory from "@/components/profile/OrderHistory";
+import PasswordChange from "@/components/profile/PasswordChange";
+import SubscriptionManager from "@/components/SubscriptionManager";
+import InvoiceManager from "@/components/InvoiceManager";
+import {
+  User,
+  Edit,
+  MapPin,
+  ShoppingBag,
+  Lock,
+  Settings,
+  FileText,
+  Calendar,
+} from "lucide-react";
 
 const ProfilePage = () => {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [loading, isAuthenticated, router]);
 
@@ -34,24 +45,30 @@ const ProfilePage = () => {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: User },
-    { id: 'edit', label: 'Edit Profile', icon: Edit },
-    { id: 'addresses', label: 'Addresses', icon: MapPin },
-    { id: 'orders', label: 'Order History', icon: ShoppingBag },
-    { id: 'password', label: 'Change Password', icon: Lock },
+    { id: "overview", label: "Overview", icon: User },
+    { id: "edit", label: "Edit Profile", icon: Edit },
+    { id: "addresses", label: "Addresses", icon: MapPin },
+    { id: "orders", label: "Order History", icon: ShoppingBag },
+    { id: "subscriptions", label: "Subscriptions", icon: Calendar },
+    { id: "invoices", label: "Invoices", icon: FileText },
+    { id: "password", label: "Change Password", icon: Lock },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case "overview":
         return <ProfileOverview user={user} />;
-      case 'edit':
+      case "edit":
         return <ProfileEdit user={user} />;
-      case 'addresses':
+      case "addresses":
         return <AddressManagement />;
-      case 'orders':
+      case "orders":
         return <OrderHistory />;
-      case 'password':
+      case "subscriptions":
+        return <SubscriptionManager />;
+      case "invoices":
+        return <InvoiceManager />;
+      case "password":
         return <PasswordChange />;
       default:
         return <ProfileOverview user={user} />;
@@ -64,7 +81,9 @@ const ProfilePage = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+          <p className="text-gray-600 mt-2">
+            Manage your account settings and preferences
+          </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm">
@@ -81,8 +100,8 @@ const ProfilePage = () => {
                           onClick={() => setActiveTab(tab.id)}
                           className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                             activeTab === tab.id
-                              ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                              ? "bg-orange-50 text-orange-700 border border-orange-200"
+                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                           }`}
                         >
                           <Icon className="w-5 h-5 mr-3" />
@@ -97,9 +116,7 @@ const ProfilePage = () => {
 
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <div className="p-6">
-                {renderTabContent()}
-              </div>
+              <div className="p-6">{renderTabContent()}</div>
             </div>
           </div>
         </div>

@@ -7,14 +7,20 @@ const {
   updateCoupon,
   deleteCoupon,
   getCouponStats,
+  getEligibleCoupons,
+  getCouponAnalytics,
+  getCouponSuggestions,
+  validateCouponRules,
+  getBestCoupon,
 } = require("../controllers/couponController");
 
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Public routes
-router.route("/coupon/validate").post(validateCoupon);
+// Authenticated routes
+router.route("/coupon/validate").post(isAuthenticatedUser, validateCoupon);
+router.route("/coupons/eligible").get(isAuthenticatedUser, getEligibleCoupons);
 
 // Admin routes
 router
@@ -31,5 +37,17 @@ router
 router
   .route("/admin/coupons/stats")
   .get(isAuthenticatedUser, authorizeRoles("admin"), getCouponStats);
+router
+  .route("/admin/coupons/analytics")
+  .get(isAuthenticatedUser, authorizeRoles("admin"), getCouponAnalytics);
+router
+  .route("/admin/coupons/suggestions")
+  .get(isAuthenticatedUser, authorizeRoles("admin"), getCouponSuggestions);
+router
+  .route("/admin/coupons/validate-rules")
+  .post(isAuthenticatedUser, authorizeRoles("admin"), validateCouponRules);
+router
+  .route("/admin/coupons/best")
+  .get(isAuthenticatedUser, authorizeRoles("admin"), getBestCoupon);
 
 module.exports = router;

@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { couponsAPI, productsAPI } from "@/lib/api";
+import { productsAPI } from "@/lib/api";
+import CartSummary from "@/components/CartSummary";
 
 export default function Cart() {
   const {
@@ -33,17 +34,8 @@ export default function Cart() {
     addToCart,
   } = useCart();
   const { isAuthenticated } = useAuth();
-  const [couponCode, setCouponCode] = useState("");
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponError, setCouponError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [recommended, setRecommended] = useState([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(true);
-
-  const shippingCost = cartTotal > 500 ? 0 : 50;
-  const subtotal = cartTotal;
-  const total = subtotal + shippingCost - couponDiscount;
 
   const handleQuantityChange = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -58,36 +50,8 @@ export default function Cart() {
     await clearCart();
   };
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-
-    setLoading(true);
-    setCouponError("");
-
-    try {
-      const response = await couponsAPI.validateCoupon(couponCode);
-      const coupon = response.data.coupon;
-
-      if (coupon) {
-        const discount = (cartTotal * coupon.discountPercentage) / 100;
-        setCouponDiscount(discount);
-        setCouponApplied(true);
-        setCouponError("");
-      }
-    } catch (error) {
-      setCouponError(error.response?.data?.message || "Invalid coupon code");
-      setCouponDiscount(0);
-      setCouponApplied(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setCouponCode("");
-    setCouponDiscount(0);
-    setCouponApplied(false);
-    setCouponError("");
+  const handleProceedToCheckout = () => {
+    window.location.href = "/checkout";
   };
 
   // Fetch recommended products
@@ -282,125 +246,10 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Coupon Code */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Coupon Code
-                  </label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="text"
-                      placeholder="Enter coupon code"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      disabled={couponApplied}
-                    />
-                    {!couponApplied ? (
-                      <Button
-                        onClick={handleApplyCoupon}
-                        disabled={loading || !couponCode.trim()}
-                        size="sm"
-                      >
-                        {loading ? "Applying..." : "Apply"}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={handleRemoveCoupon}
-                        size="sm"
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                  {couponError && (
-                    <p className="text-sm text-red-600 mt-1">{couponError}</p>
-                  )}
-                  {couponApplied && (
-                    <p className="text-sm text-green-600 mt-1">
-                      Coupon applied successfully!
-                    </p>
-                  )}
-                </div>
-
-                {/* Price Breakdown */}
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal ({cartCount} items)</span>
-                    <span>₹{subtotal.toFixed(2)}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span>Shipping</span>
-                    <span
-                      className={shippingCost === 0 ? "text-green-600" : ""}
-                    >
-                      {shippingCost === 0
-                        ? "Free"
-                        : `₹${shippingCost.toFixed(2)}`}
-                    </span>
-                  </div>
-
-                  {couponDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Coupon Discount</span>
-                      <span>-₹{couponDiscount.toFixed(2)}</span>
-                    </div>
-                  )}
-
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span>₹{total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Shipping Info */}
-                {shippingCost === 0 ? (
-                  <div className="flex items-center space-x-2 text-green-600 text-sm">
-                    <Truck className="w-4 h-4" />
-                    <span>Free shipping on orders above ₹500</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2 text-gray-600 text-sm">
-                    <Truck className="w-4 h-4" />
-                    <span>
-                      Add ₹{(500 - cartTotal).toFixed(2)} more for free shipping
-                    </span>
-                  </div>
-                )}
-
-                {/* Checkout removed as requested */}
-                <Button
-                  className="w-full bg-gray-300 text-gray-700 cursor-not-allowed"
-                  disabled
-                >
-                  Checkout disabled
-                </Button>
-
-                {/* Security Badges */}
-                <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
-                  <div className="flex items-center space-x-1">
-                    <Shield className="w-3 h-3" />
-                    <span>Secure</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <CreditCard className="w-3 h-3" />
-                    <span>Payment</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Package className="w-3 h-3" />
-                    <span>Fast Delivery</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CartSummary
+              onProceedToCheckout={handleProceedToCheckout}
+              className="sticky top-8"
+            />
           </div>
         </div>
 

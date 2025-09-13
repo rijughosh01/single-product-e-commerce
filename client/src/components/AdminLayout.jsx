@@ -24,6 +24,10 @@ import {
   UserCheck,
   Shield,
   Activity,
+  Tag,
+  Truck,
+  FileText,
+  Calendar,
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 
@@ -76,6 +80,30 @@ const AdminLayout = ({ children }) => {
       href: "/admin/users",
       icon: Users,
       description: "Customer management",
+    },
+    {
+      name: "Coupons",
+      href: "/admin/coupons",
+      icon: Tag,
+      description: "Discount management",
+    },
+    {
+      name: "Shipping",
+      href: "/admin/shipping",
+      icon: Truck,
+      description: "Shipping rules",
+    },
+    {
+      name: "Invoices",
+      href: "/admin/invoices",
+      icon: FileText,
+      description: "Invoice management",
+    },
+    {
+      name: "Subscriptions",
+      href: "/admin/subscriptions",
+      icon: Calendar,
+      description: "Subscription management",
     },
     {
       name: "Analytics",

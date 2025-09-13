@@ -110,11 +110,61 @@ couponSchema.methods.isValid = function () {
   );
 };
 
-// Method to check if coupon can be used by user
-couponSchema.methods.canBeUsedByUser = function (userId, orderAmount) {
+couponSchema.methods.canBeUsedByUser = async function (userId, orderAmount) {
   if (!this.isValid()) return false;
 
+  if (typeof orderAmount !== "number" || isNaN(orderAmount)) return false;
+
   if (orderAmount < this.minimumOrderAmount) return false;
+
+  if (!userId) return true;
+
+  const restrictions = this.userRestrictions || {};
+
+  // Restrict to specific users if defined
+  if (
+    Array.isArray(restrictions.specificUsers) &&
+    restrictions.specificUsers.length > 0
+  ) {
+    const isAllowed = restrictions.specificUsers
+      .map((id) => String(id))
+      .includes(String(userId));
+    if (!isAllowed) return false;
+  }
+
+  if (restrictions.firstTimeOnly) {
+    try {
+      const Order = require("./Order");
+      const existingOrders = await Order.countDocuments({
+        user: userId,
+        orderStatus: {
+          $in: [
+            "Processing",
+            "Confirmed",
+            "Shipped",
+            "Out for Delivery",
+            "Delivered",
+          ],
+        },
+      });
+      if (existingOrders > 0) return false;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  if (restrictions.maxUsagePerUser && restrictions.maxUsagePerUser > 0) {
+    try {
+      const Order = require("./Order");
+      const userUsage = await Order.countDocuments({
+        user: userId,
+        "coupon.code": this.code,
+      });
+      if (userUsage >= restrictions.maxUsagePerUser) return false;
+    } catch (e) {
+      return false;
+    }
+  }
 
   return true;
 };
@@ -124,15 +174,18 @@ couponSchema.methods.calculateDiscount = function (orderAmount) {
   let discount = 0;
 
   if (this.discountType === "percentage") {
-    discount = (orderAmount * this.discountValue) / 100;
+    const rawDiscount = (orderAmount * this.discountValue) / 100;
     if (this.maximumDiscount > 0) {
-      discount = Math.min(discount, this.maximumDiscount);
+      discount = Math.min(rawDiscount, this.maximumDiscount);
+    } else {
+      discount = rawDiscount;
     }
   } else {
     discount = this.discountValue;
   }
 
-  return Math.min(discount, orderAmount);
+  const finalDiscount = Math.min(discount, orderAmount);
+  return finalDiscount;
 };
 
 module.exports = mongoose.model("Coupon", couponSchema);

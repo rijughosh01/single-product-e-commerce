@@ -1,5 +1,11 @@
 const Coupon = require("../models/Coupon");
 const ErrorHandler = require("../utils/errorHandler");
+const {
+  calculateBestCoupon,
+  getCouponAnalytics,
+  validateCouponBusinessRules,
+  generateCouponSuggestions,
+} = require("../utils/couponUtils");
 
 // Validate coupon => /api/v1/coupon/validate
 exports.validateCoupon = async (req, res, next) => {
@@ -22,13 +28,17 @@ exports.validateCoupon = async (req, res, next) => {
       return next(new ErrorHandler("Coupon is not valid or has expired", 400));
     }
 
-    if (!coupon.canBeUsedByUser(req.user?.id, orderAmount)) {
+    const canUse = await coupon.canBeUsedByUser(
+      req.user?.id,
+      Number(orderAmount)
+    );
+    if (!canUse) {
       return next(
         new ErrorHandler("Coupon cannot be applied to this order", 400)
       );
     }
 
-    const discount = coupon.calculateDiscount(orderAmount);
+    const discount = coupon.calculateDiscount(Number(orderAmount));
 
     res.status(200).json({
       success: true,
@@ -161,6 +171,135 @@ exports.getCouponStats = async (req, res, next) => {
             }
           : null,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get eligible coupons for current user => /api/v1/coupons/eligible
+exports.getEligibleCoupons = async (req, res, next) => {
+  try {
+    const { orderAmount } = req.query;
+    const amount = Number(orderAmount) || 0;
+
+    const now = new Date();
+    const coupons = await Coupon.find({
+      isActive: true,
+      validFrom: { $lte: now },
+      validUntil: { $gte: now },
+    }).sort({ createdAt: -1 });
+
+    const eligible = [];
+    for (const coupon of coupons) {
+      if (!coupon.isValid()) {
+        continue;
+      }
+
+      const canUse = await coupon.canBeUsedByUser(req.user?.id, amount);
+      if (!canUse) {
+        continue;
+      }
+
+      const discount = coupon.calculateDiscount(amount);
+
+      eligible.push({
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        minimumOrderAmount: coupon.minimumOrderAmount,
+        maximumDiscount: coupon.maximumDiscount,
+        calculatedDiscount: discount,
+      });
+    }
+
+    res.status(200).json({ success: true, coupons: eligible });
+  } catch (error) {
+    console.error("Error in getEligibleCoupons:", error);
+    next(error);
+  }
+};
+
+// Get coupon analytics - Admin => /api/v1/admin/coupons/analytics
+exports.getCouponAnalytics = async (req, res, next) => {
+  try {
+    const { couponId } = req.query;
+    const analytics = await getCouponAnalytics(couponId);
+
+    res.status(200).json({
+      success: true,
+      analytics,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get coupon suggestions - Admin => /api/v1/admin/coupons/suggestions
+exports.getCouponSuggestions = async (req, res, next) => {
+  try {
+    const suggestions = generateCouponSuggestions();
+
+    res.status(200).json({
+      success: true,
+      suggestions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Validate coupon business rules - Admin => /api/v1/admin/coupons/validate-rules
+exports.validateCouponRules = async (req, res, next) => {
+  try {
+    const validation = validateCouponBusinessRules(req.body);
+
+    res.status(200).json({
+      success: true,
+      validation,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get best coupon for order amount - Admin => /api/v1/admin/coupons/best
+exports.getBestCoupon = async (req, res, next) => {
+  try {
+    const { orderAmount } = req.query;
+    const amount = Number(orderAmount) || 0;
+
+    const now = new Date();
+    const coupons = await Coupon.find({
+      isActive: true,
+      validFrom: { $lte: now },
+      validUntil: { $gte: now },
+    });
+
+    const eligible = [];
+    for (const coupon of coupons) {
+      if (!coupon.isValid()) continue;
+      const canUse = await coupon.canBeUsedByUser(req.user?.id, amount);
+      if (!canUse) continue;
+
+      eligible.push({
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        minimumOrderAmount: coupon.minimumOrderAmount,
+        maximumDiscount: coupon.maximumDiscount,
+      });
+    }
+
+    const bestCoupon = calculateBestCoupon(eligible, amount);
+
+    res.status(200).json({
+      success: true,
+      bestCoupon,
+      eligibleCoupons: eligible,
+      orderAmount: amount,
     });
   } catch (error) {
     next(error);

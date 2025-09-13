@@ -95,6 +95,16 @@ const orderSchema = new mongoose.Schema({
     required: true,
     default: 0.0,
   },
+  coupon: {
+    code: { type: String, default: null },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed"],
+      default: null,
+    },
+    discountValue: { type: Number, default: 0 },
+    discountApplied: { type: Number, default: 0 },
+  },
   orderStatus: {
     type: String,
     required: true,

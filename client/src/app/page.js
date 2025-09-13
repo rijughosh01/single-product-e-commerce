@@ -58,7 +58,7 @@ export default function Home() {
     {
       icon: <Truck className="w-8 h-8 text-amber-500" />,
       title: "Free Shipping",
-      description: "Free shipping on orders above ₹500",
+      description: "Free shipping on orders above ₹1000",
     },
     {
       icon: <Shield className="w-8 h-8 text-amber-500" />,

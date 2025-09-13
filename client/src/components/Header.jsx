@@ -1,33 +1,98 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
-import { useWishlist } from '@/contexts/WishlistContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ShoppingCart, 
-  Heart, 
-  User, 
-  Search, 
-  Menu, 
-  X, 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import NotificationSystem from "./NotificationSystem";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  ShoppingCart,
+  Heart,
+  User,
+  Search,
+  Menu,
+  X,
   LogOut,
   Package,
   Truck,
   Star,
-  Settings
-} from 'lucide-react';
+  Settings,
+} from "lucide-react";
+import { couponsAPI } from "@/lib/api";
 
 const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
-  const { cartCount } = useCart();
+  const { cartCount, cartTotal } = useCart();
   const { wishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [eligibleCoupons, setEligibleCoupons] = useState([]);
+
+  useEffect(() => {
+    const loadEligible = async () => {
+      if (!isAuthenticated) {
+        setEligibleCoupons([]);
+        return;
+      }
+      try {
+        const res = await couponsAPI.getEligibleCoupons(cartTotal || 0);
+        const list = res.data?.coupons || [];
+        setEligibleCoupons(list);
+      } catch (e) {
+        setEligibleCoupons([]);
+      }
+    };
+    loadEligible();
+  }, [isAuthenticated, cartTotal]);
+
+  const bestCoupon = useMemo(() => {
+    if (!eligibleCoupons || eligibleCoupons.length === 0) return null;
+    const amount = Number(cartTotal) || 0;
+
+    const calculateDiscount = (c) => {
+      if (!c) return 0;
+
+      // Ensure minimum order amount is met
+      if (amount < Number(c.minimumOrderAmount || 0)) {
+        return 0;
+      }
+
+      let discount = 0;
+      if (c.discountType === "percentage") {
+        const rawDiscount = (amount * Number(c.discountValue || 0)) / 100;
+        const maxDiscount = Number(c.maximumDiscount || 0);
+        discount =
+          maxDiscount > 0 ? Math.min(rawDiscount, maxDiscount) : rawDiscount;
+      } else if (c.discountType === "fixed") {
+        discount = Number(c.discountValue || 0);
+      }
+
+      return Math.min(discount, amount);
+    };
+
+    const couponsWithDiscount = eligibleCoupons
+      .map((c) => {
+        const discount = calculateDiscount(c);
+        return {
+          ...c,
+          _discount: discount,
+          _discountPercentage: amount > 0 ? (discount / amount) * 100 : 0,
+        };
+      })
+      .filter((c) => c._discount > 0)
+      .sort((a, b) => {
+        if (b._discount !== a._discount) {
+          return b._discount - a._discount;
+        }
+        return b._discountPercentage - a._discountPercentage;
+      });
+
+    return couponsWithDiscount[0] || null;
+  }, [eligibleCoupons, cartTotal]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -42,10 +107,10 @@ const Header = () => {
   };
 
   const gheeTypes = [
-    { name: 'Pure Cow Ghee', href: '/products?type=Pure Cow Ghee' },
-    { name: 'Buffalo Ghee', href: '/products?type=Buffalo Ghee' },
-    { name: 'Organic Ghee', href: '/products?type=Organic Ghee' },
-    { name: 'A2 Ghee', href: '/products?type=A2 Ghee' },
+    { name: "Pure Cow Ghee", href: "/products?type=Pure Cow Ghee" },
+    { name: "Buffalo Ghee", href: "/products?type=Buffalo Ghee" },
+    { name: "Organic Ghee", href: "/products?type=Organic Ghee" },
+    { name: "A2 Ghee", href: "/products?type=A2 Ghee" },
   ];
 
   return (
@@ -55,7 +120,14 @@ const Header = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-2 text-sm">
             <div className="flex items-center space-x-4">
-              <span className="text-amber-800">🚚 Free shipping on orders above ₹500</span>
+              <span className="text-amber-800">
+                🚚 Free shipping on orders above ₹1000
+              </span>
+              {isAuthenticated && bestCoupon && (
+                <span className="text-amber-800">
+                  🎁 Offer for you: <b>{bestCoupon.code}</b>
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-amber-800">📞 +91 98765 43210</span>
@@ -97,14 +169,27 @@ const Header = () => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden lg:flex items-center space-x-8">
-            <Link href="/products" className="text-gray-700 hover:text-amber-600 transition-colors">
+            <Link
+              href="/products"
+              className="text-gray-700 hover:text-amber-600 transition-colors"
+            >
               All Products
             </Link>
             <div className="relative group">
               <button className="text-gray-700 hover:text-amber-600 transition-colors flex items-center">
                 Ghee Types
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg
+                  className="w-4 h-4 ml-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
               <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -119,17 +204,22 @@ const Header = () => {
                 ))}
               </div>
             </div>
-            <Link href="/about" className="text-gray-700 hover:text-amber-600 transition-colors">
+            <Link
+              href="/about"
+              className="text-gray-700 hover:text-amber-600 transition-colors"
+            >
               About
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-amber-600 transition-colors">
+            <Link
+              href="/contact"
+              className="text-gray-700 hover:text-amber-600 transition-colors"
+            >
               Contact
             </Link>
           </nav>
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            {/* Search - Mobile */}
             <button
               className="md:hidden p-2 text-gray-700 hover:text-amber-600"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -137,8 +227,14 @@ const Header = () => {
               <Search className="w-5 h-5" />
             </button>
 
+            {/* Notifications */}
+            {isAuthenticated && <NotificationSystem />}
+
             {/* Wishlist */}
-            <Link href="/wishlist" className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors">
+            <Link
+              href="/wishlist"
+              className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors"
+            >
               <Heart className="w-5 h-5" />
               {wishlistCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
@@ -148,7 +244,10 @@ const Header = () => {
             </Link>
 
             {/* Cart */}
-            <Link href="/cart" className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors">
+            <Link
+              href="/cart"
+              className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors"
+            >
               <ShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
@@ -178,12 +277,24 @@ const Header = () => {
                     My Orders
                   </Link>
                   <Link
+                    href="/subscriptions"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                  >
+                    Subscriptions
+                  </Link>
+                  <Link
+                    href="/invoices"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600"
+                  >
+                    Invoices
+                  </Link>
+                  <Link
                     href="/wishlist"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600"
                   >
                     Wishlist
                   </Link>
-                  {user?.role === 'admin' && (
+                  {user?.role === "admin" && (
                     <Link
                       href="/admin"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-600 border-t border-gray-100"
@@ -208,9 +319,7 @@ const Header = () => {
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button size="sm">
-                    Sign Up
-                  </Button>
+                  <Button size="sm">Sign Up</Button>
                 </Link>
               </div>
             )}
@@ -220,7 +329,11 @@ const Header = () => {
               className="lg:hidden p-2 text-gray-700 hover:text-amber-600"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -297,13 +410,27 @@ const Header = () => {
                   My Orders
                 </Link>
                 <Link
+                  href="/subscriptions"
+                  className="block px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Subscriptions
+                </Link>
+                <Link
+                  href="/invoices"
+                  className="block px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Invoices
+                </Link>
+                <Link
                   href="/wishlist"
                   className="block px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Wishlist
                 </Link>
-                {user?.role === 'admin' && (
+                {user?.role === "admin" && (
                   <Link
                     href="/admin"
                     className="block px-3 py-2 text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-md border-t border-gray-100"
