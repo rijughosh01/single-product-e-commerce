@@ -20,6 +20,7 @@ const PaymentIntegration = ({
   onPaymentSuccess,
   onPaymentError,
   className = "",
+  addressValid = false,
 }) => {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
@@ -67,6 +68,13 @@ const PaymentIntegration = ({
       return;
     }
 
+    if (!addressValid || !orderData.shippingInfo) {
+      toast.error(
+        "Please select a delivery address before proceeding to payment"
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const orderResponse = await createRazorpayOrder();
@@ -105,9 +113,9 @@ const PaymentIntegration = ({
           }
         },
         prefill: {
-          name: orderData.shippingAddress?.name || "",
-          email: orderData.shippingAddress?.email || "",
-          contact: orderData.shippingAddress?.phone || "",
+          name: orderData.shippingInfo?.name || "",
+          email: orderData.shippingInfo?.email || "",
+          contact: orderData.shippingInfo?.phone || "",
         },
         notes: {
           order_id: orderResponse.orderId,
@@ -252,7 +260,7 @@ const PaymentIntegration = ({
         {/* Payment Button */}
         <Button
           onClick={handleRazorpayPayment}
-          disabled={loading || !razorpayLoaded}
+          disabled={loading || !razorpayLoaded || !addressValid}
           className="w-full"
           size="lg"
         >
@@ -260,6 +268,11 @@ const PaymentIntegration = ({
             <>
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               Processing...
+            </>
+          ) : !addressValid ? (
+            <>
+              <AlertCircle className="w-5 h-5 mr-2" />
+              Select Address First
             </>
           ) : (
             <>

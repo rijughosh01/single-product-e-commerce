@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ import { productsAPI } from "@/lib/api";
 import CartSummary from "@/components/CartSummary";
 
 export default function Cart() {
+  const router = useRouter();
   const {
     cart,
     cartTotal,
@@ -51,7 +53,7 @@ export default function Cart() {
   };
 
   const handleProceedToCheckout = () => {
-    window.location.href = "/checkout";
+    router.push("/checkout");
   };
 
   // Fetch recommended products

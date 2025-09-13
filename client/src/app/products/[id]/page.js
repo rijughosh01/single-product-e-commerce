@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,7 @@ import { toast } from "sonner";
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const router = useRouter();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -113,7 +114,7 @@ export default function ProductDetail() {
 
   const submitReview = async () => {
     if (!isAuthenticated) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
     if (reviewRating < 1 || reviewRating > 5 || !reviewComment.trim()) return;
@@ -137,7 +138,7 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
     await addToCart(product._id, quantity);
@@ -145,12 +146,12 @@ export default function ProductDetail() {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
     await addToCart(product._id, quantity);
-    window.location.href = "/checkout";
+    router.push("/checkout");
   };
 
   const handleQuantityChange = (change) => {

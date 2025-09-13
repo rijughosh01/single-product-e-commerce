@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import PaymentIntegration from "@/components/PaymentIntegration";
+import AddressSelector from "@/components/AddressSelector";
 import { cartAPI } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -22,6 +23,8 @@ export default function Checkout() {
   } = useCart();
   const [summary, setSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addressValid, setAddressValid] = useState(false);
 
   useEffect(() => {
     if (authLoading || cartLoading) return;
@@ -36,7 +39,7 @@ export default function Checkout() {
     }
   }, [authLoading, cartLoading, isAuthenticated, cartCount, router]);
 
-  // Load server-calculated summary (keeps coupon/shipping/tax consistent)
+  // Load server-calculated summary
   useEffect(() => {
     const load = async () => {
       try {
@@ -80,6 +83,42 @@ export default function Checkout() {
     load();
   }, [cartTotal]);
 
+  const handleAddressSelect = (address) => {
+    setSelectedAddress(address);
+    setAddressValid(true);
+  };
+
+  const handleAddressChange = (address) => {
+    // Recalculate shipping when address changes
+    if (address?.pincode) {
+      loadSummaryWithAddress(address.pincode);
+    }
+  };
+
+  const loadSummaryWithAddress = async (pincode) => {
+    try {
+      setLoadingSummary(true);
+      const couponCode = (() => {
+        try {
+          return localStorage.getItem("checkoutCouponCode");
+        } catch (e) {
+          return null;
+        }
+      })();
+
+      const res = await cartAPI.getCartSummary(
+        couponCode || undefined,
+        pincode || undefined
+      );
+      let s = res.data?.summary || res.data;
+      setSummary(s);
+    } catch (e) {
+      console.error("Error loading summary with address:", e);
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   const handlePaymentSuccess = (order) => {
     toast.success("Order placed successfully!");
     clearCart();
@@ -109,6 +148,16 @@ export default function Checkout() {
           (summary?.tax ?? 0) +
           (summary?.shipping ?? 0) -
           (summary?.discount ?? 0),
+    shippingInfo: selectedAddress
+      ? {
+          name: selectedAddress.name,
+          phone: selectedAddress.phone,
+          address: selectedAddress.address,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          pincode: selectedAddress.pincode,
+        }
+      : null,
   };
 
   if (
@@ -144,7 +193,7 @@ export default function Checkout() {
               <span className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
                 2
               </span>
-              Checkout
+              Address
             </div>
             <div className="h-[1px] w-12 bg-gray-300" />
             <div className="flex items-center gap-2 text-gray-400">
@@ -158,13 +207,25 @@ export default function Checkout() {
             Secure Checkout
           </h1>
           <p className="text-center text-gray-600">
-            Review your order and pay securely
+            Select delivery address and complete your order
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Order items + Price breakdown */}
+          {/* Left: Address + Order items + Price breakdown */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Address Selection */}
+            <Card className="shadow-sm">
+              <CardContent className="p-6">
+                <AddressSelector
+                  selectedAddress={selectedAddress}
+                  onAddressSelect={handleAddressSelect}
+                  onAddressChange={handleAddressChange}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Order Items */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle>Order Items</CardTitle>
@@ -262,6 +323,7 @@ export default function Checkout() {
               orderData={orderData}
               onPaymentSuccess={handlePaymentSuccess}
               onPaymentError={handlePaymentError}
+              addressValid={addressValid}
             />
           </div>
         </div>
