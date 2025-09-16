@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,9 +12,9 @@ import {
   ArcElement,
   PointElement,
   LineElement,
-  Filler
-} from 'chart.js';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+  Filler,
+} from "chart.js";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,14 +31,20 @@ ChartJS.register(
 );
 
 export function RevenueChart({ data, timeRange }) {
+  const hasData =
+    data.labels &&
+    data.labels.length > 0 &&
+    data.values &&
+    data.values.length > 0;
+
   const chartData = {
-    labels: data.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: data.labels || [],
     datasets: [
       {
-        label: 'Revenue',
-        data: data.values || [12000, 19000, 15000, 25000, 22000, 30000],
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        borderColor: 'rgba(59, 130, 246, 1)',
+        label: "Revenue",
+        data: data.values || [],
+        backgroundColor: "rgba(59, 130, 246, 0.1)",
+        borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 2,
         fill: true,
         tension: 0.4,
@@ -61,13 +67,26 @@ export function RevenueChart({ data, timeRange }) {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value) {
-            return '₹' + value.toLocaleString();
+          callback: function (value) {
+            return "₹" + value.toLocaleString();
           },
         },
       },
     },
   };
+
+  if (!hasData) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="text-center">
+          <p className="text-lg font-medium">No Revenue Data</p>
+          <p className="text-sm">
+            No revenue data available for the selected period
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-64">
@@ -77,24 +96,30 @@ export function RevenueChart({ data, timeRange }) {
 }
 
 export function OrderStatusChart({ data }) {
+  const hasData =
+    data.labels &&
+    data.labels.length > 0 &&
+    data.values &&
+    data.values.length > 0;
+
   const chartData = {
-    labels: data.labels || ['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'],
+    labels: data.labels || [],
     datasets: [
       {
-        data: data.values || [15, 25, 30, 20, 10],
+        data: data.values || [],
         backgroundColor: [
-          'rgba(255, 193, 7, 0.8)',
-          'rgba(13, 110, 253, 0.8)',
-          'rgba(102, 16, 242, 0.8)',
-          'rgba(25, 135, 84, 0.8)',
-          'rgba(220, 53, 69, 0.8)',
+          "rgba(255, 193, 7, 0.8)",
+          "rgba(13, 110, 253, 0.8)",
+          "rgba(102, 16, 242, 0.8)",
+          "rgba(25, 135, 84, 0.8)",
+          "rgba(220, 53, 69, 0.8)",
         ],
         borderColor: [
-          'rgba(255, 193, 7, 1)',
-          'rgba(13, 110, 253, 1)',
-          'rgba(102, 16, 242, 1)',
-          'rgba(25, 135, 84, 1)',
-          'rgba(220, 53, 69, 1)',
+          "rgba(255, 193, 7, 1)",
+          "rgba(13, 110, 253, 1)",
+          "rgba(102, 16, 242, 1)",
+          "rgba(25, 135, 84, 1)",
+          "rgba(220, 53, 69, 1)",
         ],
         borderWidth: 2,
       },
@@ -106,7 +131,7 @@ export function OrderStatusChart({ data }) {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
+        position: "bottom",
         labels: {
           usePointStyle: true,
           padding: 20,
@@ -114,6 +139,19 @@ export function OrderStatusChart({ data }) {
       },
     },
   };
+
+  if (!hasData) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="text-center">
+          <p className="text-lg font-medium">No Order Data</p>
+          <p className="text-sm">
+            No order data available for the selected period
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-64">
@@ -123,14 +161,20 @@ export function OrderStatusChart({ data }) {
 }
 
 export function TopProductsChart({ data }) {
+  const hasData =
+    data.labels &&
+    data.labels.length > 0 &&
+    data.values &&
+    data.values.length > 0;
+
   const chartData = {
-    labels: data.labels || ['Cow Ghee', 'Buffalo Ghee', 'Organic Ghee', 'A2 Ghee', 'Mixed Ghee'],
+    labels: data.labels || [],
     datasets: [
       {
-        label: 'Sales',
-        data: data.values || [45, 32, 28, 25, 20],
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgba(59, 130, 246, 1)',
+        label: "Sales",
+        data: data.values || [],
+        backgroundColor: "rgba(59, 130, 246, 0.8)",
+        borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
     ],
@@ -151,6 +195,19 @@ export function TopProductsChart({ data }) {
     },
   };
 
+  if (!hasData) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="text-center">
+          <p className="text-lg font-medium">No Product Sales Data</p>
+          <p className="text-sm">
+            No product sales data available for the selected period
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-64">
       <Bar data={chartData} options={options} />
@@ -159,14 +216,20 @@ export function TopProductsChart({ data }) {
 }
 
 export function UserGrowthChart({ data }) {
+  const hasData =
+    data.labels &&
+    data.labels.length > 0 &&
+    data.values &&
+    data.values.length > 0;
+
   const chartData = {
-    labels: data.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: data.labels || [],
     datasets: [
       {
-        label: 'New Users',
-        data: data.values || [12, 19, 15, 25, 22, 30],
-        backgroundColor: 'rgba(102, 16, 242, 0.1)',
-        borderColor: 'rgba(102, 16, 242, 1)',
+        label: "New Users",
+        data: data.values || [],
+        backgroundColor: "rgba(102, 16, 242, 0.1)",
+        borderColor: "rgba(102, 16, 242, 1)",
         borderWidth: 2,
         fill: true,
         tension: 0.4,
@@ -188,6 +251,19 @@ export function UserGrowthChart({ data }) {
       },
     },
   };
+
+  if (!hasData) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        <div className="text-center">
+          <p className="text-lg font-medium">No User Growth Data</p>
+          <p className="text-sm">
+            No user growth data available for the selected period
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-64">

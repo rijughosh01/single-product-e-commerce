@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { authAPI } from "@/lib/api";
+import { authAPI, setInitialAuthCheck } from "@/lib/api";
 import { toast } from "sonner";
 import { useHydration } from "@/hooks/useHydration";
 
@@ -19,40 +19,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const isHydrated = useHydration();
 
   useEffect(() => {
-    if (isHydrated) {
+    if (isHydrated && !authChecked) {
       checkAuth();
     }
-  }, [isHydrated]);
+  }, [isHydrated, authChecked]);
 
   const checkAuth = async () => {
     try {
+      setLoading(true);
+      setInitialAuthCheck(true);
+
       // Try to get profile - if successful, user is authenticated
       const response = await authAPI.getProfile();
       setUser(response.data.user);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Auth check failed:", error);
-      console.error("Error details:", {
-        message: error.message,
-        code: error.code,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setIsAuthenticated(false);
         setUser(null);
       } else if (error.message === "Network Error") {
+        setIsAuthenticated(false);
+        setUser(null);
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
       }
-
-      setIsAuthenticated(false);
     } finally {
       setLoading(false);
+      setAuthChecked(true);
+      setInitialAuthCheck(false);
     }
   };
 
@@ -62,6 +63,7 @@ export const AuthProvider = ({ children }) => {
       const { user } = response.data;
       setUser(user);
       setIsAuthenticated(true);
+      setAuthChecked(true);
       toast.success("Login successful!");
 
       return { success: true };
@@ -78,6 +80,7 @@ export const AuthProvider = ({ children }) => {
       const { user } = response.data;
       setUser(user);
       setIsAuthenticated(true);
+      setAuthChecked(true);
       toast.success(
         "Registration successful! Please check your email for verification."
       );
@@ -101,6 +104,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("user");
       setUser(null);
       setIsAuthenticated(false);
+      setAuthChecked(true);
       toast.success("Logged out successfully");
     }
   };
@@ -151,6 +155,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     isAuthenticated,
+    authChecked,
     login,
     register,
     logout,

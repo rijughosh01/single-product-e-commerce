@@ -752,10 +752,7 @@ const generateInvoiceForOrder = async (order) => {
       igstTotal: 0,
       shippingCharges: order.shippingPrice,
       discount: Number(order?.coupon?.discountApplied || 0),
-      totalAmount: Math.max(
-        0,
-        Number(order.totalPrice) - Number(order?.coupon?.discountApplied || 0)
-      ),
+      totalAmount: Number(order.totalPrice),
       amountInWords: "",
       paymentStatus: "Paid",
       paymentMethod: "razorpay",

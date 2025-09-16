@@ -119,6 +119,11 @@ exports.getAnalytics = async (req, res, next) => {
         );
         endDate = currentDate;
         break;
+      case "quarter":
+        const quarterStart = Math.floor(currentDate.getMonth() / 3) * 3;
+        startDate = new Date(currentDate.getFullYear(), quarterStart, 1);
+        endDate = currentDate;
+        break;
       case "year":
         startDate = new Date(currentDate.getFullYear(), 0, 1);
         endDate = currentDate;
@@ -132,108 +137,196 @@ exports.getAnalytics = async (req, res, next) => {
         endDate = currentDate;
     }
 
-    // Get orders by date range
-    const orders = await Order.find({
-      createdAt: { $gte: startDate, $lte: endDate },
-    }).select("totalPrice orderStatus createdAt");
+    // Get comprehensive analytics data
+    const [
+      orders,
+      totalUsers,
+      totalProducts,
+      activeProducts,
+      featuredProducts,
+      outOfStockProducts,
+      revenueChart,
+      orderStatusChart,
+      topProducts,
+      userGrowthChart,
+      recentOrders,
+      lowStockProducts,
+    ] = await Promise.all([
+      Order.find({
+        createdAt: { $gte: startDate, $lte: endDate },
+      }).select("totalPrice orderStatus createdAt orderItems user"),
 
-    // Get revenue data for chart
-    const revenueChart = await Order.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-          orderStatus: { $in: ["Delivered", "Shipped"] },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          revenue: { $sum: "$totalPrice" },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
+      // Get total users count
+      User.countDocuments({ role: "user" }),
 
-    // Get order status distribution
-    const orderStatusChart = await Order.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: "$orderStatus",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+      // Get total products count
+      Product.countDocuments(),
 
-    // Get top selling products
-    const topProducts = await Order.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-        },
-      },
-      {
-        $unwind: "$orderItems",
-      },
-      {
-        $group: {
-          _id: "$orderItems.product",
-          totalQuantity: { $sum: "$orderItems.quantity" },
-          totalRevenue: {
-            $sum: { $multiply: ["$orderItems.price", "$orderItems.quantity"] },
+      // Get active products count
+      Product.countDocuments({ isActive: true }),
+
+      // Get featured products count
+      Product.countDocuments({ featured: true }),
+
+      // Get out of stock products count
+      Product.countDocuments({ stock: { $lte: 0 } }),
+
+      // Get revenue data for chart
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            orderStatus: { $in: ["Delivered", "Shipped", "Out for Delivery"] },
           },
         },
-      },
-      {
-        $sort: { totalQuantity: -1 },
-      },
-      {
-        $limit: 5,
-      },
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id",
-          foreignField: "_id",
-          as: "product",
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            revenue: { $sum: "$totalPrice" },
+          },
         },
-      },
-      {
-        $unwind: "$product",
-      },
-      {
-        $project: {
-          name: "$product.name",
-          totalQuantity: 1,
-          totalRevenue: 1,
+        {
+          $sort: { _id: 1 },
         },
-      },
+      ]),
+
+      // Get order status distribution
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: "$orderStatus",
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+
+      // Get top selling products
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        {
+          $unwind: "$orderItems",
+        },
+        {
+          $group: {
+            _id: "$orderItems.product",
+            totalQuantity: { $sum: "$orderItems.quantity" },
+            totalRevenue: {
+              $sum: {
+                $multiply: ["$orderItems.price", "$orderItems.quantity"],
+              },
+            },
+          },
+        },
+        {
+          $sort: { totalQuantity: -1 },
+        },
+        {
+          $limit: 5,
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "_id",
+            as: "product",
+          },
+        },
+        {
+          $unwind: "$product",
+        },
+        {
+          $project: {
+            name: "$product.name",
+            totalQuantity: 1,
+            totalRevenue: 1,
+          },
+        },
+      ]),
+
+      // Get user growth data
+      User.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+            role: "user",
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ]),
+
+      // Get recent orders for activity feed
+      Order.find()
+        .populate("user", "name email")
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select("_id totalPrice orderStatus createdAt user"),
+
+      Product.find({ stock: { $lt: 10, $gt: 0 } })
+        .select("name stock")
+        .limit(5),
     ]);
 
-    // Get user growth data
-    const userGrowthChart = await User.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate },
-          role: "user",
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { _id: 1 },
-      },
+    // Calculate growth percentages
+    const previousStartDate = new Date(
+      startDate.getTime() - (endDate.getTime() - startDate.getTime())
+    );
+    const previousEndDate = new Date(startDate.getTime() - 1);
+
+    const [previousOrders, previousUsers] = await Promise.all([
+      Order.find({
+        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
+      }),
+      User.find({
+        createdAt: { $gte: previousStartDate, $lte: previousEndDate },
+        role: "user",
+      }),
     ]);
+
+    const previousRevenue = previousOrders
+      .filter((order) =>
+        ["Delivered", "Shipped", "Out for Delivery"].includes(order.orderStatus)
+      )
+      .reduce((sum, order) => sum + order.totalPrice, 0);
+
+    const currentRevenue = orders
+      .filter((order) =>
+        ["Delivered", "Shipped", "Out for Delivery"].includes(order.orderStatus)
+      )
+      .reduce((sum, order) => sum + order.totalPrice, 0);
+
+    const revenueGrowth =
+      previousRevenue > 0
+        ? ((currentRevenue - previousRevenue) / previousRevenue) * 100
+        : 0;
+    const ordersGrowth =
+      previousOrders.length > 0
+        ? ((orders.length - previousOrders.length) / previousOrders.length) *
+          100
+        : 0;
+    const usersGrowth =
+      previousUsers.length > 0
+        ? ((userGrowthChart.reduce((sum, item) => sum + item.count, 0) -
+            previousUsers.length) /
+            previousUsers.length) *
+          100
+        : 0;
 
     // Format chart data
     const formatChartData = (data, key = "_id", value = "count") => {
@@ -243,16 +336,47 @@ exports.getAnalytics = async (req, res, next) => {
       };
     };
 
+    // Format recent activity
+    const recentActivity = recentOrders.map((order) => ({
+      type: "order",
+      message: `Order #${order._id.toString().slice(-4)} placed by ${
+        order.user?.name || "Unknown User"
+      }`,
+      time: getTimeAgo(order.createdAt),
+    }));
+
+    // Add product activities
+    const productActivities = lowStockProducts.slice(0, 2).map((product) => ({
+      type: "product",
+      message: `Product "${product.name}" is running low on stock (${product.stock} left)`,
+      time: "Recently",
+    }));
+
+    const allRecentActivity = [...recentActivity, ...productActivities].slice(
+      0,
+      5
+    );
+
     res.status(200).json({
       success: true,
       data: {
         totalOrders: orders.length,
-        totalRevenue: orders
-          .filter((order) =>
-            ["Delivered", "Shipped"].includes(order.orderStatus)
-          )
-          .reduce((sum, order) => sum + order.totalPrice, 0),
+        totalRevenue: currentRevenue,
+        totalUsers,
+        totalProducts,
+        activeProducts,
+        featuredProducts,
+        outOfStockProducts,
+
+        // Growth metrics
+        revenueGrowth: Math.round(revenueGrowth * 100) / 100,
+        ordersGrowth: Math.round(ordersGrowth * 100) / 100,
+        usersGrowth: Math.round(usersGrowth * 100) / 100,
+
         topProducts,
+
+        recentActivity: allRecentActivity,
+
         // Chart data
         revenueChart: formatChartData(revenueChart, "_id", "revenue"),
         orderStatusChart: formatChartData(orderStatusChart, "_id", "count"),
@@ -261,6 +385,22 @@ exports.getAnalytics = async (req, res, next) => {
       },
     });
   } catch (error) {
+    console.error("Analytics error:", error);
     next(error);
   }
 };
+
+// Helper function to get time ago
+function getTimeAgo(date) {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+}

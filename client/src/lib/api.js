@@ -13,6 +13,13 @@ const api = axios.create({
   },
 });
 
+let isInitialAuthCheck = false;
+
+// Function to set initial auth check flag
+export const setInitialAuthCheck = (value) => {
+  isInitialAuthCheck = value;
+};
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
@@ -29,20 +36,12 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    console.error("API Error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error code:", error.code);
-    console.error("Error response:", error.response?.data);
-    console.error("Error status:", error.response?.status);
-
-    // Handle network errors with retry
     if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
       console.error(
         "Network Error - Check if server is running on:",
         API_BASE_URL
       );
 
-      // Try to retry the request once
       if (error.config && !error.config._retry) {
         error.config._retry = true;
         console.log("Retrying network request...");
@@ -52,9 +51,25 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login")
+      ) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+
+      if (isInitialAuthCheck) {
+        return Promise.reject(error);
+      }
+    }
+
+    // Only log network errors
+    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+      console.error(
+        "Network Error - Check if server is running on:",
+        API_BASE_URL
+      );
     }
 
     return Promise.reject(error);
