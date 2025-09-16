@@ -69,12 +69,13 @@ export default function Checkout() {
         const subtotal = cartTotal || 0;
         const tax = subtotal * 0.18;
         const shipping = subtotal >= 1000 ? 0 : 50;
+        const discount = 0;
         setSummary({
           subtotal,
           tax,
           shipping,
-          discount: 0,
-          total: subtotal + tax + shipping,
+          discount,
+          total: subtotal + tax + shipping - discount,
         });
       } finally {
         setLoadingSummary(false);
@@ -132,16 +133,18 @@ export default function Checkout() {
 
   const orderData = {
     userId: user?._id,
-    items: cart.map((item) => ({
+    orderItems: cart.map((item) => ({
       product: item.product._id,
-      quantity: item.quantity,
+      name: item.product.name,
       price: item.product.price,
+      quantity: item.quantity,
+      image: item.product.images?.[0]?.url || "/placeholder-ghee.jpg",
     })),
-    subtotal: summary?.subtotal ?? cartTotal,
-    tax: summary?.tax ?? 0,
-    shipping: summary?.shipping ?? 0,
+    itemsPrice: summary?.subtotal ?? cartTotal,
+    taxPrice: summary?.tax ?? 0,
+    shippingPrice: summary?.shipping ?? 0,
     discount: summary?.discount ?? 0,
-    total:
+    totalPrice:
       (summary?.total ?? null) !== null
         ? summary.total
         : (summary?.subtotal ?? cartTotal) +
@@ -158,6 +161,7 @@ export default function Checkout() {
           pincode: selectedAddress.pincode,
         }
       : null,
+    coupon: summary?.coupon || null,
   };
 
   if (
@@ -310,7 +314,7 @@ export default function Checkout() {
                   </div>
                   <div className="flex justify-between pt-2 mt-2 border-t text-base font-semibold">
                     <span>Total</span>
-                    <span>₹{(orderData.total || 0).toFixed(2)}</span>
+                    <span>₹{(orderData.totalPrice || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>

@@ -73,12 +73,20 @@ export default function AdminInvoicesPage() {
       toast.success("Invoice downloaded successfully!");
     } catch (error) {
       console.error("Error downloading invoice:", error);
-      toast.error("Failed to download invoice");
+
+      // Show coming soon message for invoice errors
+      if (error.response?.status === 400 || error.response?.status === 500) {
+        toast.info(
+          "Invoice download feature coming soon! We're working on it."
+        );
+      } else {
+        toast.error("Failed to download invoice. Please try again later.");
+      }
     }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "paid":
         return "bg-green-100 text-green-800";
       case "pending":
@@ -191,9 +199,9 @@ export default function AdminInvoicesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge className={getStatusColor(invoice.status)}>
-                        {invoice.status.charAt(0).toUpperCase() +
-                          invoice.status.slice(1)}
+                      <Badge className={getStatusColor(invoice.paymentStatus)}>
+                        {invoice.paymentStatus?.charAt(0).toUpperCase() +
+                          invoice.paymentStatus?.slice(1) || "Unknown"}
                       </Badge>
                       <div className="flex gap-2">
                         <Button

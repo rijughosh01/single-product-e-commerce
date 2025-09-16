@@ -83,7 +83,17 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
     const tax = subtotal * 0.18;
     const freeShippingThreshold = 1000;
     const shipping = subtotal >= freeShippingThreshold ? 0 : 50;
-    const discount = 0;
+
+    // Calculate discount based on applied coupon
+    let discount = 0;
+    if (coupon) {
+      if (coupon.discountType === "percentage") {
+        discount = (subtotal * coupon.discountValue) / 100;
+      } else {
+        discount = coupon.discountValue || coupon.discount || 0;
+      }
+    }
+
     const total = subtotal + tax + shipping - discount;
 
     return {

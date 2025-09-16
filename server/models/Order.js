@@ -132,6 +132,34 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  refundInfo: {
+    refundId: {
+      type: String,
+      default: null,
+    },
+    amount: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "processed", "failed"],
+      default: null,
+    },
+    reason: {
+      type: String,
+      default: "",
+    },
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  invoice: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Invoice",
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

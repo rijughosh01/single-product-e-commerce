@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { authAPI } from "@/lib/api";
 import { toast } from "sonner";
+import { useHydration } from "@/hooks/useHydration";
 
 const AuthContext = createContext();
 
@@ -18,22 +19,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const isHydrated = useHydration();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    if (isHydrated) {
+      checkAuth();
+    }
+  }, [isHydrated]);
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (token) {
-        const response = await authAPI.getProfile();
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+      // Try to get profile - if successful, user is authenticated
+      const response = await authAPI.getProfile();
+      setUser(response.data.user);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error("Auth check failed:", error);
       console.error("Error details:", {
@@ -46,6 +45,8 @@ export const AuthProvider = ({ children }) => {
       if (error.response?.status === 401 || error.response?.status === 403) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        setIsAuthenticated(false);
+        setUser(null);
       } else if (error.message === "Network Error") {
       }
 
@@ -58,11 +59,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authAPI.login(credentials);
-      const { token, user } = response.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
+      const { user } = response.data;
       setUser(user);
       setIsAuthenticated(true);
       toast.success("Login successful!");
@@ -78,11 +75,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
-      const { token, user } = response.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
+      const { user } = response.data;
       setUser(user);
       setIsAuthenticated(true);
       toast.success(
@@ -103,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      // Clear any stored data
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       setUser(null);

@@ -244,14 +244,14 @@ exports.getCartSummary = async (req, res, next) => {
           if (defaultRule) {
             shipping = defaultRule.getShippingCharges(subtotal);
           } else {
-            shipping = subtotal > 500 ? 0 : 50;
+            shipping = subtotal >= 1000 ? 0 : 50;
           }
         }
       } catch (error) {
-        shipping = subtotal > 500 ? 0 : 50;
+        shipping = subtotal >= 1000 ? 0 : 50;
       }
     } else {
-      shipping = subtotal > 500 ? 0 : 50;
+      shipping = subtotal >= 1000 ? 0 : 50;
     }
 
     // Apply coupon discount if provided

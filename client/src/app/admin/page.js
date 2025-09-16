@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/AdminLayout';
-import { adminAPI } from '@/lib/api';
-import { toast } from 'sonner';
-import { 
-  Package, 
-  Users, 
-  ShoppingCart, 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import AdminLayout from "@/components/AdminLayout";
+import { adminAPI } from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Package,
+  Users,
+  ShoppingCart,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -23,8 +23,8 @@ import {
   Star,
   ShoppingBag,
   CreditCard,
-  Truck
-} from 'lucide-react';
+  Truck,
+} from "lucide-react";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
     totalUsers: 0,
     totalOrders: 0,
     totalRevenue: 0,
-    recentOrders: []
+    recentOrders: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -47,25 +47,28 @@ export default function AdminDashboard() {
       const response = await adminAPI.getDashboardStats();
       const data = response.data.data;
 
+      console.log("Dashboard stats received:", data);
+      console.log("Recent orders:", data.recentOrders);
+
       setStats({
         totalProducts: data.totalProducts,
         totalUsers: data.totalUsers,
         totalOrders: data.totalOrders,
         totalRevenue: data.totalRevenue,
-        recentOrders: data.recentOrders
+        recentOrders: data.recentOrders || [],
       });
     } catch (error) {
-      console.error('Dashboard stats error:', error);
-      toast.error('Failed to load dashboard data');
+      console.error("Dashboard stats error:", error);
+      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -73,91 +76,91 @@ export default function AdminDashboard() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Delivered':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'Shipped':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'Processing':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'Cancelled':
-        return 'text-red-600 bg-red-50 border-red-200';
+      case "Delivered":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "Shipped":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "Processing":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "Cancelled":
+        return "text-red-600 bg-red-50 border-red-200";
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
+        return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
   const quickActions = [
     {
-      title: 'Add Product',
-      description: 'Create new product listing',
+      title: "Add Product",
+      description: "Create new product listing",
       icon: Plus,
-      href: '/admin/products/new',
-      color: 'bg-blue-500 hover:bg-blue-600',
-      iconColor: 'text-blue-500'
+      href: "/admin/products/new",
+      color: "bg-blue-500 hover:bg-blue-600",
+      iconColor: "text-blue-500",
     },
     {
-      title: 'View Orders',
-      description: 'Manage customer orders',
+      title: "View Orders",
+      description: "Manage customer orders",
       icon: ShoppingCart,
-      href: '/admin/orders',
-      color: 'bg-green-500 hover:bg-green-600',
-      iconColor: 'text-green-500'
+      href: "/admin/orders",
+      color: "bg-green-500 hover:bg-green-600",
+      iconColor: "text-green-500",
     },
     {
-      title: 'Manage Users',
-      description: 'Customer management',
+      title: "Manage Users",
+      description: "Customer management",
       icon: UserCheck,
-      href: '/admin/users',
-      color: 'bg-purple-500 hover:bg-purple-600',
-      iconColor: 'text-purple-500'
+      href: "/admin/users",
+      color: "bg-purple-500 hover:bg-purple-600",
+      iconColor: "text-purple-500",
     },
     {
-      title: 'Analytics',
-      description: 'Business insights',
+      title: "Analytics",
+      description: "Business insights",
       icon: BarChart3,
-      href: '/admin/analytics',
-      color: 'bg-orange-500 hover:bg-orange-600',
-      iconColor: 'text-orange-500'
-    }
+      href: "/admin/analytics",
+      color: "bg-orange-500 hover:bg-orange-600",
+      iconColor: "text-orange-500",
+    },
   ];
 
   const statCards = [
     {
-      title: 'Total Products',
+      title: "Total Products",
       value: stats.totalProducts,
       icon: Package,
-      color: 'bg-blue-500',
-      iconColor: 'text-blue-500',
-      change: '+12%',
-      changeType: 'positive'
+      color: "bg-blue-500",
+      iconColor: "text-blue-500",
+      change: "+12%",
+      changeType: "positive",
     },
     {
-      title: 'Total Users',
+      title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      color: 'bg-green-500',
-      iconColor: 'text-green-500',
-      change: '+8%',
-      changeType: 'positive'
+      color: "bg-green-500",
+      iconColor: "text-green-500",
+      change: "+8%",
+      changeType: "positive",
     },
     {
-      title: 'Total Orders',
+      title: "Total Orders",
       value: stats.totalOrders,
       icon: ShoppingCart,
-      color: 'bg-purple-500',
-      iconColor: 'text-purple-500',
-      change: '+15%',
-      changeType: 'positive'
+      color: "bg-purple-500",
+      iconColor: "text-purple-500",
+      change: "+15%",
+      changeType: "positive",
     },
     {
-      title: 'Total Revenue',
+      title: "Total Revenue",
       value: formatCurrency(stats.totalRevenue),
       icon: DollarSign,
-      color: 'bg-yellow-500',
-      iconColor: 'text-yellow-500',
-      change: '+23%',
-      changeType: 'positive'
-    }
+      color: "bg-yellow-500",
+      iconColor: "text-yellow-500",
+      change: "+23%",
+      changeType: "positive",
+    },
   ];
 
   if (loading) {
@@ -181,7 +184,9 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome back, Admin!</h1>
-              <p className="text-blue-100 text-lg">Here&apos;s what&apos;s happening with your store today.</p>
+              <p className="text-blue-100 text-lg">
+                Here&apos;s what&apos;s happening with your store today.
+              </p>
             </div>
             <div className="hidden md:flex items-center space-x-4">
               <div className="text-center">
@@ -189,7 +194,9 @@ export default function AdminDashboard() {
                 <div className="text-blue-100 text-sm">Orders Today</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(stats.totalRevenue)}
+                </div>
                 <div className="text-blue-100 text-sm">Revenue Today</div>
               </div>
             </div>
@@ -200,26 +207,37 @@ export default function AdminDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((card, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div
+            key={index}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+          >
             <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}>
+              <div
+                className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
+              >
                 <card.icon className="w-6 h-6 text-white" />
               </div>
               <div className="flex items-center space-x-1">
-                {card.changeType === 'positive' ? (
+                {card.changeType === "positive" ? (
                   <TrendingUp className="w-4 h-4 text-green-500" />
                 ) : (
                   <TrendingDown className="w-4 h-4 text-red-500" />
                 )}
-                <span className={`text-sm font-medium ${
-                  card.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <span
+                  className={`text-sm font-medium ${
+                    card.changeType === "positive"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {card.change}
                 </span>
               </div>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{card.value}</p>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {card.value}
+              </p>
               <p className="text-sm text-gray-500">{card.title}</p>
             </div>
           </div>
@@ -239,10 +257,14 @@ export default function AdminDashboard() {
               onClick={() => router.push(action.href)}
               className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 text-left"
             >
-              <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+              <div
+                className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+              >
                 <action.icon className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">
+                {action.title}
+              </h3>
               <p className="text-sm text-gray-500">{action.description}</p>
             </button>
           ))}
@@ -257,14 +279,14 @@ export default function AdminDashboard() {
             <p className="text-sm text-gray-500">Latest customer orders</p>
           </div>
           <button
-            onClick={() => router.push('/admin/orders')}
+            onClick={() => router.push("/admin/orders")}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
           >
             <span>View all orders</span>
             <ArrowUpRight className="w-4 h-4" />
           </button>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -287,37 +309,52 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {stats.recentOrders.length > 0 ? (
+              {stats.recentOrders &&
+              Array.isArray(stats.recentOrders) &&
+              stats.recentOrders.length > 0 ? (
                 stats.recentOrders.map((order, index) => (
-                  <tr key={index} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">#{order._id.slice(-8)}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        #{order?.id ? order.id.slice(-8) : "N/A"}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                           <span className="text-xs font-medium text-gray-600">
-                            {order.user?.name?.charAt(0).toUpperCase()}
+                            {order?.customer?.charAt(0).toUpperCase() || "?"}
                           </span>
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{order.user?.name}</div>
-                          <div className="text-sm text-gray-500">{order.user?.email}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {order?.customer || "Unknown User"}
+                          </div>
+                          <div className="text-sm text-gray-500">Customer</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(order.totalPrice)}
+                        {formatCurrency(order?.amount || 0)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(order.orderStatus)}`}>
-                        {order.orderStatus}
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                          order?.status || "Unknown"
+                        )}`}
+                      >
+                        {order?.status || "Unknown"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {order?.date
+                        ? new Date(order.date).toLocaleDateString()
+                        : "N/A"}
                     </td>
                   </tr>
                 ))
@@ -327,7 +364,10 @@ export default function AdminDashboard() {
                     <div className="text-gray-500">
                       <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                       <p className="text-lg font-medium mb-2">No orders yet</p>
-                      <p className="text-sm">Orders will appear here once customers start placing them.</p>
+                      <p className="text-sm">
+                        Orders will appear here once customers start placing
+                        them.
+                      </p>
                     </div>
                   </td>
                 </tr>

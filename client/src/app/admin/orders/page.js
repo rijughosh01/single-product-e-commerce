@@ -1,39 +1,39 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { adminAPI } from '@/lib/api';
-import { 
-  ShoppingCart, 
-  Search, 
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { adminAPI } from "@/lib/api";
+import {
+  ShoppingCart,
+  Search,
   Filter,
   Eye,
   Edit,
   Calendar,
   MapPin,
-  Phone
-} from 'lucide-react';
-import Link from 'next/link';
+  Phone,
+} from "lucide-react";
+import Link from "next/link";
 
 export default function AdminOrders() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
-    if (user && user.role !== 'admin') {
-      toast.error('Access denied. Admin privileges required.');
-      router.push('/');
+    if (user && user.role !== "admin") {
+      toast.error("Access denied. Admin privileges required.");
+      router.push("/");
       return;
     }
 
@@ -45,8 +45,8 @@ export default function AdminOrders() {
       const response = await adminAPI.getAllOrders();
       setOrders(response.data.orders || []);
     } catch (error) {
-      console.error('Orders fetch error:', error);
-      toast.error('Failed to load orders');
+      console.error("Orders fetch error:", error);
+      toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -55,37 +55,48 @@ export default function AdminOrders() {
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
       await adminAPI.updateOrder(orderId, { orderStatus: newStatus });
-      setOrders(orders.map(order => 
-        order._id === orderId ? { ...order, orderStatus: newStatus } : order
-      ));
-      toast.success('Order status updated successfully');
+      setOrders(
+        orders.map((order) =>
+          order._id === orderId ? { ...order, orderStatus: newStatus } : order
+        )
+      );
+      toast.success("Order status updated successfully");
     } catch (error) {
-      console.error('Update order error:', error);
-      toast.error('Failed to update order status');
+      console.error("Update order error:", error);
+      toast.error("Failed to update order status");
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Processing': return 'bg-yellow-100 text-yellow-800';
-      case 'Confirmed': return 'bg-blue-100 text-blue-800';
-      case 'Shipped': return 'bg-purple-100 text-purple-800';
-      case 'Out for Delivery': return 'bg-orange-100 text-orange-800';
-      case 'Delivered': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      case 'Returned': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "Processing":
+        return "bg-yellow-100 text-yellow-800";
+      case "Confirmed":
+        return "bg-blue-100 text-blue-800";
+      case "Shipped":
+        return "bg-purple-100 text-purple-800";
+      case "Out for Delivery":
+        return "bg-orange-100 text-orange-800";
+      case "Delivered":
+        return "bg-green-100 text-green-800";
+      case "Cancelled":
+        return "bg-red-100 text-red-800";
+      case "Returned":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
       order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order._id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterStatus === 'all' || order.orderStatus === filterStatus;
-    
+
+    const matchesFilter =
+      filterStatus === "all" || order.orderStatus === filterStatus;
+
     return matchesSearch && matchesFilter;
   });
 
@@ -104,8 +115,12 @@ export default function AdminOrders() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Orders Management</h1>
-              <p className="text-gray-600">Manage customer orders and track deliveries</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Orders Management
+              </h1>
+              <p className="text-gray-600">
+                Manage customer orders and track deliveries
+              </p>
             </div>
             <div className="flex items-center space-x-4">
               <Link
@@ -221,7 +236,10 @@ export default function AdminOrders() {
                           <div>
                             <div>{order.shippingInfo.name}</div>
                             <div>{order.shippingInfo.address}</div>
-                            <div>{order.shippingInfo.city}, {order.shippingInfo.state}</div>
+                            <div>
+                              {order.shippingInfo.city},{" "}
+                              {order.shippingInfo.state}
+                            </div>
                             <div>{order.shippingInfo.pincode}</div>
                           </div>
                         </div>
@@ -232,15 +250,17 @@ export default function AdminOrders() {
                         <div className="text-sm font-medium text-gray-900">
                           {order.paymentInfo.method}
                         </div>
-                        <div className={`text-sm ${
-                          order.paymentInfo.status === 'succeeded' 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                        }`}>
+                        <div
+                          className={`text-sm ${
+                            order.paymentInfo.status === "succeeded"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
                           {order.paymentInfo.status}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {new Date(order.paymentInfo.id).toLocaleDateString()}
+                          {new Date(order.paidAt).toLocaleDateString()}
                         </div>
                       </div>
                     </td>
@@ -250,13 +270,19 @@ export default function AdminOrders() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         value={order.orderStatus}
-                        onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
-                        className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${getStatusColor(order.orderStatus)}`}
+                        onChange={(e) =>
+                          handleStatusUpdate(order._id, e.target.value)
+                        }
+                        className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${getStatusColor(
+                          order.orderStatus
+                        )}`}
                       >
                         <option value="Processing">Processing</option>
                         <option value="Confirmed">Confirmed</option>
                         <option value="Shipped">Shipped</option>
-                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Out for Delivery">
+                          Out for Delivery
+                        </option>
                         <option value="Delivered">Delivered</option>
                         <option value="Cancelled">Cancelled</option>
                         <option value="Returned">Returned</option>
@@ -283,16 +309,17 @@ export default function AdminOrders() {
               </tbody>
             </table>
           </div>
-          
+
           {filteredOrders.length === 0 && (
             <div className="text-center py-12">
               <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No orders found</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No orders found
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || filterStatus !== 'all' 
-                  ? 'Try adjusting your search or filter criteria.'
-                  : 'No orders have been placed yet.'
-                }
+                {searchTerm || filterStatus !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "No orders have been placed yet."}
               </p>
             </div>
           )}

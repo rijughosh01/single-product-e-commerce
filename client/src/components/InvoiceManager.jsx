@@ -47,13 +47,22 @@ const InvoiceManager = ({ className = "" }) => {
   const generateInvoice = async (orderId) => {
     setLoading(true);
     try {
-      await invoiceAPI.generateInvoice(orderId);
+      const response = await invoiceAPI.generateInvoice(orderId);
       toast.success("Invoice generated successfully!");
       fetchInvoices();
+      return response.data.invoice;
     } catch (error) {
-      const message =
-        error.response?.data?.message || "Failed to generate invoice";
-      toast.error(message);
+      console.error("Error generating invoice:", error);
+      if (error.response?.status === 400 || error.response?.status === 500) {
+        toast.info(
+          "Invoice generation feature coming soon! We're working on it."
+        );
+      } else {
+        const message =
+          error.response?.data?.message || "Failed to generate invoice";
+        toast.error(message);
+      }
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -77,7 +86,15 @@ const InvoiceManager = ({ className = "" }) => {
       toast.success("Invoice downloaded successfully!");
     } catch (error) {
       console.error("Error downloading invoice:", error);
-      toast.error("Failed to download invoice");
+
+      // Show coming soon message for invoice errors
+      if (error.response?.status === 400 || error.response?.status === 500) {
+        toast.info(
+          "Invoice download feature coming soon! We're working on it."
+        );
+      } else {
+        toast.error("Failed to download invoice. Please try again later.");
+      }
     }
   };
 
@@ -93,7 +110,7 @@ const InvoiceManager = ({ className = "" }) => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "paid":
         return "bg-green-100 text-green-800";
       case "pending":
@@ -196,9 +213,9 @@ const InvoiceManager = ({ className = "" }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={getStatusColor(invoice.status)}>
-                      {invoice.status.charAt(0).toUpperCase() +
-                        invoice.status.slice(1)}
+                    <Badge className={getStatusColor(invoice.paymentStatus)}>
+                      {invoice.paymentStatus?.charAt(0).toUpperCase() +
+                        invoice.paymentStatus?.slice(1) || "Unknown"}
                     </Badge>
                     <div className="flex gap-2">
                       <Button
@@ -270,16 +287,16 @@ const InvoiceManager = ({ className = "" }) => {
                       <strong>Due Date:</strong>{" "}
                       {formatDate(selectedInvoice.dueDate)}
                     </p>
-                    <p>
+                    <div className="flex items-center gap-2">
                       <strong>Status:</strong>
                       <Badge
-                        className={`ml-2 ${getStatusColor(
-                          selectedInvoice.status
-                        )}`}
+                        className={getStatusColor(
+                          selectedInvoice.paymentStatus
+                        )}
                       >
-                        {selectedInvoice.status}
+                        {selectedInvoice.paymentStatus || "Unknown"}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -302,10 +319,10 @@ const InvoiceManager = ({ className = "" }) => {
                         <tr key={index} className="border-b">
                           <td className="p-2">
                             <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-gray-600">
+                              <div className="font-medium">{item.name}</div>
+                              <div className="text-sm text-gray-600">
                                 {item.description}
-                              </p>
+                              </div>
                             </div>
                           </td>
                           <td className="text-right p-2">{item.quantity}</td>

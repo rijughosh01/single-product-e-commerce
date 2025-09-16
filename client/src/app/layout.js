@@ -6,6 +6,7 @@ import { WishlistProvider } from "@/contexts/WishlistContext";
 import { Toaster } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import HydrationBoundary from "@/components/HydrationBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,30 +20,32 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Pure Ghee Store - Premium Quality Ghee Products",
-  description: "Discover our premium collection of pure cow ghee, buffalo ghee, and organic ghee. Authentic, traditional, and healthy ghee products delivered to your doorstep.",
-  keywords: "ghee, pure ghee, cow ghee, buffalo ghee, organic ghee, A2 ghee, traditional ghee",
+  description:
+    "Discover our premium collection of pure cow ghee, buffalo ghee, and organic ghee. Authentic, traditional, and healthy ghee products delivered to your doorstep.",
+  keywords:
+    "ghee, pure ghee, cow ghee, buffalo ghee, organic ghee, A2 ghee, traditional ghee",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  {children}
-                </main>
-                <Footer />
-              </div>
-              <Toaster position="top-right" richColors />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+        <HydrationBoundary>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <div className="min-h-screen flex flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+                <Toaster position="top-right" richColors />
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </HydrationBoundary>
       </body>
     </html>
   );

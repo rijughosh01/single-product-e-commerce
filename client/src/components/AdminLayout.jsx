@@ -94,6 +94,12 @@ const AdminLayout = ({ children }) => {
       description: "Shipping rules",
     },
     {
+      name: "Payments",
+      href: "/admin/payments",
+      icon: DollarSign,
+      description: "Payment management",
+    },
+    {
       name: "Invoices",
       href: "/admin/invoices",
       icon: FileText,

@@ -20,6 +20,19 @@ exports.generateInvoice = async (req, res, next) => {
       return next(new ErrorHandler("Order not found", 404));
     }
 
+    // Validate order has required fields
+    if (!order.orderItems || order.orderItems.length === 0) {
+      return next(new ErrorHandler("Order has no items", 400));
+    }
+
+    if (!order.shippingInfo) {
+      return next(new ErrorHandler("Order has no shipping information", 400));
+    }
+
+    if (!order.paymentInfo) {
+      return next(new ErrorHandler("Order has no payment information", 400));
+    }
+
     // Check if invoice already exists
     const existingInvoice = await Invoice.findOne({ order: orderId });
     if (existingInvoice) {
@@ -32,11 +45,15 @@ exports.generateInvoice = async (req, res, next) => {
 
     // Get user's default address for billing
     const user = await User.findById(order.user._id);
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
     const defaultAddress =
-      user.addresses.find((addr) => addr.isDefault) || user.addresses[0];
+      user.addresses?.find((addr) => addr.isDefault) || user.addresses?.[0];
 
     if (!defaultAddress) {
-      return next(new ErrorHandler("No billing address found", 400));
+      return next(new ErrorHandler("No billing address found for user", 400));
     }
 
     const invoiceItems = order.orderItems.map((item) => ({
@@ -51,10 +68,23 @@ exports.generateInvoice = async (req, res, next) => {
       igst: 0,
     }));
 
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)
+      .toUpperCase()}`;
+
+    // Calculate due date
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+
     // Create invoice
-    const invoice = await Invoice.create({
+    const invoice = new Invoice({
+      invoiceNumber: invoiceNumber,
       order: orderId,
       user: order.user._id,
+      invoiceDate: new Date(),
+      dueDate: dueDate,
       billingAddress: {
         name: defaultAddress.name,
         address: defaultAddress.address,
@@ -73,17 +103,39 @@ exports.generateInvoice = async (req, res, next) => {
       },
       items: invoiceItems,
       subtotal: order.itemsPrice,
+      cgstTotal: 0,
+      sgstTotal: 0,
+      igstTotal: 0,
       shippingCharges: order.shippingPrice,
-      totalAmount: order.totalPrice,
+      discount: Number(order?.coupon?.discountApplied || 0),
+      totalAmount: Math.max(
+        0,
+        Number(order.totalPrice) - Number(order?.coupon?.discountApplied || 0)
+      ),
+      amountInWords: "",
+      paymentStatus: "Paid",
       paymentMethod: order.paymentInfo.method,
       paymentDate: order.paidAt,
     });
 
     invoice.calculateGST();
-
     invoice.amountInWords = invoice.amountToWords(invoice.totalAmount);
 
+    if (!invoice.amountInWords) {
+      invoice.amountInWords = invoice.amountToWords(invoice.totalAmount);
+    }
+
+    // Validate the invoice before saving
+    const validationError = invoice.validateSync();
+    if (validationError) {
+      console.error("Invoice validation error:", validationError);
+      throw new Error(`Invoice validation failed: ${validationError.message}`);
+    }
+
     await invoice.save();
+
+    // Update the order with the invoice ID
+    await Order.findByIdAndUpdate(orderId, { invoice: invoice._id });
 
     res.status(201).json({
       success: true,
@@ -205,29 +257,60 @@ exports.downloadInvoicePDF = async (req, res, next) => {
 
     // Billing and shipping addresses
     const addressY = doc.y;
-    doc.fontSize(12).text("Bill To:", 50, addressY);
+    const leftColX = 50;
+    const rightColX = 330;
+    const colWidth = 200;
+    const lineHeight = 14;
+
+    doc.fontSize(12).text("Bill To:", leftColX, addressY);
     doc.fontSize(10);
-    doc.text(invoice.billingAddress.name, 50, addressY + 20);
-    doc.text(invoice.billingAddress.address, 50, addressY + 35);
+    let yPos = addressY + 18;
+    doc.text(invoice.billingAddress.name, leftColX, yPos, { width: colWidth });
+    yPos += lineHeight;
+    doc.text(invoice.billingAddress.address, leftColX, yPos, {
+      width: colWidth,
+    });
+    yPos +=
+      lineHeight *
+      Math.ceil((invoice.billingAddress.address?.length || 0) / 35);
     doc.text(
       `${invoice.billingAddress.city}, ${invoice.billingAddress.state} - ${invoice.billingAddress.pincode}`,
-      50,
-      addressY + 50
+      leftColX,
+      yPos,
+      { width: colWidth }
     );
-    doc.text(`Phone: ${invoice.billingAddress.phone}`, 50, addressY + 65);
+    yPos += lineHeight;
+    doc.text(`Phone: ${invoice.billingAddress.phone}`, leftColX, yPos, {
+      width: colWidth,
+    });
 
-    doc.fontSize(12).text("Ship To:", 350, addressY);
+    doc.fontSize(12).text("Ship To:", rightColX, addressY);
     doc.fontSize(10);
-    doc.text(invoice.shippingAddress.name, 350, addressY + 20);
-    doc.text(invoice.shippingAddress.address, 350, addressY + 35);
+    let yPosRight = addressY + 18;
+    doc.text(invoice.shippingAddress.name, rightColX, yPosRight, {
+      width: colWidth,
+    });
+    yPosRight += lineHeight;
+    doc.text(invoice.shippingAddress.address, rightColX, yPosRight, {
+      width: colWidth,
+    });
+    yPosRight +=
+      lineHeight *
+      Math.ceil((invoice.shippingAddress.address?.length || 0) / 35);
     doc.text(
       `${invoice.shippingAddress.city}, ${invoice.shippingAddress.state} - ${invoice.shippingAddress.pincode}`,
-      350,
-      addressY + 50
+      rightColX,
+      yPosRight,
+      { width: colWidth }
     );
-    doc.text(`Phone: ${invoice.shippingAddress.phone}`, 350, addressY + 65);
+    yPosRight += lineHeight;
+    doc.text(`Phone: ${invoice.shippingAddress.phone}`, rightColX, yPosRight, {
+      width: colWidth,
+    });
 
-    doc.moveDown(4);
+    const afterAddressY = Math.max(yPos, yPosRight) + 20;
+    doc.y = afterAddressY;
+    doc.moveDown();
 
     const tableY = doc.y;
     doc.fontSize(10);
@@ -236,9 +319,9 @@ exports.downloadInvoicePDF = async (req, res, next) => {
     doc.text("S.No.", 50, tableY);
     doc.text("Item Description", 100, tableY);
     doc.text("Qty", 300, tableY);
-    doc.text("Rate (₹)", 350, tableY);
-    doc.text("Amount (₹)", 420, tableY);
-    doc.text("GST (₹)", 490, tableY);
+    doc.text("Rate (Rs)", 350, tableY);
+    doc.text("Amount (Rs)", 420, tableY);
+    doc.text("GST (Rs)", 490, tableY);
 
     doc
       .moveTo(50, tableY + 15)
@@ -269,33 +352,41 @@ exports.downloadInvoicePDF = async (req, res, next) => {
 
     // Totals
     doc.text("Subtotal:", 420, currentY);
-    doc.text(`₹${invoice.subtotal.toFixed(2)}`, 490, currentY);
+    doc.text(`Rs ${invoice.subtotal.toFixed(2)}`, 490, currentY);
     currentY += 20;
 
     if (invoice.cgstTotal > 0) {
       doc.text("CGST (9%):", 420, currentY);
-      doc.text(`₹${invoice.cgstTotal.toFixed(2)}`, 490, currentY);
+      doc.text(`Rs ${invoice.cgstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }
 
     if (invoice.sgstTotal > 0) {
       doc.text("SGST (9%):", 420, currentY);
-      doc.text(`₹${invoice.sgstTotal.toFixed(2)}`, 490, currentY);
+      doc.text(`Rs ${invoice.sgstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }
 
     if (invoice.igstTotal > 0) {
       doc.text("IGST (18%):", 420, currentY);
-      doc.text(`₹${invoice.igstTotal.toFixed(2)}`, 490, currentY);
+      doc.text(`Rs ${invoice.igstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }
 
     doc.text("Shipping:", 420, currentY);
-    doc.text(`₹${invoice.shippingCharges.toFixed(2)}`, 490, currentY);
+    doc.text(`Rs ${invoice.shippingCharges.toFixed(2)}`, 490, currentY);
     currentY += 20;
 
+    if (invoice.discount && invoice.discount > 0) {
+      doc.text("Discount:", 420, currentY);
+      doc.text(`- Rs ${Number(invoice.discount).toFixed(2)}`, 490, currentY);
+      currentY += 20;
+    }
+
     doc.fontSize(12).text("Total:", 420, currentY);
-    doc.fontSize(12).text(`₹${invoice.totalAmount.toFixed(2)}`, 490, currentY);
+    doc
+      .fontSize(12)
+      .text(`Rs ${invoice.totalAmount.toFixed(2)}`, 490, currentY);
     currentY += 20;
 
     doc

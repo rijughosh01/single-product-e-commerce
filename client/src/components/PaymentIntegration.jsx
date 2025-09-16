@@ -11,8 +11,12 @@ import {
   AlertCircle,
   Loader2,
   Lock,
+  Smartphone,
+  Building2,
+  Wallet,
+  Banknote,
 } from "lucide-react";
-import { ordersAPI } from "@/lib/api";
+import { paymentAPI } from "@/lib/api";
 import { toast } from "sonner";
 
 const PaymentIntegration = ({
@@ -44,21 +48,86 @@ const PaymentIntegration = ({
 
   const createRazorpayOrder = async () => {
     try {
-      const response = await ordersAPI.createPaymentOrder(orderData);
+      // Validate required data
+      if (!orderData.totalPrice || orderData.totalPrice <= 0) {
+        throw new Error("Invalid total price");
+      }
+
+      if (!orderData.orderItems || orderData.orderItems.length === 0) {
+        throw new Error("No items in order");
+      }
+
+      if (!orderData.shippingInfo) {
+        throw new Error("Shipping information is required");
+      }
+
+      const requestData = {
+        amount: Number(orderData.totalPrice),
+        currency: "INR",
+        orderData: orderData,
+      };
+
+      console.log("Creating Razorpay order with data:", {
+        amount: requestData.amount,
+        currency: requestData.currency,
+        orderData: {
+          userId: orderData.userId,
+          orderItems: orderData.orderItems?.length,
+          totalPrice: orderData.totalPrice,
+          shippingInfo: orderData.shippingInfo ? "present" : "missing",
+        },
+      });
+
+      const response = await paymentAPI.createPaymentOrder(requestData);
       return response.data;
     } catch (error) {
       console.error("Error creating Razorpay order:", error);
+      console.error("Error details:", error.response?.data);
       throw error;
     }
   };
 
   const verifyPayment = async (paymentData) => {
     try {
-      const response = await ordersAPI.verifyPayment(paymentData);
+      console.log("Verifying payment with data:", {
+        razorpay_order_id: paymentData.razorpay_order_id,
+        razorpay_payment_id: paymentData.razorpay_payment_id,
+        razorpay_signature: paymentData.razorpay_signature
+          ? "present"
+          : "missing",
+        orderData: paymentData.orderData
+          ? {
+              userId: paymentData.orderData.userId,
+              orderItems: paymentData.orderData.orderItems?.length,
+              totalPrice: paymentData.orderData.totalPrice,
+              shippingInfo: paymentData.orderData.shippingInfo
+                ? "present"
+                : "missing",
+            }
+          : "missing",
+      });
+
+      const response = await paymentAPI.verifyPayment(paymentData);
+      console.log("Verification response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+
+      if (response.data && !response.data.success) {
+        console.error("Server returned error:", response.data);
+        return response.data;
+      }
+
       return response.data;
     } catch (error) {
       console.error("Error verifying payment:", error);
-      throw error;
+      console.error("Error response:", error.response?.data);
+
+      return {
+        success: false,
+        message: error.response?.data?.message || "Payment verification failed",
+        error: error.message,
+      };
     }
   };
 
@@ -94,15 +163,34 @@ const PaymentIntegration = ({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderId: orderResponse.orderId,
+              orderData: orderData,
             };
 
             const verificationResponse = await verifyPayment(verificationData);
 
-            if (verificationResponse.success) {
+            console.log("Verification response:", verificationResponse); // Debug log
+
+            if (verificationResponse && verificationResponse.success) {
               toast.success("Payment successful!");
-              onPaymentSuccess(verificationResponse.order);
+
+              if (
+                verificationResponse.order &&
+                verificationResponse.order._id
+              ) {
+                window.location.href = `/payment/success?order_id=${verificationResponse.order._id}&payment_id=${response.razorpay_payment_id}`;
+              } else {
+                console.error(
+                  "Order not found in verification response:",
+                  verificationResponse
+                );
+                toast.error("Order creation failed. Please contact support.");
+                onPaymentError("Order creation failed");
+              }
             } else {
+              console.error(
+                "Payment verification failed:",
+                verificationResponse
+              );
               toast.error("Payment verification failed");
               onPaymentError("Payment verification failed");
             }
@@ -114,7 +202,7 @@ const PaymentIntegration = ({
         },
         prefill: {
           name: orderData.shippingInfo?.name || "",
-          email: orderData.shippingInfo?.email || "",
+          email: orderData.userId || "",
           contact: orderData.shippingInfo?.phone || "",
         },
         notes: {
@@ -128,6 +216,7 @@ const PaymentIntegration = ({
           ondismiss: () => {
             setLoading(false);
             toast.info("Payment cancelled");
+            window.location.href = `/payment/failed?error_code=PAYMENT_CANCELLED&error_description=Payment was cancelled by the user`;
           },
         },
       };
@@ -182,6 +271,24 @@ const PaymentIntegration = ({
                   <p className="text-sm text-gray-600">
                     Pay with UPI, Cards, Net Banking, Wallets
                   </p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Smartphone className="w-3 h-3" />
+                      <span>UPI</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <CreditCard className="w-3 h-3" />
+                      <span>Cards</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Building2 className="w-3 h-3" />
+                      <span>Net Banking</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <Wallet className="w-3 h-3" />
+                      <span>Wallets</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">Recommended</Badge>
@@ -208,7 +315,7 @@ const PaymentIntegration = ({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span>{formatPrice(orderData.subtotal || 0)}</span>
+              <span>{formatPrice(orderData.itemsPrice || 0)}</span>
             </div>
             {orderData.discount > 0 && (
               <div className="flex justify-between text-green-600">
@@ -218,15 +325,21 @@ const PaymentIntegration = ({
             )}
             <div className="flex justify-between">
               <span>Shipping:</span>
-              <span>{formatPrice(orderData.shipping || 0)}</span>
+              <span>
+                {orderData.shippingPrice === 0 ? (
+                  <span className="text-green-600">FREE</span>
+                ) : (
+                  formatPrice(orderData.shippingPrice || 0)
+                )}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Tax (GST):</span>
-              <span>{formatPrice(orderData.tax || 0)}</span>
+              <span>{formatPrice(orderData.taxPrice || 0)}</span>
             </div>
             <div className="flex justify-between font-semibold text-lg border-t pt-2">
               <span>Total:</span>
-              <span>{formatPrice(orderData.total || 0)}</span>
+              <span>{formatPrice(orderData.totalPrice || 0)}</span>
             </div>
           </div>
         </div>
@@ -277,7 +390,7 @@ const PaymentIntegration = ({
           ) : (
             <>
               <Lock className="w-5 h-5 mr-2" />
-              Pay {formatPrice(orderData.total || 0)}
+              Pay {formatPrice(orderData.totalPrice || 0)}
             </>
           )}
         </Button>

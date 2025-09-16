@@ -27,6 +27,8 @@ exports.getDashboardStats = async (req, res, next) => {
       .limit(5)
       .select("_id totalPrice orderStatus createdAt user");
 
+    console.log("Recent Orders Query Result:", recentOrders);
+
     // Get monthly stats
     const currentDate = new Date();
     const firstDayOfMonth = new Date(
@@ -67,24 +69,29 @@ exports.getDashboardStats = async (req, res, next) => {
       .select("name stock")
       .limit(5);
 
+    const responseData = {
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      totalRevenue,
+      monthlyOrders,
+      monthlyRevenue: monthlyRevenueAmount,
+      recentOrders: recentOrders.map((order) => ({
+        id: order._id,
+        customer: order.user?.name || "Unknown User",
+        amount: order.totalPrice,
+        status: order.orderStatus,
+        date: order.createdAt,
+      })),
+      lowStockProducts,
+    };
+
+    console.log("Dashboard Response Data:", responseData);
+    console.log("Recent Orders in Response:", responseData.recentOrders);
+
     res.status(200).json({
       success: true,
-      data: {
-        totalUsers,
-        totalProducts,
-        totalOrders,
-        totalRevenue,
-        monthlyOrders,
-        monthlyRevenue: monthlyRevenueAmount,
-        recentOrders: recentOrders.map((order) => ({
-          id: order._id,
-          customer: order.user.name,
-          amount: order.totalPrice,
-          status: order.orderStatus,
-          date: order.createdAt,
-        })),
-        lowStockProducts,
-      },
+      data: responseData,
     });
   } catch (error) {
     next(error);

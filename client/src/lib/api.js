@@ -16,10 +16,6 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -135,6 +131,18 @@ export const ordersAPI = {
   verifyPayment: (paymentData) => api.post("/payment/verify", paymentData),
 };
 
+// Payment API
+export const paymentAPI = {
+  createPaymentOrder: (orderData) =>
+    api.post("/payment/create-order", orderData),
+  verifyPayment: (paymentData) => api.post("/payment/verify", paymentData),
+  getPaymentDetails: (paymentId) => api.get(`/payment/${paymentId}`),
+  refundPayment: (refundData) => api.post("/payment/refund", refundData),
+  getAllPayments: (params = {}) => api.get("/admin/payments", { params }),
+  getPaymentStats: (params = {}) =>
+    api.get("/admin/payments/stats", { params }),
+};
+
 // Coupons API
 export const couponsAPI = {
   validateCoupon: (data) => api.post("/coupon/validate", data),
@@ -227,6 +235,7 @@ export const adminAPI = {
 
   // Orders
   getAllOrders: (params = {}) => api.get("/admin/orders", { params }),
+  getOrderById: (id) => api.get(`/admin/order/${id}`),
   updateOrder: (id, orderData) => api.put(`/admin/order/${id}`, orderData),
   deleteOrder: (id) => api.delete(`/admin/order/${id}`),
   getOrderStats: () => api.get("/admin/orders/stats"),

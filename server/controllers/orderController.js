@@ -2,15 +2,7 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const ErrorHandler = require("../utils/errorHandler");
-const Razorpay = require("razorpay");
 const sendEmail = require("../utils/sendEmail");
-const crypto = require("crypto");
-
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 // Create new order => /api/v1/order/new
 exports.newOrder = async (req, res, next) => {
@@ -24,7 +16,25 @@ exports.newOrder = async (req, res, next) => {
       totalPrice,
       paymentInfo,
       coupon: appliedCoupon,
+      discount: discountFromSummary,
     } = req.body;
+
+    // Normalize coupon object to persist calculated discount
+    const normalizedCoupon = (() => {
+      if (!appliedCoupon) return undefined;
+      const discountApplied = Number(
+        discountFromSummary ??
+          appliedCoupon.discountApplied ??
+          appliedCoupon.discount ??
+          0
+      );
+      return {
+        code: appliedCoupon.code || null,
+        discountType: appliedCoupon.discountType || null,
+        discountValue: Number(appliedCoupon.discountValue || 0),
+        discountApplied: isNaN(discountApplied) ? 0 : discountApplied,
+      };
+    })();
 
     const order = await Order.create({
       orderItems,
@@ -36,7 +46,7 @@ exports.newOrder = async (req, res, next) => {
       paymentInfo,
       paidAt: Date.now(),
       user: req.user.id,
-      coupon: appliedCoupon || undefined,
+      coupon: normalizedCoupon,
     });
 
     // Update product stock
@@ -175,7 +185,7 @@ exports.updateOrder = async (req, res, next) => {
       );
     }
 
-    order.orderStatus = req.body.status;
+    order.orderStatus = req.body.orderStatus || req.body.status;
     order.deliveredAt = Date.now();
 
     await order.save();
@@ -184,12 +194,18 @@ exports.updateOrder = async (req, res, next) => {
     try {
       await sendEmail({
         email: order.user.email,
-        subject: `Order Status Update - ${req.body.status}`,
-        message: `Your order status has been updated to ${req.body.status}.`,
+        subject: `Order Status Update - ${
+          req.body.orderStatus || req.body.status
+        }`,
+        message: `Your order status has been updated to ${
+          req.body.orderStatus || req.body.status
+        }.`,
         html: `
           <h2>Order Status Update</h2>
           <p>Dear Customer,</p>
-          <p>Your order status has been updated to <strong>${req.body.status}</strong>.</p>
+          <p>Your order status has been updated to <strong>${
+            req.body.orderStatus || req.body.status
+          }</strong>.</p>
           <p><strong>Order ID:</strong> ${order._id}</p>
           <p>Thank you for choosing us!</p>
           <p>Best regards,<br>Ghee E-commerce Team</p>
@@ -221,54 +237,6 @@ exports.deleteOrder = async (req, res, next) => {
     res.status(200).json({
       success: true,
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Create Razorpay order => /api/v1/payment/create-order
-exports.createPaymentOrder = async (req, res, next) => {
-  try {
-    const { amount } = req.body;
-
-    const options = {
-      amount: amount * 100,
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-      payment_capture: 1,
-    };
-
-    const order = await razorpay.orders.create(options);
-
-    res.status(200).json({
-      success: true,
-      order,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Verify payment => /api/v1/payment/verify
-exports.verifyPayment = async (req, res, next) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
-
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign.toString())
-      .digest("hex");
-
-    if (razorpay_signature === expectedSign) {
-      res.status(200).json({
-        success: true,
-        message: "Payment verified successfully",
-      });
-    } else {
-      return next(new ErrorHandler("Payment verification failed", 400));
-    }
   } catch (error) {
     next(error);
   }

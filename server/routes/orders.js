@@ -6,8 +6,6 @@ const {
   allOrders,
   updateOrder,
   deleteOrder,
-  createPaymentOrder,
-  verifyPayment,
   getOrderStats,
   cancelOrder,
 } = require("../controllers/orderController");
@@ -20,12 +18,6 @@ router.route("/order/new").post(isAuthenticatedUser, newOrder);
 router.route("/order/:id").get(isAuthenticatedUser, getSingleOrder);
 router.route("/orders/me").get(isAuthenticatedUser, myOrders);
 router.route("/order/:id/cancel").put(isAuthenticatedUser, cancelOrder);
-
-// Payment routes
-router
-  .route("/payment/create-order")
-  .post(isAuthenticatedUser, createPaymentOrder);
-router.route("/payment/verify").post(isAuthenticatedUser, verifyPayment);
 
 // Admin routes
 router

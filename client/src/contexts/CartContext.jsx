@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { cartAPI } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
+import { useHydration } from "@/hooks/useHydration";
 
 const CartContext = createContext();
 
@@ -21,6 +22,7 @@ export const CartProvider = ({ children }) => {
   const [cartTotal, setCartTotal] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const { isAuthenticated } = useAuth();
+  const isHydrated = useHydration();
 
   // Ensure cart is always an array
   const setCartSafely = (newCart) => {
@@ -33,15 +35,16 @@ export const CartProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCart();
-    } else {
-      // Reset cart when user logs out
-      setCartSafely([]);
-      setCartTotal(0);
-      setCartCount(0);
+    if (isHydrated) {
+      if (isAuthenticated) {
+        fetchCart();
+      } else {
+        setCartSafely([]);
+        setCartTotal(0);
+        setCartCount(0);
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isHydrated]);
 
   useEffect(() => {
     // Only calculate totals if cart is a valid array
@@ -56,7 +59,6 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await cartAPI.getCart();
-      // The cart structure has items array, not direct cart array
       const cartData = response.data?.cart?.items || [];
       setCartSafely(cartData);
     } catch (error) {
@@ -75,7 +77,6 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await cartAPI.addToCart(productId, quantity);
-      // The cart structure has items array, not direct cart array
       const cartData = response.data?.cart?.items || [];
       setCartSafely(cartData);
       toast.success("Added to cart successfully");
@@ -92,7 +93,6 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await cartAPI.updateQuantity(productId, quantity);
-      // The cart structure has items array, not direct cart array
       const cartData = response.data?.cart?.items || [];
       setCartSafely(cartData);
       toast.success("Cart updated successfully");

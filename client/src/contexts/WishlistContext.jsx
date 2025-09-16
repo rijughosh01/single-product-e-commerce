@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useReducer, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { useHydration } from "@/hooks/useHydration";
 
 const WishlistContext = createContext();
 
@@ -62,6 +63,7 @@ const wishlistReducer = (state, action) => {
 export const WishlistProvider = ({ children }) => {
   const [state, dispatch] = useReducer(wishlistReducer, initialState);
   const { isAuthenticated } = useAuth();
+  const isHydrated = useHydration();
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
@@ -196,12 +198,14 @@ export const WishlistProvider = ({ children }) => {
 
   // Fetch wishlist when user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchWishlist();
-    } else {
-      dispatch({ type: "CLEAR_WISHLIST" });
+    if (isHydrated) {
+      if (isAuthenticated) {
+        fetchWishlist();
+      } else {
+        dispatch({ type: "CLEAR_WISHLIST" });
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isHydrated]);
 
   const value = {
     ...state,

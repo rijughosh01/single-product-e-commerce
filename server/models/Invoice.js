@@ -137,6 +137,10 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  discount: {
+    type: Number,
+    default: 0,
+  },
   totalAmount: {
     type: Number,
     required: true,
@@ -144,6 +148,7 @@ const invoiceSchema = new mongoose.Schema({
   amountInWords: {
     type: String,
     required: true,
+    default: "",
   },
   paymentStatus: {
     type: String,
@@ -214,6 +219,10 @@ invoiceSchema.pre("save", function (next) {
     this.dueDate = new Date(
       this.invoiceDate.getTime() + 30 * 24 * 60 * 60 * 1000
     );
+  }
+
+  if (!this.amountInWords && this.totalAmount) {
+    this.amountInWords = this.amountToWords(this.totalAmount);
   }
 
   next();
