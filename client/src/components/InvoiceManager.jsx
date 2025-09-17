@@ -327,10 +327,10 @@ const InvoiceManager = ({ className = "" }) => {
                           </td>
                           <td className="text-right p-2">{item.quantity}</td>
                           <td className="text-right p-2">
-                            {formatPrice(item.price)}
+                            {formatPrice(item.unitPrice)}
                           </td>
                           <td className="text-right p-2">
-                            {formatPrice(item.total)}
+                            {formatPrice(item.totalPrice)}
                           </td>
                         </tr>
                       ))}
@@ -348,11 +348,17 @@ const InvoiceManager = ({ className = "" }) => {
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (GST):</span>
-                    <span>{formatPrice(selectedInvoice.tax)}</span>
+                    <span>
+                      {formatPrice(
+                        (selectedInvoice.cgstTotal || 0) +
+                          (selectedInvoice.sgstTotal || 0) +
+                          (selectedInvoice.igstTotal || 0)
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping:</span>
-                    <span>{formatPrice(selectedInvoice.shipping)}</span>
+                    <span>{formatPrice(selectedInvoice.shippingCharges)}</span>
                   </div>
                   {selectedInvoice.discount > 0 && (
                     <div className="flex justify-between text-green-600">

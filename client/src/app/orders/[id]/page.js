@@ -171,10 +171,33 @@ export default function OrderDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Loading order details...</p>
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white flex items-center justify-center">
+        <div className="w-full max-w-5xl px-6">
+          <div className="mb-6 h-10 w-40 bg-orange-100/70 rounded animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {[...Array(2)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 bg-white p-6"
+                >
+                  <div className="h-6 w-48 bg-gray-100 rounded animate-pulse" />
+                  <div className="mt-4 h-28 bg-gray-50 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 bg-white p-6"
+                >
+                  <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
+                  <div className="mt-4 h-16 bg-gray-50 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -201,7 +224,7 @@ export default function OrderDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white py-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -221,13 +244,14 @@ export default function OrderDetails() {
               <p className="text-gray-600">Order #{order._id}</p>
             </div>
           </div>
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 rounded-full"></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Status */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="w-5 h-5" />
@@ -254,7 +278,7 @@ export default function OrderDetails() {
             </Card>
 
             {/* Order Items */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle>Order Items</CardTitle>
               </CardHeader>
@@ -265,7 +289,7 @@ export default function OrderDetails() {
                       key={index}
                       className="flex items-center gap-4 py-4 border-b last:border-b-0"
                     >
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                         <img
                           src={
                             typeof item.image === "string"
@@ -273,7 +297,7 @@ export default function OrderDetails() {
                               : item.image?.url || "/placeholder-ghee.jpg"
                           }
                           alt={item.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex-1">
@@ -299,7 +323,7 @@ export default function OrderDetails() {
             </Card>
 
             {/* Order Timeline */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle>Order Timeline</CardTitle>
               </CardHeader>
@@ -466,9 +490,9 @@ export default function OrderDetails() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-6 self-start">
             {/* Customer Information */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
@@ -500,7 +524,7 @@ export default function OrderDetails() {
             </Card>
 
             {/* Shipping Address */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
@@ -527,7 +551,7 @@ export default function OrderDetails() {
             </Card>
 
             {/* Payment Information */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
@@ -565,7 +589,7 @@ export default function OrderDetails() {
             </Card>
 
             {/* Order Summary */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
@@ -617,13 +641,19 @@ export default function OrderDetails() {
                         {formatPrice(order.totalPrice || 0)}
                       </span>
                     </div>
+                    <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-orange-500 to-yellow-400"
+                        style={{ width: "100%" }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <Card>
+            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
               <CardHeader>
                 <CardTitle>Actions</CardTitle>
               </CardHeader>

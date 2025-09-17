@@ -115,10 +115,47 @@ export default function AdminOrderDetail() {
     }
   };
 
+  const formatINR = (value) => {
+    const num = Number.parseFloat(value || 0);
+    const rounded = Math.round((num + Number.EPSILON) * 100) / 100;
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(rounded);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white flex items-center justify-center">
+        <div className="w-full max-w-6xl px-6 space-y-6">
+          <div className="h-10 w-48 bg-orange-100/70 rounded animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {[...Array(2)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 bg-white p-6"
+                >
+                  <div className="h-6 w-48 bg-gray-100 rounded animate-pulse" />
+                  <div className="mt-4 h-28 bg-gray-50 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-gray-200 bg-white p-6"
+                >
+                  <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
+                  <div className="mt-4 h-16 bg-gray-50 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -146,15 +183,17 @@ export default function AdminOrderDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden border-b border-orange-100/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,146,60,0.08),transparent_40%),radial-gradient(ellipse_at_bottom_right,rgba(250,204,21,0.08),transparent_40%)]" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
               <Link
                 href="/admin/orders"
                 className="text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Back to orders"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
@@ -168,7 +207,7 @@ export default function AdminOrderDetail() {
             <div className="flex items-center space-x-4">
               <Link
                 href={`/admin/orders/${order._id}/edit`}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Order
@@ -176,6 +215,7 @@ export default function AdminOrderDetail() {
             </div>
           </div>
         </div>
+        <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -183,7 +223,7 @@ export default function AdminOrderDetail() {
           {/* Order Information */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Status */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Status
               </h2>
@@ -228,7 +268,7 @@ export default function AdminOrderDetail() {
             </div>
 
             {/* Order Items */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Items
               </h2>
@@ -240,7 +280,11 @@ export default function AdminOrderDetail() {
                   >
                     <div className="flex-shrink-0">
                       <img
-                        src={item.image || "/placeholder-ghee.jpg"}
+                        src={
+                          typeof item.image === "string"
+                            ? item.image
+                            : item.image?.url || "/placeholder-ghee.jpg"
+                        }
                         alt={item.name}
                         className="h-16 w-16 object-cover rounded-lg"
                       />
@@ -253,12 +297,12 @@ export default function AdminOrderDetail() {
                         Quantity: {item.quantity}
                       </p>
                       <p className="text-sm text-gray-500">
-                        Price: ₹{item.price} each
+                        Price: {formatINR(item.price)} each
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        ₹{item.price * item.quantity}
+                        {formatINR(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -267,7 +311,7 @@ export default function AdminOrderDetail() {
             </div>
 
             {/* Order Timeline */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Timeline
               </h2>
@@ -432,9 +476,9 @@ export default function AdminOrderDetail() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-6 self-start">
             {/* Customer Information */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <User className="h-5 w-5 mr-2" />
                 Customer Information
@@ -443,48 +487,48 @@ export default function AdminOrderDetail() {
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">
-                    {order.user.name}
+                    {order.user?.name}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">
-                    {order.user.email}
+                    {order.user?.email}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">
-                    {order.shippingInfo.phone}
+                    {order.shippingInfo?.phone}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Shipping Address */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <MapPin className="h-5 w-5 mr-2" />
                 Shipping Address
               </h2>
               <div className="space-y-2">
                 <p className="text-sm text-gray-900 font-medium">
-                  {order.shippingInfo.name}
+                  {order.shippingInfo?.name}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {order.shippingInfo.address}
+                  {order.shippingInfo?.address}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {order.shippingInfo.city}, {order.shippingInfo.state}
+                  {order.shippingInfo?.city}, {order.shippingInfo?.state}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {order.shippingInfo.pincode}
+                  {order.shippingInfo?.pincode}
                 </p>
               </div>
             </div>
 
             {/* Payment Information */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <CreditCard className="h-5 w-5 mr-2" />
                 Payment Information
@@ -493,32 +537,34 @@ export default function AdminOrderDetail() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Method:</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {order.paymentInfo.method}
+                    {order.paymentInfo?.method}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Status:</span>
                   <span
                     className={`text-sm font-medium ${
-                      order.paymentInfo.status === "succeeded"
+                      order.paymentInfo?.status === "succeeded"
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    {order.paymentInfo.status}
+                    {order.paymentInfo?.status}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Paid At:</span>
                   <span className="text-sm font-medium text-gray-900">
-                    {new Date(order.paidAt).toLocaleDateString()}
+                    {order.paidAt
+                      ? new Date(order.paidAt).toLocaleDateString()
+                      : "N/A"}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Order Summary
               </h2>
@@ -526,13 +572,13 @@ export default function AdminOrderDetail() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Items Price:</span>
                   <span className="text-sm font-medium text-gray-900">
-                    ₹{order.itemsPrice}
+                    {formatINR(order.itemsPrice)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Tax:</span>
                   <span className="text-sm font-medium text-gray-900">
-                    ₹{order.taxPrice}
+                    {formatINR(order.taxPrice)}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -541,7 +587,7 @@ export default function AdminOrderDetail() {
                     {order.shippingPrice === 0 ? (
                       <span className="text-green-600">FREE</span>
                     ) : (
-                      `₹${order.shippingPrice}`
+                      formatINR(order.shippingPrice)
                     )}
                   </span>
                 </div>
@@ -551,10 +597,12 @@ export default function AdminOrderDetail() {
                       Coupon Discount:
                     </span>
                     <span className="text-sm font-medium text-green-600">
-                      -₹
-                      {order.coupon.discountApplied ||
-                        order.coupon.discount ||
-                        0}
+                      -
+                      {formatINR(
+                        order.coupon.discountApplied ||
+                          order.coupon.discount ||
+                          0
+                      )}
                     </span>
                   </div>
                 )}
@@ -564,8 +612,14 @@ export default function AdminOrderDetail() {
                       Total:
                     </span>
                     <span className="text-base font-semibold text-gray-900">
-                      ₹{order.totalPrice}
+                      {formatINR(order.totalPrice)}
                     </span>
+                  </div>
+                  <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-orange-500 to-yellow-400"
+                      style={{ width: "100%" }}
+                    ></div>
                   </div>
                 </div>
               </div>
