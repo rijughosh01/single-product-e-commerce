@@ -24,13 +24,17 @@ import { toast } from "sonner";
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState(null);
   const [filters, setFilters] = useState({
     status: "",
     method: "",
     page: 1,
-    limit: 10,
+    limit: 100,
   });
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -43,7 +47,24 @@ export default function AdminPayments() {
     try {
       setLoading(true);
       const response = await paymentAPI.getAllPayments(filters);
-      setPayments(response.data.payments || []);
+      const newItems = response.data.payments || [];
+      const apiHasMore = response.data?.pagination?.hasMore || false;
+
+      if (filters.page > 1) {
+        setPayments((prev) => {
+          const merged = [...prev, ...newItems];
+          const seen = new Set();
+          return merged.filter((p) => {
+            if (seen.has(p.id)) return false;
+            seen.add(p.id);
+            return true;
+          });
+        });
+      } else {
+        setPayments(newItems);
+      }
+
+      setHasMore(apiHasMore);
     } catch (error) {
       console.error("Error loading payments:", error);
       toast.error("Failed to load payments");
@@ -73,6 +94,21 @@ export default function AdminPayments() {
     e.preventDefault();
     // Implement search functionality
     loadPayments();
+  };
+
+  const viewDetails = async (paymentId) => {
+    try {
+      setDetailsLoading(true);
+      setDetailsOpen(true);
+      const response = await paymentAPI.getPaymentDetails(paymentId);
+      setPaymentDetails(response.data.payment || null);
+    } catch (error) {
+      console.error("Error fetching payment details:", error);
+      toast.error("Failed to load payment details");
+      setDetailsOpen(false);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -261,7 +297,10 @@ export default function AdminPayments() {
                   Export
                 </Button>
 
-                <Button onClick={loadPayments} variant="outline">
+                <Button
+                  onClick={() => setFilters((prev) => ({ ...prev, page: 1 }))}
+                  variant="outline"
+                >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh
                 </Button>
@@ -329,10 +368,7 @@ export default function AdminPayments() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            // Implement view details
-                            toast.info("View details coming soon");
-                          }}
+                          onClick={() => viewDetails(payment.id)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View
@@ -350,8 +386,109 @@ export default function AdminPayments() {
                 </div>
               )}
             </div>
+            {/* Load more */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Showing {payments.length} payments
+              </div>
+              {hasMore && (
+                <Button
+                  onClick={() =>
+                    setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
+                  }
+                >
+                  Load more
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
+        {/* Details Modal */}
+        {detailsOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setDetailsOpen(false)}
+            />
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[85vh] flex flex-col">
+              <div className="p-4 md:p-6 border-b sticky top-0 bg-white rounded-t-lg">
+                <h3 className="text-lg font-semibold">Payment Details</h3>
+              </div>
+              <div className="p-4 md:p-6 overflow-y-auto">
+                {detailsLoading && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Loading...
+                  </div>
+                )}
+                {!detailsLoading && paymentDetails && (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Payment ID</p>
+                      <p className="font-mono text-sm">{paymentDetails.id}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500">Amount</p>
+                        <p className="font-medium">
+                          {new Intl.NumberFormat("en-IN", {
+                            style: "currency",
+                            currency: paymentDetails.currency || "INR",
+                          }).format(paymentDetails.amount || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Method</p>
+                        <p className="font-medium">
+                          {paymentDetails.method?.toUpperCase() || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Status</p>
+                        <div className="mt-1">
+                          {getStatusBadge(paymentDetails.status)}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Captured</p>
+                        <p className="font-medium">
+                          {paymentDetails.captured ? "Yes" : "No"}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Created At</p>
+                      <p className="font-medium">
+                        {formatDate(paymentDetails.created_at)}
+                      </p>
+                    </div>
+                    {paymentDetails.description && (
+                      <div>
+                        <p className="text-xs text-gray-500">Description</p>
+                        <p className="font-medium break-words">
+                          {paymentDetails.description}
+                        </p>
+                      </div>
+                    )}
+                    {paymentDetails.notes &&
+                      Object.keys(paymentDetails.notes).length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500">Notes</p>
+                          <div className="mt-1 rounded border p-3 text-sm text-gray-700 bg-gray-50 max-h-56 overflow-auto">
+                            <pre className="whitespace-pre-wrap break-words">
+                              {JSON.stringify(paymentDetails.notes, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+              <div className="p-3 md:p-4 border-t flex justify-end sticky bottom-0 bg-white rounded-b-lg">
+                <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

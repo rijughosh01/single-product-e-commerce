@@ -536,8 +536,9 @@ exports.refundPayment = async (req, res, next) => {
 // Get all payments - Admin => /api/v1/admin/payments
 exports.getAllPayments = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, method } = req.query;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 100, status, method } = req.query;
+    const safeLimit = Math.min(parseInt(limit), 100) || 100;
+    const skip = (page - 1) * safeLimit;
 
     let query = {};
     if (status) query.status = status;
@@ -545,7 +546,7 @@ exports.getAllPayments = async (req, res, next) => {
 
     const payments = await razorpay.payments.all({
       ...query,
-      count: parseInt(limit),
+      count: safeLimit,
       skip: skip,
     });
 
@@ -564,8 +565,9 @@ exports.getAllPayments = async (req, res, next) => {
       })),
       pagination: {
         page: parseInt(page),
-        limit: parseInt(limit),
-        total: payments.count,
+        limit: safeLimit,
+        returned: payments.count,
+        hasMore: payments.items?.length === safeLimit,
       },
     });
   } catch (error) {
@@ -585,10 +587,23 @@ exports.getPaymentStats = async (req, res, next) => {
       query.to = new Date(to).getTime() / 1000;
     }
 
-    const payments = await razorpay.payments.all(query);
+    const pageSize = 100;
+    let skip = 0;
+    const allItems = [];
+    while (true) {
+      const pageResp = await razorpay.payments.all({
+        ...query,
+        count: pageSize,
+        skip,
+      });
+      const items = pageResp.items || [];
+      allItems.push(...items);
+      if (items.length < pageSize) break;
+      skip += pageSize;
+    }
 
     const stats = {
-      totalPayments: payments.count,
+      totalPayments: allItems.length,
       totalAmount: 0,
       successfulPayments: 0,
       failedPayments: 0,
@@ -598,7 +613,7 @@ exports.getPaymentStats = async (req, res, next) => {
       dailyStats: {},
     };
 
-    payments.items.forEach((payment) => {
+    allItems.forEach((payment) => {
       const amount = payment.amount / 100;
       stats.totalAmount += amount;
 

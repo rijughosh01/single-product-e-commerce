@@ -26,6 +26,8 @@ const InvoiceManager = ({ className = "" }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date_desc");
 
   useEffect(() => {
     fetchInvoices();
@@ -137,19 +139,50 @@ const InvoiceManager = ({ className = "" }) => {
     }).format(price);
   };
 
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.order?.orderNumber
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+  const getDisplayOrderNumber = (order) => {
+    if (!order) return "N/A";
+    return (
+      order.orderNumber ||
+      (order._id ? order._id.slice(-6).toUpperCase() : "N/A")
+    );
+  };
+
+  const filteredInvoices = invoices
+    .filter((invoice) => {
+      const matchesSearch =
+        invoice.invoiceNumber
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        invoice.order?.orderNumber
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        invoice.order?._id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        invoice.paymentStatus?.toLowerCase() === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "amount_desc":
+          return (b.totalAmount || 0) - (a.totalAmount || 0);
+        case "amount_asc":
+          return (a.totalAmount || 0) - (b.totalAmount || 0);
+        case "date_asc":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case "date_desc":
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
 
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Invoice Management</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -159,6 +192,26 @@ const InvoiceManager = ({ className = "" }) => {
               className="pl-10 w-64"
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+          >
+            <option value="all">All Status</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
+          >
+            <option value="date_desc">Newest first</option>
+            <option value="date_asc">Oldest first</option>
+            <option value="amount_desc">Amount: High → Low</option>
+            <option value="amount_asc">Amount: Low → High</option>
+          </select>
         </div>
       </div>
 
@@ -203,7 +256,7 @@ const InvoiceManager = ({ className = "" }) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Package className="w-4 h-4" />
-                          Order #{invoice.order?.orderNumber || "N/A"}
+                          Order #{getDisplayOrderNumber(invoice.order)}
                         </div>
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-4 h-4" />
@@ -286,6 +339,10 @@ const InvoiceManager = ({ className = "" }) => {
                     <p>
                       <strong>Due Date:</strong>{" "}
                       {formatDate(selectedInvoice.dueDate)}
+                    </p>
+                    <p>
+                      <strong>Order:</strong> #
+                      {getDisplayOrderNumber(selectedInvoice.order)}
                     </p>
                     <div className="flex items-center gap-2">
                       <strong>Status:</strong>
