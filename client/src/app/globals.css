@@ -62,14 +62,115 @@
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
   }
-  
+
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
-  
+
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/90 backdrop-blur-[1px];
   }
-  
 
+  .product-card {
+    @apply bg-gradient-to-br from-cream-50 to-amber-50 border border-amber-100 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2;
+  }
+
+  .product-card-image {
+    @apply relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50;
+  }
+
+  .product-card-content {
+    @apply p-6 bg-white/80 backdrop-blur-sm;
+  }
+
+  .product-badge {
+    @apply bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg;
+  }
+
+  .product-price {
+    @apply text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent;
+  }
+
+  .product-button {
+    @apply bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105;
+  }
+
+  .wishlist-button {
+    @apply bg-white border-2 border-amber-200 hover:border-amber-300 hover:bg-amber-50 text-amber-600 hover:text-amber-700 p-3 rounded-xl transition-all duration-300 hover:shadow-md hover:scale-105 min-w-[48px] h-[48px] flex items-center justify-center;
+  }
+
+  .wishlist-button[data-state="active"] {
+    @apply bg-red-500 border-red-500 text-white hover:bg-red-600 hover:border-red-600;
+  }
+
+  /* Custom animation classes */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #f59e0b;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d97706;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

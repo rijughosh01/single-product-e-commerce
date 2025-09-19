@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,20 @@ export default function ProductDetail() {
   const [pageSize, setPageSize] = useState(10);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 40 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: "easeOut" },
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
   const renderStars = (rating, sizeClass = "w-5 h-5") => {
     const stars = [];
@@ -243,7 +258,6 @@ export default function ProductDetail() {
         )}`;
         break;
       case "instagram":
-        // Instagram doesn't support direct URL sharing, so we'll copy the URL
         copyToClipboard();
         toast.success("Link copied for Instagram!");
         return;
@@ -263,7 +277,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-white to-white py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
@@ -284,7 +298,7 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-white to-white py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Product not found
@@ -323,7 +337,7 @@ export default function ProductDetail() {
     },
   ];
 
-  // Derived reviews view: sort and slice for UX controls
+  // Derived reviews view
   const sortedAndSlicedReviews = (() => {
     const list = Array.isArray(product?.reviews) ? [...product.reviews] : [];
     if (sort === "top") {
@@ -345,9 +359,8 @@ export default function ProductDetail() {
   })();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/40 via-white to-white py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
           <Link href="/" className="hover:text-amber-600">
             Home
@@ -360,23 +373,41 @@ export default function ProductDetail() {
           <span className="text-gray-900">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
           {/* Product Images */}
-          <div className="space-y-4">
-            <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
-              <Image
-                src={
-                  product.images?.[selectedImage]?.url ||
-                  "/placeholder-ghee.jpg"
-                }
-                alt={product.name}
-                fill
-                className="object-cover"
-              />
+          <motion.div className="space-y-4" variants={fadeInUp}>
+            <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow">
+              <motion.div
+                whileHover={{ scale: 1.06 }}
+                transition={{ duration: 0.35 }}
+                className="w-full h-full cursor-zoom-in"
+              >
+                <Image
+                  src={
+                    product.images?.[selectedImage]?.url ||
+                    "/placeholder-ghee.jpg"
+                  }
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
               {product.discount > 0 && (
-                <Badge className="absolute top-4 left-4 bg-red-500">
-                  {product.discount}% OFF
-                </Badge>
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="absolute top-4 left-4"
+                >
+                  <span className="product-badge">{product.discount}% OFF</span>
+                </motion.div>
               )}
             </div>
 
@@ -384,7 +415,7 @@ export default function ProductDetail() {
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-2">
                 {product.images.map((image, index) => (
-                  <button
+                  <motion.button
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
@@ -392,6 +423,8 @@ export default function ProductDetail() {
                         ? "border-amber-500"
                         : "border-gray-200"
                     }`}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <Image
                       src={image?.url || "/placeholder-ghee.jpg"}
@@ -399,14 +432,17 @@ export default function ProductDetail() {
                       fill
                       className="object-cover"
                     />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-6 lg:sticky lg:top-24"
+            variants={fadeInUp}
+          >
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 {product.name}
@@ -504,7 +540,7 @@ export default function ProductDetail() {
 
               <div className="flex space-x-4">
                 <Button
-                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 rounded-full h-12 text-base"
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
                 >
@@ -512,7 +548,7 @@ export default function ProductDetail() {
                   {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
                 </Button>
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex-1 bg-green-600 hover:bg-green-700 rounded-full h-12 text-base"
                   onClick={handleBuyNow}
                   disabled={product.stock === 0}
                 >
@@ -589,7 +625,12 @@ export default function ProductDetail() {
             {/* Features */}
             <div className="grid grid-cols-2 gap-4">
               {features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-3">
+                <motion.div
+                  key={index}
+                  className="flex items-start space-x-3"
+                  whileHover={{ y: -3 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
                   {feature.icon}
                   <div>
                     <h4 className="font-medium text-gray-900">
@@ -599,14 +640,20 @@ export default function ProductDetail() {
                       {feature.description}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Tabs */}
-        <div className="mt-16">
+        <motion.div
+          className="mt-16"
+          variants={fadeInUp}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+        >
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8">
               {[
@@ -874,11 +921,12 @@ export default function ProductDetail() {
                           <Button
                             variant="outline"
                             onClick={() => setShowReviewForm(false)}
+                            className="rounded-full"
                           >
                             Cancel
                           </Button>
                           <Button
-                            className="bg-amber-600 hover:bg-amber-700"
+                            className="bg-amber-600 hover:bg-amber-700 rounded-full"
                             onClick={submitReview}
                             disabled={
                               submitting ||
@@ -950,7 +998,7 @@ export default function ProductDetail() {
                       Be the first to share your thoughts on this product.
                     </p>
                     <Button
-                      className="bg-amber-600 hover:bg-amber-700"
+                      className="bg-amber-600 hover:bg-amber-700 rounded-full"
                       onClick={() => setShowReviewForm(true)}
                     >
                       Write a Review
@@ -960,7 +1008,7 @@ export default function ProductDetail() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
