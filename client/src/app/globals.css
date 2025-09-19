@@ -174,3 +174,77 @@
     background-position: 200% 0;
   }
 }
+
+/* Custom navbar animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Navbar specific styles */
+.navbar-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.navbar-fade-in {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.navbar-pulse {
+  animation: pulse 2s infinite;
+}
+
+.navbar-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* focus styles */
+.navbar-focus:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: rgb(249 115 22 / 0.5);
+  ring-offset: 2px;
+}
+
+/* Hover effects */
+.navbar-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Mobile menu animations */
+.mobile-menu-enter {
+  animation: slideDown 0.3s ease-out;
+}
+
+.mobile-menu-exit {
+  animation: slideDown 0.3s ease-out reverse;
+}
