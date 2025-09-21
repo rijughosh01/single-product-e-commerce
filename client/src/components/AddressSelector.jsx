@@ -197,10 +197,10 @@ const AddressSelector = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Delivery Address
+        <h3 className="text-xl font-bold text-gray-900">
+          Select Delivery Address
         </h3>
         {!showForm && (
           <Button
@@ -208,7 +208,7 @@ const AddressSelector = ({
             onClick={() => setShowForm(true)}
             variant="outline"
             size="sm"
-            className="text-orange-600 border-orange-200 hover:bg-orange-50"
+            className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:border-orange-400 rounded-xl transition-all duration-300 font-semibold"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New
@@ -218,10 +218,10 @@ const AddressSelector = ({
 
       {/* Add/Edit Address Form */}
       {showForm && (
-        <Card className="border-orange-200">
-          <CardHeader className="pb-4">
+        <Card className="border-2 border-orange-200 shadow-lg bg-gradient-to-r from-orange-50 to-amber-50">
+          <CardHeader className="pb-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">
+              <CardTitle className="text-lg font-bold">
                 {editingAddress ? "Edit Address" : "Add New Address"}
               </CardTitle>
               <Button
@@ -229,12 +229,13 @@ const AddressSelector = ({
                 variant="ghost"
                 size="sm"
                 onClick={cancelForm}
+                className="text-white hover:bg-white/20 rounded-xl"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -247,6 +248,7 @@ const AddressSelector = ({
                     onChange={handleInputChange}
                     placeholder="Enter full name"
                     required
+                    className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                   />
                 </div>
 
@@ -260,6 +262,7 @@ const AddressSelector = ({
                     onChange={handleInputChange}
                     placeholder="Enter phone number"
                     required
+                    className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -274,6 +277,7 @@ const AddressSelector = ({
                   onChange={handleInputChange}
                   placeholder="Enter street address"
                   required
+                  className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                 />
               </div>
 
@@ -288,6 +292,7 @@ const AddressSelector = ({
                     onChange={handleInputChange}
                     placeholder="Enter city"
                     required
+                    className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                   />
                 </div>
 
@@ -301,6 +306,7 @@ const AddressSelector = ({
                     onChange={handleInputChange}
                     placeholder="Enter state"
                     required
+                    className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                   />
                 </div>
 
@@ -314,6 +320,7 @@ const AddressSelector = ({
                     onChange={handleInputChange}
                     placeholder="Enter pincode"
                     required
+                    className="rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                   />
                 </div>
               </div>
@@ -338,13 +345,14 @@ const AddressSelector = ({
                   variant="outline"
                   onClick={cancelForm}
                   disabled={loading}
+                  className="rounded-xl hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {loading
                     ? "Saving..."
@@ -380,47 +388,48 @@ const AddressSelector = ({
               </Button>
             </Card>
           ) : (
-            addresses.map((address) => (
+            addresses.map((address, index) => (
               <Card
                 key={address._id}
-                className={`cursor-pointer transition-all duration-200 ${
+                className={`cursor-pointer transition-all duration-300 group ${
                   selectedAddress?._id === address._id
-                    ? "ring-2 ring-orange-500 border-orange-200 bg-orange-50"
-                    : "hover:border-orange-200 hover:shadow-sm"
+                    ? "ring-2 ring-orange-500 border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50 shadow-lg"
+                    : "hover:border-orange-300 hover:shadow-lg bg-white"
                 }`}
                 onClick={() => handleAddressSelect(address)}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-medium text-gray-900">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <h4 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
                           {address.name}
                         </h4>
                         {address.isDefault && (
-                          <Badge className="bg-orange-100 text-orange-800 text-xs">
+                          <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                             <Star className="w-3 h-3 mr-1" />
                             Default
                           </Badge>
                         )}
                         {selectedAddress?._id === address._id && (
-                          <Badge className="bg-green-100 text-green-800 text-xs">
+                          <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                             <Check className="w-3 h-3 mr-1" />
                             Selected
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {address.phone}
+                      <p className="text-base text-gray-600 mb-2 font-medium">
+                        📞 {address.phone}
                       </p>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {address.address}
+                      <p className="text-base text-gray-600 mb-2 font-medium">
+                        📍 {address.address}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        {address.city}, {address.state} - {address.pincode}
+                      <p className="text-base text-gray-600 font-medium">
+                        🏙️ {address.city}, {address.state} - {address.pincode}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-1 ml-4">
+                    <div className="flex items-center space-x-2 ml-4">
                       {!address.isDefault && (
                         <Button
                           type="button"
@@ -430,7 +439,7 @@ const AddressSelector = ({
                             e.stopPropagation();
                             handleSetDefault(address._id);
                           }}
-                          className="text-gray-400 hover:text-orange-600"
+                          className="text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
                         >
                           <Star className="w-4 h-4" />
                         </Button>
@@ -443,7 +452,7 @@ const AddressSelector = ({
                           e.stopPropagation();
                           handleEdit(address);
                         }}
-                        className="text-gray-400 hover:text-blue-600"
+                        className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -455,7 +464,7 @@ const AddressSelector = ({
                           e.stopPropagation();
                           handleDelete(address._id);
                         }}
-                        className="text-gray-400 hover:text-red-600"
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300"
                       >
                         <X className="w-4 h-4" />
                       </Button>

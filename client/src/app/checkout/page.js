@@ -172,54 +172,67 @@ export default function Checkout() {
     loadingSummary
   ) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 flex items-center justify-center">
         <div className="text-center">
-          <p>Loading checkout...</p>
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <p className="text-lg font-medium text-gray-700">
+            Loading checkout...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Step Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-4 text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <span className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center font-semibold">
+        <div className="mb-12">
+          <div className="flex items-center justify-center gap-6 text-sm">
+            <div className="flex items-center gap-3 text-gray-600">
+              <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-500">
                 1
               </span>
-              Cart
+              <span className="font-medium">Cart</span>
             </div>
-            <div className="h-[1px] w-12 bg-gray-300" />
-            <div className="flex items-center gap-2 text-amber-600 font-medium">
-              <span className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
+            <div className="h-1 w-16 bg-gray-300 rounded-full" />
+            <div className="flex items-center gap-3 text-orange-600 font-bold">
+              <span className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-center font-bold shadow-lg">
                 2
               </span>
-              Address
+              <span className="font-bold">Address</span>
             </div>
-            <div className="h-[1px] w-12 bg-gray-300" />
-            <div className="flex items-center gap-2 text-gray-400">
-              <span className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center font-semibold">
+            <div className="h-1 w-16 bg-gray-300 rounded-full" />
+            <div className="flex items-center gap-3 text-gray-400">
+              <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold">
                 3
               </span>
-              Payment
+              <span className="font-medium">Payment</span>
             </div>
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-center text-gray-900">
+          <h1 className="mt-8 text-5xl font-bold text-center text-gray-900 mb-4">
             Secure Checkout
           </h1>
-          <p className="text-center text-gray-600">
+          <p className="text-center text-xl text-gray-600 max-w-2xl mx-auto">
             Select delivery address and complete your order
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Address + Order items + Price breakdown */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-8">
             {/* Address Selection */}
-            <Card className="shadow-sm">
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">📍</span>
+                  </div>
+                  Delivery Address
+                </CardTitle>
+              </CardHeader>
               <CardContent className="p-6">
                 <AddressSelector
                   selectedAddress={selectedAddress}
@@ -230,18 +243,24 @@ export default function Checkout() {
             </Card>
 
             {/* Order Items */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Order Items</CardTitle>
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">🛒</span>
+                  </div>
+                  Order Items
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="divide-y">
-                  {cart.map((item) => (
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {cart.map((item, index) => (
                     <div
                       key={item._id}
-                      className="flex items-center gap-4 py-4"
+                      className="group flex items-center gap-4 p-4 bg-gradient-to-r from-white to-orange-50 border border-orange-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden ring-1 ring-gray-200">
+                      <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300">
                         <img
                           src={
                             item.product.images[0]?.url ||
@@ -250,22 +269,25 @@ export default function Checkout() {
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
+                        {/* <div className="absolute -top-2 -right-7 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white min-w-[28px] h-7 flex items-center justify-center">
+                          {item.quantity}
+                        </div> */}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
-                            <h3 className="text-base font-semibold text-gray-900 truncate">
+                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
                               {item.product.name}
                             </h3>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm text-gray-600 font-medium">
                               {item.product.type} • {item.product.size}
                             </p>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 font-medium">
                               Qty {item.quantity}
                             </div>
-                            <div className="text-base font-semibold text-gray-900">
+                            <div className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                               ₹{item.product.price * item.quantity}
                             </div>
                           </div>
@@ -278,27 +300,34 @@ export default function Checkout() {
             </Card>
 
             {/* Price breakdown */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Price Details</CardTitle>
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">💰</span>
+                  </div>
+                  Price Details
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">
+              <CardContent className="p-6">
+                <div className="space-y-4 text-base">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Subtotal</span>
+                    <span className="font-bold">
                       ₹{(summary?.subtotal ?? 0).toFixed(2)}
                     </span>
                   </div>
                   {summary?.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-green-600 font-medium">
                       <span>Discount</span>
-                      <span>-₹{(summary.discount || 0).toFixed(2)}</span>
+                      <span className="font-bold">
+                        -₹{(summary.discount || 0).toFixed(2)}
+                      </span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Shipping</span>
+                    <span className="font-bold">
                       {summary?.shipping === 0 ? (
                         <span className="text-green-600">FREE</span>
                       ) : (
@@ -306,15 +335,18 @@ export default function Checkout() {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (GST)</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Tax (GST)</span>
+                    <span className="font-bold">
                       ₹{(summary?.tax ?? 0).toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex justify-between pt-2 mt-2 border-t text-base font-semibold">
-                    <span>Total</span>
-                    <span>₹{(orderData.totalPrice || 0).toFixed(2)}</span>
+                  <div className="border-t border-gray-200 my-4"></div>
+                  <div className="flex justify-between text-xl font-bold bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl">
+                    <span className="text-gray-900">Total</span>
+                    <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                      ₹{(orderData.totalPrice || 0).toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </CardContent>

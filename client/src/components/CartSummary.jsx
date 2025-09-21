@@ -139,13 +139,13 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
       );
     }
 
-    console.log("=== COUPON VALIDATION DEBUG ===");
-    console.log("Coupon code:", couponCode.trim());
-    console.log("Cart summary:", cartSummary);
-    console.log("Cart items:", cart);
-    console.log("Calculated subtotal:", subtotal);
-    console.log("Subtotal type:", typeof subtotal);
-    console.log("Subtotal is valid:", !isNaN(subtotal) && subtotal > 0);
+    // console.log("=== COUPON VALIDATION DEBUG ===");
+    // console.log("Coupon code:", couponCode.trim());
+    // console.log("Cart summary:", cartSummary);
+    // console.log("Cart items:", cart);
+    // console.log("Calculated subtotal:", subtotal);
+    // console.log("Subtotal type:", typeof subtotal);
+    // console.log("Subtotal is valid:", !isNaN(subtotal) && subtotal > 0);
 
     if (!subtotal || subtotal <= 0 || isNaN(subtotal)) {
       toast.error("Cart is empty or subtotal not calculated");
@@ -320,45 +320,49 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5" />
+    <Card
+      className={`${className} shadow-xl border-0 bg-white/80 backdrop-blur-sm`}
+    >
+      <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <ShoppingCart className="w-6 h-6" />
           Cart Summary
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-6 space-y-6">
         {/* Coupon Section */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <Tag className="w-4 h-4" />
+        <div className="space-y-3">
+          <label className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+            <Tag className="w-5 h-5 text-orange-500" />
             Coupon Code
           </label>
           {appliedCoupon ? (
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">
-                  {appliedCoupon.code} applied
-                </span>
-                <Badge variant="secondary" className="text-xs">
-                  {(() => {
-                    const type =
-                      appliedCoupon.type || appliedCoupon.discountType;
-                    const value =
-                      appliedCoupon.value ??
-                      appliedCoupon.discountValue ??
-                      appliedCoupon.discount;
-                    if (type === "percentage") return `${value}% off`;
-                    return `${formatPrice(Number(value) || 0)} off`;
-                  })()}
-                </Badge>
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <span className="text-sm font-bold text-green-800">
+                    {appliedCoupon.code} applied
+                  </span>
+                  <Badge className="ml-2 bg-green-500 text-white text-xs">
+                    {(() => {
+                      const type =
+                        appliedCoupon.type || appliedCoupon.discountType;
+                      const value =
+                        appliedCoupon.value ??
+                        appliedCoupon.discountValue ??
+                        appliedCoupon.discount;
+                      if (type === "percentage") return `${value}% off`;
+                      return `${formatPrice(Number(value) || 0)} off`;
+                    })()}
+                  </Badge>
+                </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleRemoveCoupon}
-                className="text-red-600 hover:text-red-700"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-300"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -370,12 +374,13 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 onKeyPress={(e) => e.key === "Enter" && handleApplyCoupon()}
-                className="flex-1"
+                className="flex-1 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
               />
               <Button
                 onClick={handleApplyCoupon}
                 disabled={couponLoading || !couponCode.trim()}
                 size="sm"
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl transition-all duration-300"
               >
                 {couponLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -390,9 +395,9 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
         <Separator />
 
         {/* Shipping Calculator */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-2">
-            <Truck className="w-4 h-4" />
+        <div className="space-y-3">
+          <label className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+            <Truck className="w-5 h-5 text-orange-500" />
             Shipping Calculator
           </label>
           <div className="flex gap-2">
@@ -405,24 +410,24 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
                   calculateShipping(value);
                 }
               }}
-              className="flex-1"
+              className="flex-1 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
             />
           </div>
           {shippingLoading && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-sm text-gray-500 p-3 bg-gray-50 rounded-xl">
               <Loader2 className="w-4 h-4 animate-spin" />
               Calculating shipping...
             </div>
           )}
           {shippingInfo && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-800">
+                <span className="text-sm font-bold text-blue-800">
                   Shipping to {shippingInfo.pincode}
                 </span>
-                <span className="text-sm font-medium text-blue-800">
+                <span className="text-sm font-bold text-blue-800">
                   {shippingInfo.shippingCharge === 0 ? (
-                    <Badge variant="secondary" className="text-green-600">
+                    <Badge className="bg-green-500 text-white text-xs">
                       FREE
                     </Badge>
                   ) : (
@@ -431,7 +436,7 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
                 </span>
               </div>
               {shippingInfo.estimatedDelivery && (
-                <p className="text-xs text-blue-600 mt-1">
+                <p className="text-xs text-blue-600 mt-2 font-medium">
                   Estimated delivery: {shippingInfo.estimatedDelivery}
                 </p>
               )}
@@ -442,16 +447,20 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
         <Separator />
 
         {/* Price Breakdown */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Subtotal ({cartSummary.itemCount} items)</span>
-            <span>{formatPrice(cartSummary.subtotal)}</span>
+        <div className="space-y-4">
+          <div className="flex justify-between text-base font-medium">
+            <span className="text-gray-700">
+              Subtotal ({cartSummary.itemCount} items)
+            </span>
+            <span className="font-bold">
+              {formatPrice(cartSummary.subtotal)}
+            </span>
           </div>
 
           {appliedCoupon && (
-            <div className="flex justify-between text-sm text-green-600">
+            <div className="flex justify-between text-base text-green-600 font-medium">
               <span>Discount ({appliedCoupon.code})</span>
-              <span>
+              <span className="font-bold">
                 -
                 {formatPrice(
                   Number(cartSummary.discount) ||
@@ -462,9 +471,9 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
             </div>
           )}
 
-          <div className="flex justify-between text-sm">
-            <span>Shipping</span>
-            <span>
+          <div className="flex justify-between text-base font-medium">
+            <span className="text-gray-700">Shipping</span>
+            <span className="font-bold">
               {shippingInfo ? (
                 shippingInfo.shippingCharge === 0 ? (
                   <span className="text-green-600">FREE</span>
@@ -480,16 +489,16 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
             </span>
           </div>
 
-          <div className="flex justify-between text-sm">
-            <span>Tax (GST)</span>
-            <span>{formatPrice(cartSummary.tax)}</span>
+          <div className="flex justify-between text-base font-medium">
+            <span className="text-gray-700">Tax (GST)</span>
+            <span className="font-bold">{formatPrice(cartSummary.tax)}</span>
           </div>
 
-          <Separator />
+          <Separator className="my-4" />
 
-          <div className="flex justify-between text-lg font-semibold">
-            <span>Total</span>
-            <span>
+          <div className="flex justify-between text-xl font-bold bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl">
+            <span className="text-gray-900">Total</span>
+            <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
               {formatPrice(
                 (cartSummary.subtotal || 0) +
                   (cartSummary.tax || 0) +
@@ -513,10 +522,10 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
 
           if (qualifiesForFreeShipping) {
             return (
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-800">
-                  You qualify for free shipping!
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-bold text-green-800">
+                  🎉 You qualify for free shipping!
                 </span>
               </div>
             );
@@ -524,9 +533,9 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
             const amountNeeded =
               freeShippingThreshold - (cartSummary.subtotal || 0);
             return (
-              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-amber-600" />
-                <span className="text-sm text-amber-800">
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl shadow-sm">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <span className="text-sm font-bold text-amber-800">
                   Add {formatPrice(amountNeeded)} more for free shipping
                 </span>
               </div>
@@ -535,7 +544,11 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
         })()}
 
         {/* Proceed to Checkout Button */}
-        <Button onClick={onProceedToCheckout} className="w-full" size="lg">
+        <Button
+          onClick={onProceedToCheckout}
+          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          size="lg"
+        >
           Proceed to Checkout
         </Button>
       </CardContent>
