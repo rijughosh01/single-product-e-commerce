@@ -171,33 +171,14 @@ export default function OrderDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white flex items-center justify-center">
-        <div className="w-full max-w-5xl px-6">
-          <div className="mb-6 h-10 w-40 bg-orange-100/70 rounded animate-pulse" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {[...Array(2)].map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-gray-200 bg-white p-6"
-                >
-                  <div className="h-6 w-48 bg-gray-100 rounded animate-pulse" />
-                  <div className="mt-4 h-28 bg-gray-50 rounded animate-pulse" />
-                </div>
-              ))}
-            </div>
-            <div className="space-y-6">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-gray-200 bg-white p-6"
-                >
-                  <div className="h-6 w-40 bg-gray-100 rounded animate-pulse" />
-                  <div className="mt-4 h-16 bg-gray-50 rounded animate-pulse" />
-                </div>
-              ))}
-            </div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
+          <p className="text-lg font-medium text-gray-700">
+            Loading order details...
+          </p>
         </div>
       </div>
     );
@@ -205,17 +186,22 @@ export default function OrderDetails() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 flex items-center justify-center">
         <div className="text-center">
-          <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Package className="w-12 h-12 text-white" />
+          </div>
+          <h3 className="text-4xl font-bold text-gray-900 mb-4">
             Order not found
           </h3>
-          <p className="text-gray-500 mb-4">
+          <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
             The order you are looking for does not exist or you do not have
             permission to view it.
           </p>
-          <Button onClick={() => router.push("/orders")}>
+          <Button
+            onClick={() => router.push("/orders")}
+            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+          >
             View All Orders
           </Button>
         </div>
@@ -224,121 +210,66 @@ export default function OrderDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/orders")}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Orders
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Order Details
-              </h1>
-              <p className="text-gray-600">Order #{order._id}</p>
+        <div className="mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/orders")}
+                className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Orders
+              </Button>
+              <div>
+                <h1 className="text-5xl font-bold text-gray-900 mb-2">
+                  Order Details
+                </h1>
+                <p className="text-xl text-gray-600">Order #{order._id}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge
+                className={`px-4 py-2 text-sm font-semibold ${getStatusColor(
+                  order.orderStatus
+                )}`}
+              >
+                {getStatusIcon(order.orderStatus)}
+                <span className="ml-2">{order.orderStatus}</span>
+              </Badge>
             </div>
           </div>
-          <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 rounded-full"></div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Information */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Order Status */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5" />
-                  Order Status
+          <div className="lg:col-span-2 space-y-8">
+            {/* Order Timeline */}
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">📋</span>
+                  </div>
+                  Order Timeline
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-3 rounded-full ${getStatusColor(
-                      order.orderStatus
-                    )}`}
-                  >
-                    {getStatusIcon(order.orderStatus)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Current Status
-                    </p>
-                    <p className="text-lg font-semibold">{order.orderStatus}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Order Items */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle>Order Items</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {order.orderItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 py-4 border-b last:border-b-0"
-                    >
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-                        <img
-                          src={
-                            typeof item.image === "string"
-                              ? item.image
-                              : item.image?.url || "/placeholder-ghee.jpg"
-                          }
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">
-                          {item.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Qty: {item.quantity}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Price: {formatPrice(item.price)} each
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          {formatPrice(item.price * item.quantity)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Order Timeline */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle>Order Timeline</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="p-6">
+                <div className="space-y-6">
                   {/* Order Placed - Always shown */}
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <div className="w-3 h-3 bg-blue-600 rounded-full shadow-lg"></div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
+                    <div className="flex-1">
+                      <p className="text-base font-semibold text-gray-900">
                         Order Placed
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-600">
                         {formatDate(order.createdAt)}
                       </p>
                     </div>
@@ -346,15 +277,15 @@ export default function OrderDetails() {
 
                   {/* Payment Confirmed - Show if paid */}
                   {order.paidAt && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-green-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Payment Confirmed
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {formatDate(order.paidAt)}
                         </p>
                       </div>
@@ -367,15 +298,15 @@ export default function OrderDetails() {
                     order.orderStatus === "Shipped" ||
                     order.orderStatus === "Out for Delivery" ||
                     order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-yellow-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Processing
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.paidAt
                             ? formatDate(order.paidAt)
                             : formatDate(order.createdAt)}
@@ -389,15 +320,15 @@ export default function OrderDetails() {
                     order.orderStatus === "Shipped" ||
                     order.orderStatus === "Out for Delivery" ||
                     order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-blue-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Confirmed
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.paidAt
                             ? formatDate(order.paidAt)
                             : formatDate(order.createdAt)}
@@ -410,15 +341,15 @@ export default function OrderDetails() {
                   {(order.orderStatus === "Shipped" ||
                     order.orderStatus === "Out for Delivery" ||
                     order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-purple-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Shipped
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.shippedAt
                             ? formatDate(order.shippedAt)
                             : formatDate(order.createdAt)}
@@ -430,15 +361,15 @@ export default function OrderDetails() {
                   {/* Out for Delivery - Show if status is Out for Delivery or Delivered */}
                   {(order.orderStatus === "Out for Delivery" ||
                     order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-orange-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Out for Delivery
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.outForDeliveryAt
                             ? formatDate(order.outForDeliveryAt)
                             : formatDate(order.createdAt)}
@@ -449,15 +380,15 @@ export default function OrderDetails() {
 
                   {/* Delivered - Show only if status is Delivered */}
                   {order.orderStatus === "Delivered" && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-green-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Delivered
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.deliveredAt
                             ? formatDate(order.deliveredAt)
                             : formatDate(order.createdAt)}
@@ -468,15 +399,15 @@ export default function OrderDetails() {
 
                   {/* Cancelled - Show if status is Cancelled */}
                   {order.orderStatus === "Cancelled" && (
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                        <div className="w-3 h-3 bg-red-600 rounded-full shadow-lg"></div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="flex-1">
+                        <p className="text-base font-semibold text-gray-900">
                           Cancelled
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600">
                           {order.cancelledAt
                             ? formatDate(order.cancelledAt)
                             : formatDate(order.createdAt)}
@@ -487,35 +418,91 @@ export default function OrderDetails() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Order Items */}
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">🛒</span>
+                  </div>
+                  Order Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {order.orderItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className="group flex items-center gap-6 p-6 bg-gradient-to-r from-white to-orange-50 border border-orange-100 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <img
+                          src={
+                            typeof item.image === "string"
+                              ? item.image
+                              : item.image?.url || "/placeholder-ghee.jpg"
+                          }
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          {item.quantity}
+                        </div> */}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 font-medium">
+                          Qty: {item.quantity}
+                        </p>
+                        <p className="text-sm text-gray-600 font-medium">
+                          Price: {formatPrice(item.price)} each
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                          {formatPrice(item.price * item.quantity)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6 lg:sticky lg:top-6 self-start">
+          <div className="space-y-8 lg:sticky lg:top-6 self-start">
             {/* Customer Information */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">👤</span>
+                  </div>
                   Customer Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <User className="h-5 w-5 text-orange-500" />
+                    <span className="text-base font-semibold text-gray-900">
                       {order.user?.name || "N/A"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-orange-500" />
+                    <span className="text-base font-medium text-gray-700">
                       {order.user?.email || "N/A"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-orange-500" />
+                    <span className="text-base font-medium text-gray-700">
                       {order.shippingInfo?.phone || "N/A"}
                     </span>
                   </div>
@@ -524,26 +511,28 @@ export default function OrderDetails() {
             </Card>
 
             {/* Shipping Address */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">📍</span>
+                  </div>
                   Shipping Address
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-900 font-medium">
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <p className="text-base text-gray-900 font-semibold">
                     {order.shippingInfo?.name || "N/A"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-base text-gray-700">
                     {order.shippingInfo?.address || "N/A"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-base text-gray-700">
                     {order.shippingInfo?.city || "N/A"},{" "}
                     {order.shippingInfo?.state || "N/A"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-base text-gray-700 font-medium">
                     {order.shippingInfo?.pincode || "N/A"}
                   </p>
                 </div>
@@ -551,25 +540,31 @@ export default function OrderDetails() {
             </Card>
 
             {/* Payment Information */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">💳</span>
+                  </div>
                   Payment Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Method:</span>
-                    <span className="text-sm font-medium text-gray-900">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-600 font-medium">
+                      Method:
+                    </span>
+                    <span className="text-base font-semibold text-gray-900">
                       {order.paymentInfo?.method || "N/A"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Status:</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-600 font-medium">
+                      Status:
+                    </span>
                     <span
-                      className={`text-sm font-medium ${
+                      className={`text-base font-semibold ${
                         order.paymentInfo?.status === "succeeded"
                           ? "text-green-600"
                           : "text-red-600"
@@ -578,9 +573,11 @@ export default function OrderDetails() {
                       {order.paymentInfo?.status || "N/A"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Paid At:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base text-gray-600 font-medium">
+                      Paid At:
+                    </span>
+                    <span className="text-base font-medium text-gray-700">
                       {order.paidAt ? formatDate(order.paidAt) : "N/A"}
                     </span>
                   </div>
@@ -589,27 +586,32 @@ export default function OrderDetails() {
             </Card>
 
             {/* Order Summary */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">💰</span>
+                  </div>
+                  Order Summary
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Items Price:</span>
-                    <span className="text-sm font-medium text-gray-900">
+              <CardContent className="p-6">
+                <div className="space-y-4 text-base">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Items Price:</span>
+                    <span className="font-bold">
                       {formatPrice(order.itemsPrice || 0)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Tax:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Tax (GST):</span>
+                    <span className="font-bold">
                       {formatPrice(order.taxPrice || 0)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Shipping:</span>
-                    <span className="text-sm font-medium text-gray-900">
+                  <div className="flex justify-between font-medium">
+                    <span className="text-gray-700">Shipping:</span>
+                    <span className="font-bold">
                       {order.shippingPrice === 0 ? (
                         <span className="text-green-600">FREE</span>
                       ) : (
@@ -618,11 +620,9 @@ export default function OrderDetails() {
                     </span>
                   </div>
                   {order.coupon && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">
-                        Coupon Discount:
-                      </span>
-                      <span className="text-sm font-medium text-green-600">
+                    <div className="flex justify-between text-green-600 font-medium">
+                      <span>Coupon Discount:</span>
+                      <span className="font-bold">
                         -
                         {formatPrice(
                           order.coupon.discountApplied ||
@@ -632,36 +632,32 @@ export default function OrderDetails() {
                       </span>
                     </div>
                   )}
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between">
-                      <span className="text-base font-semibold text-gray-900">
-                        Total:
-                      </span>
-                      <span className="text-base font-semibold text-gray-900">
-                        {formatPrice(order.totalPrice || 0)}
-                      </span>
-                    </div>
-                    <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-orange-500 to-yellow-400"
-                        style={{ width: "100%" }}
-                      ></div>
-                    </div>
+                  <div className="border-t border-gray-200 my-4"></div>
+                  <div className="flex justify-between text-xl font-bold bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl">
+                    <span className="text-gray-900">Total</span>
+                    <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                      {formatPrice(order.totalPrice || 0)}
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <Card className="rounded-2xl border border-orange-100/60 shadow-sm">
-              <CardHeader>
-                <CardTitle>Actions</CardTitle>
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold">⚡</span>
+                  </div>
+                  Actions
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="p-6 space-y-4">
                 <Button
                   onClick={downloadInvoice}
                   disabled={downloadingInvoice}
-                  className="w-full"
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105"
                 >
                   {downloadingInvoice ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -673,7 +669,7 @@ export default function OrderDetails() {
                 <Button
                   variant="outline"
                   onClick={loadOrderDetails}
-                  className="w-full"
+                  className="w-full hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 rounded-xl"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh Order

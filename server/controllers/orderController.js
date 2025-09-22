@@ -72,7 +72,9 @@ exports.newOrder = async (req, res, next) => {
           await couponDoc.save();
         }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error incrementing coupon usage:", err);
+    }
 
     try {
       await sendEmail({

@@ -74,7 +74,14 @@ const Header = () => {
       return Math.min(discount, amount);
     };
 
-    const couponsWithDiscount = eligibleCoupons
+    // Filter coupons that can be used
+    const usableCoupons = eligibleCoupons.filter((c) => {
+      if (c.canUse === false) return false;
+      if (c.remainingUses !== undefined && c.remainingUses <= 0) return false;
+      return true;
+    });
+
+    const couponsWithDiscount = usableCoupons
       .map((c) => {
         const discount = calculateDiscount(c);
         return {
@@ -130,8 +137,19 @@ const Header = () => {
                 <div className="flex items-center space-x-2 text-gray-700">
                   <Star className="w-4 h-4 text-orange-500" />
                   <span className="font-medium">
-                    Offer for you:{" "}
+                    Best offer:{" "}
                     <b className="text-orange-600">{bestCoupon.code}</b>
+                    {bestCoupon._discount > 0 && (
+                      <span className="text-green-600 ml-1">
+                        (Save ₹{Math.round(bestCoupon._discount)})
+                      </span>
+                    )}
+                    {bestCoupon.remainingUses !== undefined &&
+                      bestCoupon.remainingUses > 0 && (
+                        <span className="text-blue-600 text-xs ml-1">
+                          ({bestCoupon.remainingUses} left)
+                        </span>
+                      )}
                   </span>
                 </div>
               )}
@@ -333,6 +351,12 @@ const Header = () => {
                     >
                       Wishlist
                     </Link>
+                    <Link
+                      href="/coupons"
+                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
+                    >
+                      My Coupons
+                    </Link>
                     {user?.role === "admin" && (
                       <Link
                         href="/admin"
@@ -486,6 +510,13 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Wishlist
+                </Link>
+                <Link
+                  href="/coupons"
+                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Coupons
                 </Link>
                 {user?.role === "admin" && (
                   <Link

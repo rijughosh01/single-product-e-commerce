@@ -1,5 +1,6 @@
 const Coupon = require("../models/Coupon");
 const ErrorHandler = require("../utils/errorHandler");
+const mongoose = require("mongoose");
 const {
   calculateBestCoupon,
   getCouponAnalytics,
@@ -28,14 +29,13 @@ exports.validateCoupon = async (req, res, next) => {
       return next(new ErrorHandler("Coupon is not valid or has expired", 400));
     }
 
-    const canUse = await coupon.canBeUsedByUser(
+    const validationDetails = await coupon.getValidationDetails(
       req.user?.id,
       Number(orderAmount)
     );
-    if (!canUse) {
-      return next(
-        new ErrorHandler("Coupon cannot be applied to this order", 400)
-      );
+    if (!validationDetails.isValid) {
+      const errorMessage = validationDetails.reasons.join(". ");
+      return next(new ErrorHandler(errorMessage, 400));
     }
 
     const discount = coupon.calculateDiscount(Number(orderAmount));
@@ -50,6 +50,9 @@ exports.validateCoupon = async (req, res, next) => {
         discount: discount,
         minimumOrderAmount: coupon.minimumOrderAmount,
         maximumDiscount: coupon.maximumDiscount,
+        userUsage: validationDetails.userUsage,
+        remainingUses: validationDetails.remainingUses,
+        maxUsagePerUser: coupon.userRestrictions?.maxUsagePerUser || 1,
       },
     });
   } catch (error) {
@@ -300,6 +303,137 @@ exports.getBestCoupon = async (req, res, next) => {
       bestCoupon,
       eligibleCoupons: eligible,
       orderAmount: amount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get user's coupon usage information => /api/v1/coupons/my-usage
+exports.getMyCouponUsage = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return next(new ErrorHandler("User not authenticated", 401));
+    }
+
+    const Order = require("../models/Order");
+
+    // Get all coupons the user has used
+    const userCouponUsage = await Order.aggregate([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(userId),
+          "coupon.code": { $exists: true, $ne: null },
+          orderStatus: {
+            $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$coupon.code",
+          usageCount: { $sum: 1 },
+          totalDiscount: { $sum: "$coupon.discountApplied" },
+          lastUsed: { $max: "$createdAt" },
+          orders: {
+            $push: {
+              orderId: "$_id",
+              date: "$createdAt",
+              discount: "$coupon.discountApplied",
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "coupons",
+          localField: "_id",
+          foreignField: "code",
+          as: "couponDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$couponDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          code: "$_id",
+          usageCount: 1,
+          totalDiscount: 1,
+          lastUsed: 1,
+          orders: 1,
+          maxUsagePerUser: "$couponDetails.userRestrictions.maxUsagePerUser",
+          remainingUses: {
+            $subtract: [
+              {
+                $ifNull: ["$couponDetails.userRestrictions.maxUsagePerUser", 1],
+              },
+              "$usageCount",
+            ],
+          },
+          isFirstTimeOnly: "$couponDetails.userRestrictions.firstTimeOnly",
+          description: "$couponDetails.description",
+          discountType: "$couponDetails.discountType",
+          discountValue: "$couponDetails.discountValue",
+        },
+      },
+      {
+        $sort: { lastUsed: -1 },
+      },
+    ]);
+
+    // Get available coupons with usage info
+    const now = new Date();
+    const availableCoupons = await Coupon.find({
+      isActive: true,
+      validFrom: { $lte: now },
+      validUntil: { $gte: now },
+    });
+
+    const availableCouponsWithUsage = [];
+    for (const coupon of availableCoupons) {
+      const userUsage = userCouponUsage.find(
+        (usage) => usage.code === coupon.code
+      );
+      const usageCount = userUsage ? userUsage.usageCount : 0;
+      const maxUsage = coupon.userRestrictions?.maxUsagePerUser || 1;
+      const remainingUses = Math.max(0, maxUsage - usageCount);
+
+      availableCouponsWithUsage.push({
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        minimumOrderAmount: coupon.minimumOrderAmount,
+        maximumDiscount: coupon.maximumDiscount,
+        userUsage: usageCount,
+        maxUsagePerUser: maxUsage,
+        remainingUses: remainingUses,
+        canUse: remainingUses > 0,
+        isFirstTimeOnly: coupon.userRestrictions?.firstTimeOnly || false,
+        validUntil: coupon.validUntil,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      usedCoupons: userCouponUsage,
+      availableCoupons: availableCouponsWithUsage,
+      summary: {
+        totalCouponsUsed: userCouponUsage.length,
+        totalDiscountReceived: userCouponUsage.reduce(
+          (sum, usage) => sum + usage.totalDiscount,
+          0
+        ),
+        totalOrdersWithCoupons: userCouponUsage.reduce(
+          (sum, usage) => sum + usage.usageCount,
+          0
+        ),
+      },
     });
   } catch (error) {
     next(error);

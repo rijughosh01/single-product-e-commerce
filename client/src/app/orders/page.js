@@ -168,23 +168,32 @@ export default function OrdersPage() {
   });
 
   const renderSkeletons = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {[...Array(3)].map((_, i) => (
         <div
           key={i}
-          className="overflow-hidden rounded-xl border border-gray-200 bg-white"
+          className="overflow-hidden rounded-2xl border-0 bg-white/80 backdrop-blur-sm shadow-lg"
         >
-          <div className="h-1 w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+          <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400" />
           <div className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
-              <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="h-8 w-24 bg-gray-200 rounded-full animate-pulse" />
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div className="h-10 bg-gray-100 rounded animate-pulse" />
-              <div className="h-10 bg-gray-100 rounded animate-pulse" />
-              <div className="h-10 bg-gray-100 rounded animate-pulse" />
+            <div className="mb-4">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-3" />
+              <div className="flex gap-4">
+                <div className="h-16 w-16 bg-gray-200 rounded-xl animate-pulse" />
+                <div className="h-16 w-16 bg-gray-200 rounded-xl animate-pulse" />
+                <div className="h-16 w-16 bg-gray-200 rounded-xl animate-pulse" />
+              </div>
             </div>
+            <div className="flex items-center gap-6 mb-4">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full animate-pulse" />
           </div>
         </div>
       ))}
@@ -192,35 +201,41 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-amber-50 to-white py-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="relative overflow-hidden rounded-2xl border border-orange-100 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 shadow-sm">
+        <div className="mb-12">
+          <div className="relative overflow-hidden rounded-2xl border-0 bg-white/80 backdrop-blur-sm shadow-xl">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(251,146,60,0.08),transparent_40%),radial-gradient(ellipse_at_bottom_right,rgba(250,204,21,0.08),transparent_40%)]" />
             <div className="relative p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-2">
                   My Orders
                 </h1>
-                <p className="mt-1 text-gray-600">
+                <p className="text-lg text-gray-600">
                   Track and manage your orders
                 </p>
               </div>
-              <div className="grid grid-cols-3 divide-x rounded-xl border bg-white shadow-sm overflow-hidden">
+              <div className="grid grid-cols-3 divide-x rounded-xl border border-orange-100 bg-gradient-to-r from-white to-orange-50 shadow-lg overflow-hidden">
                 <div className="p-4">
-                  <p className="text-xs text-gray-500">Total Orders</p>
-                  <p className="text-lg font-semibold">{orders.length}</p>
+                  <p className="text-sm text-gray-600 font-medium">
+                    Total Orders
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {orders.length}
+                  </p>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-gray-500">Delivered</p>
-                  <p className="text-lg font-semibold text-green-600">
+                  <p className="text-sm text-gray-600 font-medium">Delivered</p>
+                  <p className="text-2xl font-bold text-green-600">
                     {orders.filter((o) => o.orderStatus === "Delivered").length}
                   </p>
                 </div>
                 <div className="p-4">
-                  <p className="text-xs text-gray-500">In Progress</p>
-                  <p className="text-lg font-semibold text-blue-600">
+                  <p className="text-sm text-gray-600 font-medium">
+                    In Progress
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600">
                     {
                       orders.filter((o) =>
                         [
@@ -240,25 +255,25 @@ export default function OrdersPage() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search orders by ID or product name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white/80 shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-3 border border-orange-200 rounded-xl bg-white/80 shadow-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg bg-white/80 shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-4 py-3 border border-orange-200 rounded-xl bg-white/80 shadow-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
               >
                 <option value="all">All Status</option>
                 <option value="Processing">Processing</option>
@@ -272,14 +287,19 @@ export default function OrdersPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg bg-white/80 shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="px-4 py-3 border border-orange-200 rounded-xl bg-white/80 shadow-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
               >
                 <option value="date_desc">Newest first</option>
                 <option value="date_asc">Oldest first</option>
                 <option value="amount_desc">Amount: high to low</option>
                 <option value="amount_asc">Amount: low to high</option>
               </select>
-              <Button variant="outline" onClick={loadOrders} disabled={loading}>
+              <Button
+                variant="outline"
+                onClick={loadOrders}
+                disabled={loading}
+                className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 rounded-xl"
+              >
                 <RefreshCw
                   className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
                 />
@@ -287,7 +307,7 @@ export default function OrdersPage() {
               </Button>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             {[
               "all",
               "Processing",
@@ -299,10 +319,10 @@ export default function OrdersPage() {
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1 rounded-full text-sm border transition-colors hover:shadow-sm ${
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all duration-300 hover:shadow-md ${
                   statusFilter === s
-                    ? "bg-orange-600 text-white border-orange-600"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-500 shadow-lg"
+                    : "bg-white text-gray-700 border-orange-200 hover:bg-orange-50 hover:border-orange-300"
                 }`}
               >
                 {s}
@@ -315,30 +335,36 @@ export default function OrdersPage() {
         {loading ? (
           renderSkeletons()
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Package className="w-12 h-12 text-white" />
+            </div>
+            <h3 className="text-4xl font-bold text-gray-900 mb-4">
               {orders.length === 0
                 ? "No orders found"
                 : "No orders match your search"}
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">
               {orders.length === 0
                 ? "You haven't placed any orders yet. Start shopping to see your orders here."
                 : "Try adjusting your search criteria or filters."}
             </p>
             {orders.length === 0 && (
-              <Button onClick={() => router.push("/products")}>
+              <Button
+                onClick={() => router.push("/products")}
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-8 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
                 Start Shopping
               </Button>
             )}
           </div>
         ) : (
-          <div className="space-y-5">
-            {sortedOrders.map((order) => (
+          <div className="space-y-6">
+            {sortedOrders.map((order, index) => (
               <Card
                 key={order._id}
-                className="hover:shadow-lg transition-all duration-200 overflow-hidden border border-gray-200 rounded-2xl"
+                className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-0 rounded-2xl shadow-lg bg-white/80 backdrop-blur-sm hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <CardContent className="p-0">
                   <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400" />
@@ -346,40 +372,40 @@ export default function OrdersPage() {
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                       {/* Order Info */}
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
                               Order #{order._id}
                             </h3>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-base text-gray-600 font-medium">
                               Placed on {formatDate(order.createdAt)}
                             </p>
                           </div>
                           <Badge
                             className={`${getStatusColor(
                               order.orderStatus
-                            )} border px-2.5 py-0.5 rounded-full`}
+                            )} border px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm`}
                           >
                             {order.orderStatus}
                           </Badge>
                         </div>
 
                         {/* Order Items Preview */}
-                        <div className="mb-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Package className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-700">
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Package className="w-5 h-5 text-orange-500" />
+                            <span className="text-base font-semibold text-gray-700">
                               {order.orderItems.length} item
                               {order.orderItems.length !== 1 ? "s" : ""}
                             </span>
                           </div>
-                          <div className="flex flex-wrap gap-3">
+                          <div className="flex flex-wrap gap-4">
                             {order.orderItems.slice(0, 3).map((item, index) => (
                               <div
                                 key={index}
-                                className="flex items-center gap-2"
+                                className="group/item flex items-center gap-3 p-3 bg-gradient-to-r from-white to-orange-50 border border-orange-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
                               >
-                                <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden">
+                                <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shadow-md group-hover/item:scale-105 transition-transform duration-300">
                                   <img
                                     src={
                                       typeof item.image === "string"
@@ -392,17 +418,17 @@ export default function OrdersPage() {
                                   />
                                 </div>
                                 <div className="text-sm text-gray-700">
-                                  <p className="leading-4 line-clamp-1">
+                                  <p className="leading-4 line-clamp-1 font-semibold">
                                     {item.name}
                                   </p>
-                                  <p className="text-gray-500">
+                                  <p className="text-gray-500 font-medium">
                                     Qty: {item.quantity}
                                   </p>
                                 </div>
                               </div>
                             ))}
                             {order.orderItems.length > 3 && (
-                              <div className="text-sm text-gray-500 self-center">
+                              <div className="text-sm text-gray-500 self-center font-medium">
                                 +{order.orderItems.length - 3} more
                               </div>
                             )}
@@ -410,16 +436,20 @@ export default function OrdersPage() {
                         </div>
 
                         {/* Order Summary */}
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <CreditCard className="w-4 h-4" />
-                            <span>{order.paymentInfo?.method || "N/A"}</span>
+                        <div className="flex items-center gap-6 text-base text-gray-600 mb-4">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-5 h-5 text-orange-500" />
+                            <span className="font-medium">
+                              {order.paymentInfo?.method || "N/A"}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{order.shippingInfo?.city || "N/A"}</span>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-5 h-5 text-orange-500" />
+                            <span className="font-medium">
+                              {order.shippingInfo?.city || "N/A"}
+                            </span>
                           </div>
-                          <div className="text-lg font-semibold text-gray-900">
+                          <div className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                             {formatPrice(order.totalPrice)}
                           </div>
                         </div>
@@ -455,11 +485,12 @@ export default function OrdersPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => router.push(`/orders/${order._id}`)}
+                          className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 rounded-xl"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
@@ -469,6 +500,7 @@ export default function OrdersPage() {
                           size="sm"
                           onClick={() => downloadInvoice(order._id)}
                           disabled={downloadingInvoice === order._id}
+                          className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 rounded-xl"
                         >
                           {downloadingInvoice === order._id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>

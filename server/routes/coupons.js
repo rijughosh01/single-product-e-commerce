@@ -12,6 +12,7 @@ const {
   getCouponSuggestions,
   validateCouponRules,
   getBestCoupon,
+  getMyCouponUsage,
 } = require("../controllers/couponController");
 
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
@@ -21,6 +22,7 @@ const router = express.Router();
 // Authenticated routes
 router.route("/coupon/validate").post(isAuthenticatedUser, validateCoupon);
 router.route("/coupons/eligible").get(isAuthenticatedUser, getEligibleCoupons);
+router.route("/coupons/my-usage").get(isAuthenticatedUser, getMyCouponUsage);
 
 // Admin routes
 router

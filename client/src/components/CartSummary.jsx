@@ -28,6 +28,8 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
   const [loading, setLoading] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [shippingLoading, setShippingLoading] = useState(false);
+  const [couponError, setCouponError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     fetchCartSummary();
@@ -122,7 +124,7 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
     }
   };
 
-  const handleApplyCoupon = async () => {
+  const handleApplyCoupon = async (isRetry = false) => {
     if (!couponCode.trim()) {
       toast.error("Please enter a coupon code");
       return;
@@ -139,58 +141,112 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
       );
     }
 
-    // console.log("=== COUPON VALIDATION DEBUG ===");
-    // console.log("Coupon code:", couponCode.trim());
-    // console.log("Cart summary:", cartSummary);
-    // console.log("Cart items:", cart);
-    // console.log("Calculated subtotal:", subtotal);
-    // console.log("Subtotal type:", typeof subtotal);
-    // console.log("Subtotal is valid:", !isNaN(subtotal) && subtotal > 0);
-
     if (!subtotal || subtotal <= 0 || isNaN(subtotal)) {
       toast.error("Cart is empty or subtotal not calculated");
       return;
     }
 
     setCouponLoading(true);
+    setCouponError(null);
+
     try {
       const requestData = {
         code: couponCode.trim(),
         orderAmount: Number(subtotal),
       };
 
-      console.log("Request data being sent:", requestData);
-      console.log("Request data validation:", {
-        hasCode: !!requestData.code,
-        hasOrderAmount: !!requestData.orderAmount,
-        codeValue: requestData.code,
-        orderAmountValue: requestData.orderAmount,
-        orderAmountType: typeof requestData.orderAmount,
-      });
-
       const response = await couponsAPI.validateCoupon(requestData);
       if (response.data.success) {
-        setAppliedCoupon(response.data.coupon);
-        // Persist for checkout page
+        const couponData = response.data.coupon;
+        setAppliedCoupon(couponData);
+        setRetryCount(0);
+
+        // Show success message with usage info
+        const usageInfo =
+          couponData.userUsage > 0
+            ? ` (Used ${couponData.userUsage}/${couponData.maxUsagePerUser} times)`
+            : "";
+        toast.success(`Coupon applied successfully!${usageInfo}`);
+
         try {
           if (couponCode?.trim()) {
             localStorage.setItem("checkoutCouponCode", couponCode.trim());
           }
         } catch (e) {}
         await fetchCartSummary(couponCode.trim());
-        toast.success("Coupon applied successfully!");
       } else {
-        toast.error(response.data.message || "Invalid coupon code");
+        const errorMessage = response.data.message || "Invalid coupon code";
+        setCouponError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
-      console.error("Coupon validation error:", error);
-      console.error("Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-      const message = error.response?.data?.message || "Failed to apply coupon";
-      toast.error(message);
+      // Handle different types of errors with specific messages
+      let errorMessage = "Failed to apply coupon";
+      let shouldRetry = false;
+      let shouldLogError = true;
+
+      if (error.response) {
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message;
+
+        switch (status) {
+          case 400:
+            shouldLogError = false;
+            errorMessage =
+              serverMessage ||
+              "Invalid coupon code or cannot be applied to this order";
+            break;
+          case 401:
+            errorMessage = "Please log in to apply coupons";
+            break;
+          case 404:
+            shouldLogError = false;
+            errorMessage = `Coupon "${couponCode.trim()}" not found. Please check the code and try again.`;
+            break;
+          case 429:
+            errorMessage =
+              "Too many attempts. Please wait a moment before trying again.";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later.";
+            shouldRetry = true;
+            break;
+          default:
+            errorMessage = serverMessage || "Failed to validate coupon";
+            shouldRetry = true;
+        }
+      } else if (
+        error.code === "ERR_NETWORK" ||
+        error.message === "Network Error"
+      ) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+        shouldRetry = true;
+      } else if (error.code === "ECONNABORTED") {
+        errorMessage = "Request timed out. Please try again.";
+        shouldRetry = true;
+      } else {
+        errorMessage = error.message || "An unexpected error occurred";
+        shouldRetry = true;
+      }
+
+      // Only log unexpected errors to console
+      if (shouldLogError) {
+        console.error("Coupon validation error:", error);
+      }
+
+      setCouponError(errorMessage);
+
+      // Auto-retry for network errors (max 2 retries)
+      if (shouldRetry && retryCount < 2 && !isRetry) {
+        setRetryCount((prev) => prev + 1);
+        toast.error(`${errorMessage} Retrying... (${retryCount + 1}/2)`);
+        setTimeout(() => {
+          handleApplyCoupon(true);
+        }, 1000 * (retryCount + 1));
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setCouponLoading(false);
     }
@@ -199,6 +255,8 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
   const handleRemoveCoupon = async () => {
     setAppliedCoupon(null);
     setCouponCode("");
+    setCouponError(null);
+    setRetryCount(0);
     try {
       localStorage.removeItem("checkoutCouponCode");
     } catch (e) {}
@@ -337,57 +395,117 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
             Coupon Code
           </label>
           {appliedCoupon ? (
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <span className="text-sm font-bold text-green-800">
-                    {appliedCoupon.code} applied
-                  </span>
-                  <Badge className="ml-2 bg-green-500 text-white text-xs">
-                    {(() => {
-                      const type =
-                        appliedCoupon.type || appliedCoupon.discountType;
-                      const value =
-                        appliedCoupon.value ??
-                        appliedCoupon.discountValue ??
-                        appliedCoupon.discount;
-                      if (type === "percentage") return `${value}% off`;
-                      return `${formatPrice(Number(value) || 0)} off`;
-                    })()}
-                  </Badge>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div>
+                    <span className="text-sm font-bold text-green-800">
+                      {appliedCoupon.code} applied
+                    </span>
+                    <Badge className="ml-2 bg-green-500 text-white text-xs">
+                      {(() => {
+                        const type =
+                          appliedCoupon.type || appliedCoupon.discountType;
+                        const value =
+                          appliedCoupon.value ??
+                          appliedCoupon.discountValue ??
+                          appliedCoupon.discount;
+                        if (type === "percentage") return `${value}% off`;
+                        return `${formatPrice(Number(value) || 0)} off`;
+                      })()}
+                    </Badge>
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveCoupon}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-300"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRemoveCoupon}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-300"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+
+              {/* Usage Information */}
+              {(appliedCoupon.userUsage !== undefined ||
+                appliedCoupon.remainingUses !== undefined) && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-blue-700 font-medium">
+                      Usage Information:
+                    </span>
+                    <div className="flex items-center gap-4 text-blue-600">
+                      {appliedCoupon.userUsage !== undefined && (
+                        <span>
+                          Used: {appliedCoupon.userUsage}/
+                          {appliedCoupon.maxUsagePerUser || 1}
+                        </span>
+                      )}
+                      {appliedCoupon.remainingUses !== undefined && (
+                        <span>Remaining: {appliedCoupon.remainingUses}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter coupon code"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                onKeyPress={(e) => e.key === "Enter" && handleApplyCoupon()}
-                className="flex-1 rounded-xl border-2 border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
-              />
-              <Button
-                onClick={handleApplyCoupon}
-                disabled={couponLoading || !couponCode.trim()}
-                size="sm"
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl transition-all duration-300"
-              >
-                {couponLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Apply"
-                )}
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter coupon code"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setCouponError(null);
+                  }}
+                  onKeyPress={(e) => e.key === "Enter" && handleApplyCoupon()}
+                  className={`flex-1 rounded-xl border-2 transition-all duration-300 ${
+                    couponError
+                      ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                      : "border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+                  }`}
+                />
+                <Button
+                  onClick={() => handleApplyCoupon()}
+                  disabled={couponLoading || !couponCode.trim()}
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl transition-all duration-300"
+                >
+                  {couponLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Apply"
+                  )}
+                </Button>
+              </div>
+
+              {/* Error message with retry button */}
+              {couponError && (
+                <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <span className="text-sm text-red-700">{couponError}</span>
+                  </div>
+                  {(retryCount > 0 ||
+                    couponError.includes("Network") ||
+                    couponError.includes("timeout") ||
+                    couponError.includes("Server error")) && (
+                    <Button
+                      onClick={() => {
+                        setRetryCount(0);
+                        handleApplyCoupon();
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      Retry
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

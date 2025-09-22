@@ -164,6 +164,7 @@ export const couponsAPI = {
   getCoupons: () => api.get("/admin/coupons"),
   getEligibleCoupons: (orderAmount = 0) =>
     api.get(`/coupons/eligible?orderAmount=${Number(orderAmount) || 0}`),
+  getMyCouponUsage: () => api.get("/coupons/my-usage"),
   createCoupon: (couponData) => api.post("/admin/coupon/new", couponData),
   updateCoupon: (id, couponData) => api.put(`/admin/coupon/${id}`, couponData),
   deleteCoupon: (id) => api.delete(`/admin/coupon/${id}`),

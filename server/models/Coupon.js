@@ -159,6 +159,9 @@ couponSchema.methods.canBeUsedByUser = async function (userId, orderAmount) {
       const userUsage = await Order.countDocuments({
         user: userId,
         "coupon.code": this.code,
+        orderStatus: {
+          $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"],
+        },
       });
       if (userUsage >= restrictions.maxUsagePerUser) return false;
     } catch (e) {
@@ -167,6 +170,125 @@ couponSchema.methods.canBeUsedByUser = async function (userId, orderAmount) {
   }
 
   return true;
+};
+
+// Method to get detailed validation
+couponSchema.methods.getValidationDetails = async function (
+  userId,
+  orderAmount
+) {
+  const details = {
+    isValid: true,
+    reasons: [],
+    userUsage: 0,
+    remainingUses: 0,
+  };
+
+  if (!this.isValid()) {
+    details.isValid = false;
+    details.reasons.push("Coupon is not active or has expired");
+    return details;
+  }
+
+  if (typeof orderAmount !== "number" || isNaN(orderAmount)) {
+    details.isValid = false;
+    details.reasons.push("Invalid order amount");
+    return details;
+  }
+
+  if (orderAmount < this.minimumOrderAmount) {
+    details.isValid = false;
+    details.reasons.push(
+      `Minimum order amount of ₹${this.minimumOrderAmount} required`
+    );
+    return details;
+  }
+
+  if (!userId) {
+    details.isValid = true;
+    return details;
+  }
+
+  const restrictions = this.userRestrictions || {};
+
+  // Check specific users restriction
+  if (
+    Array.isArray(restrictions.specificUsers) &&
+    restrictions.specificUsers.length > 0
+  ) {
+    const isAllowed = restrictions.specificUsers
+      .map((id) => String(id))
+      .includes(String(userId));
+    if (!isAllowed) {
+      details.isValid = false;
+      details.reasons.push("This coupon is not available for your account");
+      return details;
+    }
+  }
+
+  // Check first-time only restriction
+  if (restrictions.firstTimeOnly) {
+    try {
+      const Order = require("./Order");
+      const existingOrders = await Order.countDocuments({
+        user: userId,
+        orderStatus: {
+          $in: [
+            "Processing",
+            "Confirmed",
+            "Shipped",
+            "Out for Delivery",
+            "Delivered",
+          ],
+        },
+      });
+      if (existingOrders > 0) {
+        details.isValid = false;
+        details.reasons.push(
+          "This coupon is only available for first-time customers"
+        );
+        return details;
+      }
+    } catch (err) {
+      details.isValid = false;
+      details.reasons.push("Unable to validate coupon restrictions");
+      return details;
+    }
+  }
+
+  // Check per-user usage limit
+  if (restrictions.maxUsagePerUser && restrictions.maxUsagePerUser > 0) {
+    try {
+      const Order = require("./Order");
+      const userUsage = await Order.countDocuments({
+        user: userId,
+        "coupon.code": this.code,
+        orderStatus: {
+          $in: ["Confirmed", "Shipped", "Out for Delivery", "Delivered"],
+        },
+      });
+
+      details.userUsage = userUsage;
+      details.remainingUses = Math.max(
+        0,
+        restrictions.maxUsagePerUser - userUsage
+      );
+
+      if (userUsage >= restrictions.maxUsagePerUser) {
+        details.isValid = false;
+        details.reasons.push(
+          `You have already used this coupon ${userUsage} time(s). Limit: ${restrictions.maxUsagePerUser}`
+        );
+        return details;
+      }
+    } catch (e) {
+      details.isValid = false;
+      details.reasons.push("Unable to validate coupon usage limit");
+      return details;
+    }
+  }
+
+  return details;
 };
 
 // Method to calculate discount
