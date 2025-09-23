@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import ProfileOverview from "@/components/profile/ProfileOverview";
@@ -19,6 +20,8 @@ import {
   Settings,
   FileText,
   Calendar,
+  Crown,
+  Sparkles,
 } from "lucide-react";
 
 const ProfilePage = () => {
@@ -34,8 +37,16 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center space-y-4"
+        >
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-200 border-t-amber-600"></div>
+          <p className="text-amber-700 font-medium">Loading your profile...</p>
+        </motion.div>
       </div>
     );
   }
@@ -45,13 +56,48 @@ const ProfilePage = () => {
   }
 
   const tabs = [
-    { id: "overview", label: "Overview", icon: User },
-    { id: "edit", label: "Edit Profile", icon: Edit },
-    { id: "addresses", label: "Addresses", icon: MapPin },
-    { id: "orders", label: "Order History", icon: ShoppingBag },
-    { id: "subscriptions", label: "Subscriptions", icon: Calendar },
-    { id: "invoices", label: "Invoices", icon: FileText },
-    { id: "password", label: "Change Password", icon: Lock },
+    {
+      id: "overview",
+      label: "Overview",
+      icon: User,
+      color: "from-amber-500 to-orange-500",
+    },
+    {
+      id: "edit",
+      label: "Edit Profile",
+      icon: Edit,
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      id: "addresses",
+      label: "Addresses",
+      icon: MapPin,
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      id: "orders",
+      label: "Order History",
+      icon: ShoppingBag,
+      color: "from-purple-500 to-violet-500",
+    },
+    {
+      id: "subscriptions",
+      label: "Subscriptions",
+      icon: Calendar,
+      color: "from-pink-500 to-rose-500",
+    },
+    {
+      id: "invoices",
+      label: "Invoices",
+      icon: FileText,
+      color: "from-indigo-500 to-blue-500",
+    },
+    {
+      id: "password",
+      label: "Change Password",
+      icon: Lock,
+      color: "from-red-500 to-pink-500",
+    },
   ];
 
   const renderTabContent = () => {
@@ -75,51 +121,143 @@ const ProfilePage = () => {
     }
   };
 
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: "easeOut" },
+  };
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const tabVariants = {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.3, ease: "easeOut" },
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your account settings and preferences
-          </p>
-        </div>
+        {/* <motion.div
+          initial="initial"
+          animate="animate"
+          variants={staggerContainer}
+          className="mb-8"
+        >
+          <motion.div variants={fadeInUp} className="text-center mb-8">
+            <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-100 to-orange-100 px-4 py-2 rounded-full mb-4">
+              <Crown className="w-5 h-5 text-amber-600" />
+              <span className="text-amber-700 font-medium">
+                Premium Account
+              </span>
+              <Sparkles className="w-4 h-4 text-amber-500" />
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mb-4">
+              My Profile
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Manage your account settings, track orders, and personalize your
+              ghee shopping experience
+            </p>
+          </motion.div>
+        </motion.div>  */}
 
-        <div className="bg-white rounded-lg shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-4">
             {/* Sidebar */}
-            <div className="lg:col-span-1 border-r border-gray-200">
+            <div className="lg:col-span-1 bg-gradient-to-b from-amber-50 to-orange-50 border-r border-amber-100">
               <nav className="p-6">
-                <ul className="space-y-2">
-                  {tabs.map((tab) => {
+                <motion.ul
+                  initial="initial"
+                  animate="animate"
+                  variants={staggerContainer}
+                  className="space-y-3"
+                >
+                  {tabs.map((tab, index) => {
                     const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
                     return (
-                      <li key={tab.id}>
+                      <motion.li
+                        key={tab.id}
+                        variants={tabVariants}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                         <button
                           onClick={() => setActiveTab(tab.id)}
-                          className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                            activeTab === tab.id
-                              ? "bg-orange-50 text-orange-700 border border-orange-200"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                          className={`w-full flex items-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                            isActive
+                              ? `bg-gradient-to-r ${tab.color} text-white shadow-lg shadow-amber-200`
+                              : "text-gray-700 hover:bg-white/60 hover:text-gray-900 hover:shadow-md"
                           }`}
                         >
-                          <Icon className="w-5 h-5 mr-3" />
-                          {tab.label}
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeTab"
+                              className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl"
+                              transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30,
+                              }}
+                            />
+                          )}
+                          <Icon
+                            className={`w-5 h-5 mr-3 relative z-10 ${
+                              isActive
+                                ? "text-white"
+                                : "text-gray-500 group-hover:text-amber-600"
+                            }`}
+                          />
+                          <span className="relative z-10">{tab.label}</span>
+                          {isActive && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.1 }}
+                              className="ml-auto"
+                            >
+                              <Sparkles className="w-4 h-4 text-white" />
+                            </motion.div>
+                          )}
                         </button>
-                      </li>
+                      </motion.li>
                     );
                   })}
-                </ul>
+                </motion.ul>
               </nav>
             </div>
 
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <div className="p-6">{renderTabContent()}</div>
+              <div className="p-6 lg:p-8">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    {renderTabContent()}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

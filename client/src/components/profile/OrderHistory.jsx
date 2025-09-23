@@ -4,18 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ShoppingBag,
-  Eye,
-  Download,
-  Calendar,
-  MapPin,
-  Package,
-} from "lucide-react";
+import { ShoppingBag, Eye, Calendar, MapPin, Package } from "lucide-react";
 import { toast } from "sonner";
 import { ordersAPI } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const OrderHistory = () => {
+  const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -68,28 +63,28 @@ const OrderHistory = () => {
     setSelectedOrder(order);
   };
 
-  const handleDownloadInvoice = async (orderId) => {
-    try {
-      const response = await ordersAPI.getOrderInvoice(orderId);
-      if (response.status === 200) {
-        const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice-${orderId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success("Invoice downloaded successfully!");
-      } else {
-        toast.error("Failed to download invoice");
-      }
-    } catch (error) {
-      console.error("Error downloading invoice:", error);
-      toast.error("Failed to download invoice");
-    }
-  };
+  // const handleDownloadInvoice = async (orderId) => {
+  //   try {
+  //     const response = await ordersAPI.getOrderInvoice(orderId);
+  //     if (response.status === 200) {
+  //       const blob = new Blob([response.data], { type: "application/pdf" });
+  //       const url = window.URL.createObjectURL(blob);
+  //       const a = document.createElement("a");
+  //       a.href = url;
+  //       a.download = `invoice-${orderId}.pdf`;
+  //       document.body.appendChild(a);
+  //       a.click();
+  //       window.URL.revokeObjectURL(url);
+  //       document.body.removeChild(a);
+  //       toast.success("Invoice downloaded successfully!");
+  //     } else {
+  //       toast.error("Failed to download invoice");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error downloading invoice:", error);
+  //     toast.error("Failed to download invoice");
+  //   }
+  // };
 
   const handleCancelOrder = async (orderId) => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
@@ -181,29 +176,12 @@ const OrderHistory = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleViewOrder(order)}
+                    onClick={() => router.push(`/orders/${order._id}`)}
+                    className="hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 rounded-xl"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Details
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadInvoice(order._id)}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Invoice
-                  </Button>
-                  {order.orderStatus.toLowerCase() === "pending" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancelOrder(order._id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Cancel
-                    </Button>
-                  )}
                 </div>
               </div>
 
@@ -259,133 +237,6 @@ const OrderHistory = () => {
               )}
             </Card>
           ))}
-        </div>
-      )}
-
-      {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Order Details - #{selectedOrder._id.slice(-8).toUpperCase()}
-                </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedOrder(null)}
-                >
-                  ×
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                {/* Order Status */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">
-                    Status
-                  </span>
-                  <Badge className={getStatusColor(selectedOrder.orderStatus)}>
-                    {selectedOrder.orderStatus}
-                  </Badge>
-                </div>
-
-                {/* Order Items */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    Order Items
-                  </h4>
-                  <div className="space-y-3">
-                    {selectedOrder.orderItems.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg"
-                      >
-                        <img
-                          src={
-                            typeof item.image === "string"
-                              ? item.image
-                              : item.image?.url || "/placeholder-ghee.jpg"
-                          }
-                          alt={item.name}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
-                            {item.name}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Quantity: {item.quantity}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Price: ₹{item.price}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-900">
-                            ₹{(item.quantity * item.price).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Order Summary */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    Order Summary
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span>₹{selectedOrder.itemsPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping</span>
-                      <span>
-                        ₹{selectedOrder.shippingPrice.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tax</span>
-                      <span>₹{selectedOrder.taxPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between font-medium text-lg border-t border-gray-200 pt-2">
-                      <span>Total</span>
-                      <span>₹{selectedOrder.totalPrice.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Info */}
-                {selectedOrder.paymentInfo && (
-                  <div className="border-t border-gray-200 pt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Payment Information
-                    </h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Payment Method</span>
-                        <span>{selectedOrder.paymentInfo.method}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Payment Status</span>
-                        <Badge
-                          className={getStatusColor(
-                            selectedOrder.paymentInfo.status
-                          )}
-                        >
-                          {selectedOrder.paymentInfo.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>
