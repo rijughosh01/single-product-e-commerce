@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HydrationBoundary from "@/components/HydrationBoundary";
 import AuthWrapper from "@/components/AuthWrapper";
+import ConditionalLayout from "@/components/ConditionalLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,11 +39,7 @@ export default function RootLayout({ children }) {
             <AuthWrapper>
               <CartProvider>
                 <WishlistProvider>
-                  <div className="min-h-screen flex flex-col">
-                    <Header />
-                    <main className="flex-1">{children}</main>
-                    <Footer />
-                  </div>
+                  <ConditionalLayout>{children}</ConditionalLayout>
                   <Toaster position="top-right" richColors />
                 </WishlistProvider>
               </CartProvider>

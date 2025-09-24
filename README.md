@@ -1,29 +1,63 @@
-# Ghee E-commerce Backend API
+# Single Product E-commerce Platform - Ghee Store
 
-A comprehensive backend API for a single-product e-commerce website specializing in ghee products. Built with Node.js, Express, MongoDB, and integrated with Razorpay for payments.
+A full-stack e-commerce platform specialized in selling premium ghee products. Built with Next.js for the frontend and Node.js/Express for the backend, offering a seamless shopping experience with modern features and robust functionality.
 
-## Features
+## 🌟 Features
 
-### 🔐 Authentication & User Management
+### 🎨 Frontend Features (Next.js)
+
+- Modern, responsive UI built with Next.js 15 and Tailwind CSS
+- Server-side rendering 1and static generation for optimal performance
+- Dynamic image carousel for product showcasing
+- Real-time cart updates and notifications
+- Client-side form validation with React Hook Form and Zod
+- Animated transitions using Framer Motion
+- Dark/Light mode support
+- Interactive charts for admin dashboard using Chart.js
+- Protected routes with Next-Auth
+- Optimized images and lazy loading
+- Real-time notifications using WebSocket
+- Mobile-responsive design
 - User registration and login with JWT
 - Password reset functionality
 - Profile management
 - Role-based access control (User/Admin)
 
-### 🛍️ Product Management
+### �️ Backend Features (Node.js/Express)
+
+- RESTful API architecture
+- MongoDB database with Mongoose ODM
+- JWT-based authentication
+- Role-based access control (User/Admin)
+- Real-time WebSocket notifications
+- Email notifications using Nodemailer
+- File uploads with Cloudinary
+- PDF invoice generation
+- Rate limiting and security measures
+- Comprehensive error handling
+
+### 💼 Business Features
+
 - Multiple ghee variants (Cow, Buffalo, A2, Organic, Mixed)
-- Different sizes (250g, 500g, 1kg, 2kg, 5kg)
-- Product reviews and ratings
-- Stock management
-- Featured products
+- Dynamic pricing and stock management
+- Coupon system and discounts
+- Order tracking and management
+- Subscription service
+- Wishlist functionality
+- Address management
+- GST-compliant invoicing
+- Analytics and reporting
+- Razorpay payment integration
 
 ### 🛒 Shopping Cart
+
 - Add/remove items from cart
 - Update quantities
 - Cart summary with tax calculation
 - Free shipping above ₹500
 
 ### 💳 Order Management
+
 - Complete order lifecycle
 - Order tracking
 - Order cancellation
@@ -32,16 +66,19 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - PDF invoice download
 
 ### 💰 Payment Integration
+
 - Razorpay payment gateway
 - Payment verification
 - Order confirmation
 
 ### 📍 Address Management
+
 - Multiple delivery addresses
 - Default address setting
 - Address validation
 
 ### 🚚 Shipping Management
+
 - Pincode-based shipping rules
 - Dynamic shipping charges
 - Free shipping thresholds
@@ -49,6 +86,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - Zone-based shipping
 
 ### 🎫 Coupon & Discount System
+
 - Multiple coupon types (percentage/fixed)
 - Usage limits and restrictions
 - First-time user discounts
@@ -56,11 +94,13 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - Loyalty rewards
 
 ### ❤️ Wishlist Management
+
 - Add/remove products to wishlist
 - Wishlist synchronization
 - Product availability tracking
 
 ### 🔔 Notification System
+
 - Real-time notifications
 - Order status updates
 - Stock alerts
@@ -68,51 +108,105 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - Email integration
 
 ### 🔄 Subscription Management
+
 - Recurring orders
 - Flexible delivery schedules
 - Pause/resume subscriptions
 - Automatic order processing
 
 ### 📊 Admin Panel
+
 - Product management
 - Order management
 - User management
 - Sales statistics
 - Order status updates
 
-## Tech Stack
+## 🔧 Tech Stack
+
+### Frontend
+
+- **Framework**: Next.js 15
+- **UI Library**: React 19
+- **Styling**: TailwindCSS
+- **State Management**: Jotai
+- **Data Fetching**: SWR, Axios
+- **Authentication**: Next-Auth
+- **Forms**: React Hook Form, Zod
+- **Charts**: Chart.js, React-Chartjs-2
+- **Animations**: Framer Motion
+- **UI Components**: Radix UI, Shadcn UI
+- **Toast Notifications**: Sonner
+
+### Backend
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: MongoDB with Mongoose
 - **Authentication**: JWT (JSON Web Tokens)
+- **File Upload**: Cloudinary
 - **Payment**: Razorpay
 - **Email**: Nodemailer
+- **PDF Generation**: PDFKit
+- **WebSocket**: ws
 - **Security**: Helmet, Rate Limiting, CORS
 - **Validation**: Express Validator
 
-## Prerequisites
+## 📦 Project Structure
+
+### Frontend Structure
+
+```
+client/
+├── src/
+│   ├── app/           # Next.js app directory and pages
+│   ├── components/    # Reusable React components
+│   ├── contexts/      # React context providers
+│   ├── hooks/         # Custom React hooks
+│   └── lib/          # Utilities and API clients
+├── public/           # Static assets and images
+└── next.config.mjs   # Next.js configuration
+```
+
+### Backend Structure
+
+```
+server/
+├── config/          # Configuration files
+├── controllers/     # Route controllers
+├── middleware/      # Custom middleware
+├── models/         # Mongoose models
+├── routes/         # API routes
+├── utils/          # Utility functions
+└── app.js          # Main application file
+```
+
+## 📋 Prerequisites
 
 - Node.js (v14 or higher)
 - MongoDB (local or cloud)
 - Razorpay account
 - Gmail account (for email notifications)
+- Cloudinary account
 
 ## Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd server
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Environment Setup**
    Create a `.env` file in the root directory:
+
    ```env
    # Server Configuration
    PORT=5000
@@ -140,16 +234,20 @@ A comprehensive backend API for a single-product e-commerce website specializing
    ```
 
 4. **Database Setup**
+
    - Install MongoDB locally or use MongoDB Atlas
    - Update `MONGODB_URI` in `.env` file
 
 5. **Seed Database**
+
    ```bash
    npm run seed:all
    ```
+
    This will create sample products, admin user, shipping rules, and coupons.
 
 6. **Start the server**
+
    ```bash
    # Development
    npm run dev
@@ -161,6 +259,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/v1/register` - Register new user
 - `POST /api/v1/login` - User login
 - `GET /api/v1/logout` - User logout
@@ -171,6 +270,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `PUT /api/v1/password/update` - Update password
 
 ### Products
+
 - `GET /api/v1/products` - Get all products
 - `GET /api/v1/product/:id` - Get single product
 - `GET /api/v1/products/type/:type` - Get products by type
@@ -181,6 +281,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `DELETE /api/v1/reviews` - Delete review
 
 ### Cart
+
 - `POST /api/v1/cart/add` - Add item to cart
 - `GET /api/v1/cart` - Get user's cart
 - `PUT /api/v1/cart/update` - Update cart item
@@ -189,6 +290,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `GET /api/v1/cart/summary` - Get cart summary (supports coupon codes)
 
 ### Coupons
+
 - `POST /api/v1/coupon/validate` - Validate coupon code
 - `GET /api/v1/admin/coupons` - Get all coupons (Admin)
 - `POST /api/v1/admin/coupon/new` - Create coupon (Admin)
@@ -196,6 +298,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `DELETE /api/v1/admin/coupon/:id` - Delete coupon (Admin)
 
 ### Wishlist
+
 - `GET /api/v1/wishlist` - Get user's wishlist
 - `POST /api/v1/wishlist/add` - Add product to wishlist
 - `DELETE /api/v1/wishlist/remove/:productId` - Remove from wishlist
@@ -203,6 +306,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `GET /api/v1/wishlist/check/:productId` - Check if product in wishlist
 
 ### Notifications
+
 - `GET /api/v1/notifications` - Get user's notifications
 - `PUT /api/v1/notification/:id/read` - Mark notification as read
 - `PUT /api/v1/notifications/read-all` - Mark all as read
@@ -210,6 +314,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `GET /api/v1/notifications/unread-count` - Get unread count
 
 ### Subscriptions
+
 - `POST /api/v1/subscription/new` - Create subscription
 - `GET /api/v1/subscriptions` - Get user's subscriptions
 - `PUT /api/v1/subscription/:id` - Update subscription
@@ -218,12 +323,14 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `PUT /api/v1/subscription/:id/cancel` - Cancel subscription
 
 ### Orders
+
 - `POST /api/v1/order/new` - Create new order
 - `GET /api/v1/order/:id` - Get single order
 - `GET /api/v1/orders/me` - Get user's orders
 - `PUT /api/v1/order/:id/cancel` - Cancel order
 
 ### Shipping
+
 - `POST /api/v1/shipping/calculate` - Calculate shipping charges
 - `GET /api/v1/admin/shipping/rules` - Get shipping rules (Admin)
 - `POST /api/v1/admin/shipping/rule/new` - Create shipping rule (Admin)
@@ -231,16 +338,19 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `DELETE /api/v1/admin/shipping/rule/:id` - Delete shipping rule (Admin)
 
 ### Invoice
+
 - `POST /api/v1/invoice/generate/:orderId` - Generate invoice
 - `GET /api/v1/invoice/:id` - Get invoice details
 - `GET /api/v1/invoices/me` - Get user's invoices
 - `GET /api/v1/invoice/:id/pdf` - Download invoice PDF
 
 ### Payment
+
 - `POST /api/v1/payment/create-order` - Create Razorpay order
 - `POST /api/v1/payment/verify` - Verify payment
 
 ### Address Management
+
 - `POST /api/v1/address/add` - Add new address
 - `GET /api/v1/addresses` - Get user addresses
 - `PUT /api/v1/address/:id` - Update address
@@ -248,6 +358,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 - `PUT /api/v1/address/:id/default` - Set default address
 
 ### Admin Routes
+
 - `GET /api/v1/admin/users` - Get all users
 - `GET /api/v1/admin/user/:id` - Get user details
 - `PUT /api/v1/admin/user/:id` - Update user
@@ -264,6 +375,7 @@ A comprehensive backend API for a single-product e-commerce website specializing
 ## Sample API Requests
 
 ### Register User
+
 ```bash
 curl -X POST http://localhost:5000/api/v1/register \
   -H "Content-Type: application/json" \
@@ -276,6 +388,7 @@ curl -X POST http://localhost:5000/api/v1/register \
 ```
 
 ### Login User
+
 ```bash
 curl -X POST http://localhost:5000/api/v1/login \
   -H "Content-Type: application/json" \
@@ -286,11 +399,13 @@ curl -X POST http://localhost:5000/api/v1/login \
 ```
 
 ### Get Products
+
 ```bash
 curl -X GET http://localhost:5000/api/v1/products
 ```
 
 ### Add to Cart
+
 ```bash
 curl -X POST http://localhost:5000/api/v1/cart/add \
   -H "Content-Type: application/json" \
@@ -302,6 +417,7 @@ curl -X POST http://localhost:5000/api/v1/cart/add \
 ```
 
 ### Calculate Shipping
+
 ```bash
 curl -X POST http://localhost:5000/api/v1/shipping/calculate \
   -H "Content-Type: application/json" \
@@ -312,12 +428,14 @@ curl -X POST http://localhost:5000/api/v1/shipping/calculate \
 ```
 
 ### Generate Invoice
+
 ```bash
 curl -X POST http://localhost:5000/api/v1/invoice/generate/ORDER_ID \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### Download Invoice PDF
+
 ```bash
 curl -X GET http://localhost:5000/api/v1/invoice/INVOICE_ID/pdf \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -327,12 +445,14 @@ curl -X GET http://localhost:5000/api/v1/invoice/INVOICE_ID/pdf \
 ## Database Schema
 
 ### User Schema
+
 - Basic info (name, email, password, phone)
 - Addresses array with multiple addresses
 - Role (user/admin)
 - Email verification status
 
 ### Product Schema
+
 - Product details (name, description, price)
 - Variants (type, size)
 - Stock management
@@ -340,6 +460,7 @@ curl -X GET http://localhost:5000/api/v1/invoice/INVOICE_ID/pdf \
 - Nutritional information
 
 ### Order Schema
+
 - Order items with quantities
 - Shipping information
 - Payment details
@@ -347,6 +468,7 @@ curl -X GET http://localhost:5000/api/v1/invoice/INVOICE_ID/pdf \
 - Delivery tracking
 
 ### Cart Schema
+
 - User reference
 - Items array with products and quantities
 - Total calculations
@@ -364,6 +486,7 @@ curl -X GET http://localhost:5000/api/v1/invoice/INVOICE_ID/pdf \
 ## Email Notifications
 
 The system sends email notifications for:
+
 - Order confirmation
 - Order status updates
 - Password reset

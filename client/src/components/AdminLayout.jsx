@@ -132,7 +132,7 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-24 bottom-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col min-h-0 max-h-screen ${
+        className={`fixed left-0 top-0 bottom-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col min-h-0 max-h-screen ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
@@ -258,7 +258,7 @@ const AdminLayout = ({ children }) => {
       )}
 
       {/* Main content */}
-      <div className="pt-1 lg:pl-80">
+      <div className="lg:pl-80">
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
