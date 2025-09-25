@@ -68,6 +68,17 @@ export default function OrderDetails() {
 
       let invoiceId = order.invoice;
 
+      // Prevent COD invoice access before delivery
+      if (
+        order?.paymentInfo?.method === "cod" &&
+        order?.orderStatus !== "Delivered"
+      ) {
+        toast.info(
+          "Invoice will be available after delivery for Cash on Delivery orders"
+        );
+        return;
+      }
+
       // Generate invoice if not exists
       if (!invoiceId) {
         const generateResponse = await invoiceAPI.generateInvoice(order._id);
@@ -97,8 +108,15 @@ export default function OrderDetails() {
     } catch (error) {
       console.error("Error downloading invoice:", error);
 
-      // Show coming soon message for invoice errors
-      if (error.response?.status === 400 || error.response?.status === 500) {
+      if (error.response?.status === 403) {
+        toast.info(
+          error.response?.data?.message ||
+            "Invoice will be available after delivery for Cash on Delivery orders"
+        );
+      } else if (
+        error.response?.status === 400 ||
+        error.response?.status === 500
+      ) {
         toast.info(
           "Invoice download feature coming soon! We're working on it."
         );

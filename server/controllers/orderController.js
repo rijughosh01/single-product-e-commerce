@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const Invoice = require("../models/Invoice");
 const ErrorHandler = require("../utils/errorHandler");
 const sendEmail = require("../utils/sendEmail");
 
@@ -187,8 +188,31 @@ exports.updateOrder = async (req, res, next) => {
       );
     }
 
-    order.orderStatus = req.body.orderStatus || req.body.status;
-    order.deliveredAt = Date.now();
+    const newStatus = req.body.orderStatus || req.body.status;
+    order.orderStatus = newStatus;
+
+    // If admin marks Delivered, auto-complete COD payment and set paidAt
+    if (newStatus === "Delivered") {
+      order.deliveredAt = Date.now();
+
+      if (order.paymentInfo && order.paymentInfo.method === "cod") {
+        order.paymentInfo.status = "completed";
+        order.paidAt = Date.now();
+
+        // Update linked invoice payment status/date if present
+        try {
+          if (order.invoice) {
+            await Invoice.findByIdAndUpdate(order.invoice, {
+              paymentStatus: "Paid",
+              paymentMethod: "cod",
+              paymentDate: new Date(),
+            });
+          }
+        } catch (err) {
+          console.error("Failed to update invoice for COD delivery:", err);
+        }
+      }
+    }
 
     await order.save();
 

@@ -60,7 +60,9 @@ const orderSchema = new mongoose.Schema({
   paymentInfo: {
     id: {
       type: String,
-      required: true,
+      required: function () {
+        return this.paymentInfo.method !== "cod";
+      },
     },
     status: {
       type: String,
@@ -69,11 +71,14 @@ const orderSchema = new mongoose.Schema({
     method: {
       type: String,
       required: true,
+      enum: ["razorpay", "cod"],
     },
   },
   paidAt: {
     type: Date,
-    required: true,
+    required: function () {
+      return this.paymentInfo.method !== "cod";
+    },
   },
   itemsPrice: {
     type: Number,

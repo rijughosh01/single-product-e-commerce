@@ -55,7 +55,15 @@ const InvoiceManager = ({ className = "" }) => {
       return response.data.invoice;
     } catch (error) {
       console.error("Error generating invoice:", error);
-      if (error.response?.status === 400 || error.response?.status === 500) {
+      if (error.response?.status === 403) {
+        toast.info(
+          error.response?.data?.message ||
+            "Invoice will be available after delivery for Cash on Delivery orders"
+        );
+      } else if (
+        error.response?.status === 400 ||
+        error.response?.status === 500
+      ) {
         toast.info(
           "Invoice generation feature coming soon! We're working on it."
         );
@@ -88,9 +96,15 @@ const InvoiceManager = ({ className = "" }) => {
       toast.success("Invoice downloaded successfully!");
     } catch (error) {
       console.error("Error downloading invoice:", error);
-
-      // Show coming soon message for invoice errors
-      if (error.response?.status === 400 || error.response?.status === 500) {
+      if (error.response?.status === 403) {
+        toast.info(
+          error.response?.data?.message ||
+            "Invoice download will be available after delivery for Cash on Delivery orders"
+        );
+      } else if (
+        error.response?.status === 400 ||
+        error.response?.status === 500
+      ) {
         toast.info(
           "Invoice download feature coming soon! We're working on it."
         );

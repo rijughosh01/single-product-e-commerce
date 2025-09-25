@@ -15,6 +15,7 @@ import {
   Building2,
   Wallet,
   Banknote,
+  HandCoins,
 } from "lucide-react";
 import { paymentAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -128,6 +129,34 @@ const PaymentIntegration = ({
         message: error.response?.data?.message || "Payment verification failed",
         error: error.message,
       };
+    }
+  };
+
+  const handleCODPayment = async () => {
+    if (!addressValid || !orderData.shippingInfo) {
+      toast.error(
+        "Please select a delivery address before proceeding to payment"
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await paymentAPI.createCODOrder({ orderData });
+
+      if (response.data && response.data.success) {
+        toast.success("COD order placed successfully!");
+        onPaymentSuccess(response.data.order);
+      } else {
+        throw new Error(response.data?.message || "COD order creation failed");
+      }
+    } catch (error) {
+      console.error("COD order error:", error);
+      const message = error.response?.data?.message || "COD order failed";
+      toast.error(message);
+      onPaymentError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -318,6 +347,58 @@ const PaymentIntegration = ({
                 </div>
               </div>
             </div>
+
+            {/* Cash on Delivery Option */}
+            <div
+              className={`p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${
+                paymentMethod === "cod"
+                  ? "border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50 shadow-lg"
+                  : "border-gray-200 hover:border-orange-300 hover:shadow-md bg-white"
+              }`}
+              onClick={() => setPaymentMethod("cod")}
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl shadow-md flex-shrink-0">
+                    <HandCoins className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
+                      Cash on Delivery
+                    </h5>
+                    <p className="text-sm text-gray-600 font-medium mb-3">
+                      Pay when your order is delivered
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Banknote className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">Cash Payment</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">No Online Payment</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                    Safe & Easy
+                  </Badge>
+                  <div
+                    className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ${
+                      paymentMethod === "cod"
+                        ? "border-orange-500 bg-orange-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {paymentMethod === "cod" && (
+                      <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -397,9 +478,19 @@ const PaymentIntegration = ({
 
         {/* Payment Button */}
         <Button
-          onClick={handleRazorpayPayment}
-          disabled={loading || !razorpayLoaded || !addressValid}
-          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          onClick={
+            paymentMethod === "cod" ? handleCODPayment : handleRazorpayPayment
+          }
+          disabled={
+            loading ||
+            (!razorpayLoaded && paymentMethod === "razorpay") ||
+            !addressValid
+          }
+          className={`w-full font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ${
+            paymentMethod === "cod"
+              ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+              : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+          }`}
           size="lg"
         >
           {loading ? (
@@ -411,6 +502,11 @@ const PaymentIntegration = ({
             <>
               <AlertCircle className="w-5 h-5 mr-2" />
               Select Address First
+            </>
+          ) : paymentMethod === "cod" ? (
+            <>
+              <HandCoins className="w-5 h-5 mr-2" />
+              Place COD Order - {formatPrice(orderData.totalPrice || 0)}
             </>
           ) : (
             <>
@@ -430,10 +526,15 @@ const PaymentIntegration = ({
         {/* Payment Methods Info */}
         <div className="text-xs text-gray-500 text-center">
           <p>
-            We accept all major credit cards, debit cards, UPI, net banking, and
-            wallets
+            {paymentMethod === "cod"
+              ? "Pay securely when your order is delivered to your doorstep"
+              : "We accept all major credit cards, debit cards, UPI, net banking, and wallets"}
           </p>
-          <p className="mt-1">Powered by Razorpay</p>
+          <p className="mt-1">
+            {paymentMethod === "cod"
+              ? "Cash on Delivery - Safe & Convenient"
+              : "Powered by Razorpay"}
+          </p>
         </div>
       </CardContent>
     </Card>

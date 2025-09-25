@@ -33,6 +33,19 @@ exports.generateInvoice = async (req, res, next) => {
       return next(new ErrorHandler("Order has no payment information", 400));
     }
 
+    // If COD and not delivered yet, block invoice generation
+    if (
+      order.paymentInfo?.method === "cod" &&
+      order.orderStatus !== "Delivered"
+    ) {
+      return next(
+        new ErrorHandler(
+          "Invoice will be available after delivery for Cash on Delivery orders",
+          403
+        )
+      );
+    }
+
     // Check if invoice already exists
     const existingInvoice = await Invoice.findOne({ order: orderId });
     if (existingInvoice) {
@@ -110,9 +123,15 @@ exports.generateInvoice = async (req, res, next) => {
       discount: Number(order?.coupon?.discountApplied || 0),
       totalAmount: Number(order.totalPrice),
       amountInWords: "",
-      paymentStatus: "Paid",
+      paymentStatus:
+        order.paymentInfo?.method === "cod" && order.orderStatus !== "Delivered"
+          ? "Pending"
+          : "Paid",
       paymentMethod: order.paymentInfo.method,
-      paymentDate: order.paidAt,
+      paymentDate:
+        order.paymentInfo?.method === "cod" && order.orderStatus !== "Delivered"
+          ? null
+          : order.paidAt,
     });
 
     invoice.calculateGST();
@@ -153,6 +172,19 @@ exports.getInvoice = async (req, res, next) => {
 
     if (!invoice) {
       return next(new ErrorHandler("Invoice not found", 404));
+    }
+
+    // Block download for COD orders until delivered
+    if (
+      invoice.order?.paymentInfo?.method === "cod" &&
+      invoice.order?.orderStatus !== "Delivered"
+    ) {
+      return next(
+        new ErrorHandler(
+          "Invoice download will be available after delivery for Cash on Delivery orders",
+          403
+        )
+      );
     }
 
     res.status(200).json({

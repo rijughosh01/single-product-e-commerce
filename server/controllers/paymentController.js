@@ -576,6 +576,230 @@ exports.getAllPayments = async (req, res, next) => {
   }
 };
 
+// Create COD order => /api/v1/payment/create-cod-order
+exports.createCODOrder = async (req, res, next) => {
+  try {
+    const { orderData } = req.body;
+
+    console.log("Create COD order request:", {
+      orderData: orderData
+        ? {
+            userId: orderData.userId,
+            orderItems: orderData.orderItems?.length,
+            totalPrice: orderData.totalPrice,
+            shippingInfo: orderData.shippingInfo ? "present" : "missing",
+          }
+        : "missing",
+      user: req.user?.id,
+    });
+
+    if (!orderData || !orderData.orderItems || !orderData.shippingInfo) {
+      console.error("Missing required order data for COD");
+      return res.status(400).json({
+        success: false,
+        message: "Missing required order data",
+      });
+    }
+
+    if (!req.user || !req.user.id) {
+      console.error("User not authenticated for COD order");
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    // Normalize coupon and persist applied discount amount
+    const normalizedCoupon = (() => {
+      const c = orderData.coupon;
+      if (!c) return undefined;
+      const discountApplied = Number(
+        orderData.discount ?? c.discountApplied ?? c.discount ?? 0
+      );
+      return {
+        code: c.code || null,
+        discountType: c.discountType || null,
+        discountValue: Number(c.discountValue || 0),
+        discountApplied: isNaN(discountApplied) ? 0 : discountApplied,
+      };
+    })();
+
+    const orderDataToCreate = {
+      orderItems: orderData.orderItems,
+      shippingInfo: orderData.shippingInfo,
+      itemsPrice: orderData.itemsPrice,
+      taxPrice: orderData.taxPrice,
+      shippingPrice: orderData.shippingPrice,
+      totalPrice: orderData.totalPrice,
+      paymentInfo: {
+        id: `COD_${Date.now()}`,
+        status: "pending",
+        method: "cod",
+      },
+      user: req.user.id,
+      coupon: normalizedCoupon,
+      orderStatus: "Processing",
+    };
+
+    console.log("Creating COD order with data:", {
+      orderItems: orderData.orderItems?.length,
+      shippingInfo: orderData.shippingInfo ? "present" : "missing",
+      itemsPrice: orderData.itemsPrice,
+      taxPrice: orderData.taxPrice,
+      shippingPrice: orderData.shippingPrice,
+      totalPrice: orderData.totalPrice,
+      user: req.user.id,
+    });
+
+    // Validate orderItems structure
+    if (
+      !orderData.orderItems ||
+      !Array.isArray(orderData.orderItems) ||
+      orderData.orderItems.length === 0
+    ) {
+      console.error("Invalid orderItems:", orderData.orderItems);
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order items",
+      });
+    }
+
+    // Validate each order item
+    for (let i = 0; i < orderData.orderItems.length; i++) {
+      const item = orderData.orderItems[i];
+      if (!item.name || !item.quantity || !item.price || !item.product) {
+        console.error(`Invalid order item at index ${i}:`, item);
+        return res.status(400).json({
+          success: false,
+          message: `Invalid order item at index ${i}`,
+        });
+      }
+
+      if (typeof item.product === "string") {
+        orderDataToCreate.orderItems[i].product = new mongoose.Types.ObjectId(
+          item.product
+        );
+      }
+    }
+
+    // Validate user ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+      console.error("Invalid user ID:", req.user.id);
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    if (typeof req.user.id === "string") {
+      orderDataToCreate.user = new mongoose.Types.ObjectId(req.user.id);
+      console.log("Converted user ID to ObjectId:", orderDataToCreate.user);
+    }
+
+    // Validate shippingInfo structure
+    if (
+      !orderData.shippingInfo ||
+      !orderData.shippingInfo.name ||
+      !orderData.shippingInfo.phone ||
+      !orderData.shippingInfo.address ||
+      !orderData.shippingInfo.city ||
+      !orderData.shippingInfo.state ||
+      !orderData.shippingInfo.pincode
+    ) {
+      console.error("Invalid shippingInfo:", orderData.shippingInfo);
+      return res.status(400).json({
+        success: false,
+        message: "Invalid shipping information",
+      });
+    }
+
+    const order = await Order.create(orderDataToCreate);
+
+    console.log("COD order created successfully:", {
+      orderId: order._id,
+      totalPrice: order.totalPrice,
+      user: order.user,
+      orderStatus: order.orderStatus,
+    });
+
+    // Update product stock
+    for (const item of orderData.orderItems) {
+      const product = await Product.findById(item.product);
+      if (product) {
+        product.stock -= item.quantity;
+        await product.save();
+      }
+    }
+
+    await Cart.findOneAndUpdate({ user: req.user.id }, { items: [] });
+
+    // Update coupon usage if applied
+    if (orderData.coupon && orderData.coupon.code) {
+      try {
+        const Coupon = require("../models/Coupon");
+        const couponDoc = await Coupon.findOne({
+          code: orderData.coupon.code.toUpperCase(),
+        });
+        if (couponDoc) {
+          couponDoc.usedCount = (couponDoc.usedCount || 0) + 1;
+          await couponDoc.save();
+        }
+      } catch (err) {
+        console.error("Coupon update error:", err);
+      }
+    }
+
+    // Generate invoice
+    try {
+      const invoice = await generateInvoiceForOrder(order);
+      order.invoice = invoice._id;
+      await order.save();
+    } catch (err) {
+      console.error("Invoice generation error:", err);
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmationEmail(req.user, order);
+    } catch (err) {
+      console.error("Email sending error:", err);
+    }
+
+    // Send real-time notification to admins
+    if (global.wss) {
+      global.wss.sendToAdmins({
+        type: "new_order",
+        title: "New COD Order Received",
+        message: `COD Order #${order._id} placed by ${req.user.name} for ₹${order.totalPrice}`,
+        orderId: order._id,
+        customerName: req.user.name,
+        amount: order.totalPrice,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "COD order created successfully",
+      order: order,
+    });
+  } catch (error) {
+    console.error("COD order creation error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      errors: error.errors,
+    });
+
+    res.status(500).json({
+      success: false,
+      message: "COD order creation failed",
+      error: error.message,
+    });
+  }
+};
+
 // Get payment statistics - Admin => /api/v1/admin/payments/stats
 exports.getPaymentStats = async (req, res, next) => {
   try {
@@ -769,9 +993,9 @@ const generateInvoiceForOrder = async (order) => {
       discount: Number(order?.coupon?.discountApplied || 0),
       totalAmount: Number(order.totalPrice),
       amountInWords: "",
-      paymentStatus: "Paid",
-      paymentMethod: "razorpay",
-      paymentDate: order.paidAt,
+      paymentStatus: order.paymentInfo.method === "cod" ? "Pending" : "Paid",
+      paymentMethod: order.paymentInfo.method,
+      paymentDate: order.paymentInfo.method === "cod" ? null : order.paidAt,
     });
 
     invoice.calculateGST();
@@ -810,7 +1034,11 @@ const sendOrderConfirmationEmail = async (user, order) => {
             <h3>Order Details</h3>
             <p><strong>Order ID:</strong> ${order._id}</p>
             <p><strong>Total Amount:</strong> ₹${order.totalPrice}</p>
-            <p><strong>Payment Method:</strong> Razorpay</p>
+            <p><strong>Payment Method:</strong> ${
+              order.paymentInfo.method === "cod"
+                ? "Cash on Delivery"
+                : "Razorpay"
+            }</p>
             <p><strong>Order Status:</strong> ${order.orderStatus}</p>
           </div>
           
@@ -818,10 +1046,17 @@ const sendOrderConfirmationEmail = async (user, order) => {
             <h3>Delivery Address</h3>
             <p>${order.shippingInfo.name}<br>
             ${order.shippingInfo.address}<br>
-            ${order.shippingInfo.city}, ${order.shippingInfo.state} - ${order.shippingInfo.pincode}<br>
+            ${order.shippingInfo.city}, ${order.shippingInfo.state} - ${
+        order.shippingInfo.pincode
+      }<br>
             Phone: ${order.shippingInfo.phone}</p>
           </div>
           
+          ${
+            order.paymentInfo.method === "cod"
+              ? `<p><strong>Payment Information:</strong> You will pay ₹${order.totalPrice} in cash when your order is delivered to your doorstep.</p>`
+              : ""
+          }
           <p>We will process your order and ship it to you soon. You will receive tracking information once your order is shipped.</p>
           <p>Best regards,<br>Pure Ghee Store Team</p>
         </div>

@@ -7,6 +7,7 @@ const {
   getAllPayments,
   getPaymentStats,
   handleWebhook,
+  createCODOrder,
 } = require("../controllers/paymentController");
 
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
@@ -20,6 +21,9 @@ router.route("/payment/webhook").post(handleWebhook);
 router
   .route("/payment/create-order")
   .post(isAuthenticatedUser, createPaymentOrder);
+router
+  .route("/payment/create-cod-order")
+  .post(isAuthenticatedUser, createCODOrder);
 router.route("/payment/verify").post(isAuthenticatedUser, verifyPayment);
 router.route("/payment/:paymentId").get(isAuthenticatedUser, getPaymentDetails);
 router.route("/payment/refund").post(isAuthenticatedUser, refundPayment);

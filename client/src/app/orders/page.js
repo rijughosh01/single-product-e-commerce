@@ -58,8 +58,18 @@ export default function OrdersPage() {
 
       let invoiceId = null;
 
-      // Check if order has an existing invoice
       const order = orders.find((o) => o._id === orderId);
+
+      // Prevent COD invoice access before delivery
+      if (
+        order?.paymentInfo?.method === "cod" &&
+        order?.orderStatus !== "Delivered"
+      ) {
+        toast.info(
+          "Invoice will be available after delivery for Cash on Delivery orders"
+        );
+        return;
+      }
       if (order?.invoice) {
         invoiceId = order.invoice;
       } else {
@@ -91,8 +101,16 @@ export default function OrdersPage() {
     } catch (error) {
       console.error("Error downloading invoice:", error);
 
-      // Show coming soon message for invoice errors
-      if (error.response?.status === 400 || error.response?.status === 500) {
+      // Messaging for blocked COD
+      if (error.response?.status === 403) {
+        toast.info(
+          error.response?.data?.message ||
+            "Invoice will be available after delivery for Cash on Delivery orders"
+        );
+      } else if (
+        error.response?.status === 400 ||
+        error.response?.status === 500
+      ) {
         toast.info(
           "Invoice download feature coming soon! We're working on it."
         );
