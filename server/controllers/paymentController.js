@@ -8,6 +8,7 @@ const Invoice = require("../models/Invoice");
 const User = require("../models/User");
 const ErrorHandler = require("../utils/errorHandler");
 const sendEmail = require("../utils/sendEmail");
+const NotificationService = require("../utils/notificationService");
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -376,6 +377,14 @@ exports.verifyPayment = async (req, res, next) => {
       await sendOrderConfirmationEmail(req.user, order);
     } catch (err) {
       console.error("Email sending error:", err);
+    }
+
+    // Create database notifications
+    try {
+      await NotificationService.createOrderNotification(order, "created");
+      await NotificationService.createPaymentNotification(payment, order, "success");
+    } catch (error) {
+      console.error("Error creating payment notifications:", error);
     }
 
     // Send real-time notification to admins
@@ -763,6 +772,13 @@ exports.createCODOrder = async (req, res, next) => {
       await sendOrderConfirmationEmail(req.user, order);
     } catch (err) {
       console.error("Email sending error:", err);
+    }
+
+    // Create database notifications
+    try {
+      await NotificationService.createOrderNotification(order, "created");
+    } catch (error) {
+      console.error("Error creating COD order notifications:", error);
     }
 
     // Send real-time notification to admins

@@ -20,8 +20,10 @@ import {
 } from "lucide-react";
 import { notificationsAPI } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotificationSystem = ({ className = "" }) => {
+  const { isAuthenticated, authChecked } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -29,16 +31,19 @@ const NotificationSystem = ({ className = "" }) => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    fetchNotifications();
-    fetchUnreadCount();
-
-    // Set up polling for new notifications
-    const interval = setInterval(() => {
+    // Only fetch notifications if user is authenticated
+    if (authChecked && isAuthenticated) {
+      fetchNotifications();
       fetchUnreadCount();
-    }, 30000);
 
-    return () => clearInterval(interval);
-  }, []);
+      // Set up polling for new notifications
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [authChecked, isAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -172,6 +177,11 @@ const NotificationSystem = ({ className = "" }) => {
       return date.toLocaleDateString();
     }
   };
+
+  // Don't render if user is not authenticated
+  if (!authChecked || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>

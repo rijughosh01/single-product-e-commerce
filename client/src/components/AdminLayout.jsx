@@ -29,7 +29,7 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
-import NotificationBell from "./NotificationBell";
+import NotificationSystem from "./NotificationSystem";
 
 const AdminLayout = ({ children }) => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -291,7 +291,7 @@ const AdminLayout = ({ children }) => {
               </div>
 
               {/* Notifications */}
-              <NotificationBell />
+              <NotificationSystem />
 
               {/* Quick Stats */}
               <div className="hidden lg:flex items-center space-x-6 text-sm">

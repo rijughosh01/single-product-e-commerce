@@ -4,6 +4,7 @@ const Product = require("../models/Product");
 const Invoice = require("../models/Invoice");
 const ErrorHandler = require("../utils/errorHandler");
 const sendEmail = require("../utils/sendEmail");
+const NotificationService = require("../utils/notificationService");
 
 // Create new order => /api/v1/order/new
 exports.newOrder = async (req, res, next) => {
@@ -94,6 +95,13 @@ exports.newOrder = async (req, res, next) => {
       });
     } catch (error) {
       console.log("Email sending failed:", error);
+    }
+
+    // Create database notifications
+    try {
+      await NotificationService.createOrderNotification(order, "created");
+    } catch (error) {
+      console.error("Error creating order notifications:", error);
     }
 
     // Send real-time notification to admins
@@ -216,6 +224,25 @@ exports.updateOrder = async (req, res, next) => {
 
     await order.save();
 
+    // Create database notifications for order status update
+    try {
+      const eventType = newStatus.toLowerCase().replace(/\s+/g, "_");
+      await NotificationService.createOrderNotification(order, eventType);
+
+      if (newStatus === "Shipped") {
+        await NotificationService.createShippingNotification(order, "shipped");
+      }
+
+      if (newStatus === "Delivered") {
+        await NotificationService.createShippingNotification(
+          order,
+          "delivered"
+        );
+      }
+    } catch (error) {
+      console.error("Error creating order status notifications:", error);
+    }
+
     // Send status update email
     try {
       await sendEmail({
@@ -322,6 +349,13 @@ exports.cancelOrder = async (req, res, next) => {
 
     order.orderStatus = "Cancelled";
     await order.save();
+
+    // Create database notifications for order cancellation
+    try {
+      await NotificationService.createOrderNotification(order, "cancelled");
+    } catch (error) {
+      console.error("Error creating order cancellation notifications:", error);
+    }
 
     // Restore product stock
     for (const item of order.orderItems) {
