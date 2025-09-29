@@ -214,7 +214,7 @@ exports.getCartSummary = async (req, res, next) => {
     }
 
     const subtotal = cart.totalAmount;
-    const tax = subtotal * 0.18; // 18% GST
+    const tax = subtotal * 0.12;
     let shipping = 0;
     let discount = 0;
     let couponDetails = null;

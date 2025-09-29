@@ -67,7 +67,7 @@ export default function Checkout() {
         setSummary(s);
       } catch (e) {
         const subtotal = cartTotal || 0;
-        const tax = subtotal * 0.18;
+        const tax = subtotal * 0.12;
         const shipping = subtotal >= 1000 ? 0 : 50;
         const discount = 0;
         setSummary({

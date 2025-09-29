@@ -101,7 +101,7 @@ const invoiceSchema = new mongoose.Schema({
       },
       gstRate: {
         type: Number,
-        default: 18,
+        default: 12,
       },
       cgst: {
         type: Number,

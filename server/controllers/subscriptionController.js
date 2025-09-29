@@ -274,9 +274,9 @@ exports.processDueSubscriptions = async (req, res, next) => {
             status: "pending",
           },
           itemsPrice: subscription.product.price * subscription.quantity,
-          taxPrice: subscription.product.price * subscription.quantity * 0.18,
+          taxPrice: subscription.product.price * subscription.quantity * 0.12,
           shippingPrice: 0,
-          totalPrice: subscription.product.price * subscription.quantity * 1.18,
+          totalPrice: subscription.product.price * subscription.quantity * 1.12,
         });
 
         // Update subscription

@@ -75,7 +75,7 @@ exports.generateInvoice = async (req, res, next) => {
       quantity: item.quantity,
       unitPrice: item.price,
       totalPrice: item.price * item.quantity,
-      gstRate: 18,
+      gstRate: 12,
       cgst: 0,
       sgst: 0,
       igst: 0,
@@ -385,19 +385,19 @@ exports.downloadInvoicePDF = async (req, res, next) => {
     currentY += 20;
 
     if (invoice.cgstTotal > 0) {
-      doc.text("CGST (9%):", 420, currentY);
+      doc.text("CGST (6%):", 420, currentY);
       doc.text(`Rs ${invoice.cgstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }
 
     if (invoice.sgstTotal > 0) {
-      doc.text("SGST (9%):", 420, currentY);
+      doc.text("SGST (6%):", 420, currentY);
       doc.text(`Rs ${invoice.sgstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }
 
     if (invoice.igstTotal > 0) {
-      doc.text("IGST (18%):", 420, currentY);
+      doc.text("IGST (12%):", 420, currentY);
       doc.text(`Rs ${invoice.igstTotal.toFixed(2)}`, 490, currentY);
       currentY += 20;
     }

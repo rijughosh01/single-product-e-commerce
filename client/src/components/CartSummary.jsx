@@ -82,7 +82,7 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
       (sum, item) => sum + item.product.price * item.quantity,
       0
     );
-    const tax = subtotal * 0.18;
+    const tax = subtotal * 0.12;
     const freeShippingThreshold = 1000;
     const shipping = subtotal >= freeShippingThreshold ? 0 : 50;
 
