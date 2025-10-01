@@ -299,10 +299,10 @@ const AdminLayout = ({ children }) => {
                   <Activity className="w-4 h-4" />
                   <span className="font-medium">Online</span>
                 </div>
-                <div className="flex items-center space-x-2 text-blue-600">
+                {/* <div className="flex items-center space-x-2 text-blue-600">
                   <TrendingUp className="w-4 h-4" />
                   <span className="font-medium">+12%</span>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
