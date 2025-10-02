@@ -21,6 +21,7 @@ import {
   Truck,
   Star,
   Settings,
+  Home,
 } from "lucide-react";
 import { couponsAPI } from "@/lib/api";
 
@@ -122,8 +123,8 @@ const Header = () => {
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
-      {/* Top banner */}
-      <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-b border-amber-100">
+      {/* Top banner - Desktop/Tablet */}
+      <div className="hidden md:block bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-b border-amber-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center py-3 text-sm">
             <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-6">
@@ -181,19 +182,35 @@ const Header = () => {
         </div>
       </div>
 
+      {/* Top banner - Mobile */}
+      <div className="md:hidden border-b border-amber-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 text-xs">
+            <span className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+              <Truck className="w-3.5 h-3.5" /> Free shipping ₹1000+
+            </span>
+            {isAuthenticated && bestCoupon && (
+              <span className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
+                <Star className="w-3.5 h-3.5" /> {bestCoupon.code}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-              <Package className="w-7 h-7 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <Package className="w-6 h-6 md:w-7 md:h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
                 Pure Ghee
               </h1>
-              <p className="text-sm text-gray-500 font-medium">
+              <p className="hidden md:block text-sm text-gray-500 font-medium">
                 Premium Quality
               </p>
             </div>
@@ -273,21 +290,25 @@ const Header = () => {
           </nav>
 
           {/* Right side actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 md:space-x-2">
             <button
-              className="md:hidden p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
+              className="md:hidden p-2 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <Search className="w-5 h-5" />
             </button>
 
             {/* Notifications */}
-            {isAuthenticated && <NotificationSystem />}
+            {isAuthenticated && (
+              <span className="inline-flex md:inline-flex">
+                <NotificationSystem />
+              </span>
+            )}
 
             {/* Wishlist */}
             <Link
               href="/wishlist"
-              className="relative p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
+              className="hidden md:inline-flex relative p-2 md:p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
             >
               <Heart className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
               {wishlistCount > 0 && (
@@ -300,7 +321,7 @@ const Header = () => {
             {/* Cart */}
             <Link
               href="/cart"
-              className="relative p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
+              className="hidden md:inline-flex relative p-2 md:p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group"
             >
               <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
               {cartCount > 0 && (
@@ -312,10 +333,10 @@ const Header = () => {
 
             {/* User menu */}
             {isAuthenticated ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-2 p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group">
+              <div className="relative group hidden md:block">
+                <button className="flex items-center space-x-2 p-2 md:p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300 group">
                   <User className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-                  <span className="hidden sm:block text-sm font-medium">
+                  <span className="hidden sm:block max-w-[90px] truncate text-sm font-medium">
                     {user?.name}
                   </span>
                 </button>
@@ -376,7 +397,7 @@ const Header = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2">
                 <Link href="/login">
                   <Button
                     variant="outline"
@@ -399,7 +420,7 @@ const Header = () => {
 
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
+              className="lg:hidden p-2 md:p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
@@ -559,6 +580,68 @@ const Header = () => {
           </div>
         </div>
       )}
+
+      {/* Bottom Tab Bar - Mobile */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <nav className="max-w-7xl mx-auto">
+          <ul className="grid grid-cols-5 text-xs text-gray-700">
+            <li>
+              <Link href="/" className="flex flex-col items-center py-2">
+                <Home className="w-5 h-5" />
+                <span className="mt-1">Home</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/products"
+                className="flex flex-col items-center py-2"
+              >
+                <Package className="w-5 h-5" />
+                <span className="mt-1">Shop</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/wishlist"
+                className="relative flex flex-col items-center py-2"
+              >
+                <Heart className="w-5 h-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute top-1 right-5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] text-white">
+                    {wishlistCount}
+                  </span>
+                )}
+                <span className="mt-1">Wishlist</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/cart"
+                className="relative flex flex-col items-center py-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute top-1 right-5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] text-white">
+                    {cartCount}
+                  </span>
+                )}
+                <span className="mt-1">Cart</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={isAuthenticated ? "/profile" : "/login"}
+                className="flex flex-col items-center py-2"
+              >
+                <User className="w-5 h-5" />
+                <span className="mt-1">
+                  {isAuthenticated ? "Profile" : "Login"}
+                </span>
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </header>
   );
 };

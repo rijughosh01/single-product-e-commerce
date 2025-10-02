@@ -189,11 +189,11 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-amber-50 to-orange-100 py-12 lg:py-16 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-amber-50 to-orange-100 py-8 md:py-12 lg:py-16 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start min-h-[600px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-16 items-start min-h-[0] md:min-h-[520px] lg:min-h-[600px]">
             <motion.div
-              className="space-y-6 lg:space-y-8 flex flex-col justify-start pt-4 lg:pt-6"
+              className="space-y-4 md:space-y-6 lg:space-y-8 flex flex-col justify-start pt-2 md:pt-4 lg:pt-6"
               initial="initial"
               animate="animate"
               variants={staggerContainer}
@@ -212,7 +212,7 @@ export default function Home() {
                   </Badge>
                 </motion.div>
                 <motion.h1
-                  className="text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight"
+                  className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight"
                   variants={fadeInUp}
                 >
                   <span className="block">Pure & Authentic</span>
@@ -226,7 +226,7 @@ export default function Home() {
                   </motion.span>
                 </motion.h1>
                 <motion.p
-                  className="text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed"
+                  className="text-base md:text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed"
                   variants={fadeInUp}
                 >
                   Discover our premium collection of traditional ghee, sourced
@@ -235,7 +235,7 @@ export default function Home() {
               </motion.div>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 lg:gap-6"
+                className="flex flex-col sm:flex-row gap-3 md:gap-4 lg:gap-6"
                 variants={fadeInUp}
               >
                 <Link href="/products">
@@ -246,7 +246,7 @@ export default function Home() {
                   >
                     <Button
                       size="lg"
-                      className="bg-amber-600 hover:bg-amber-700 text-white transition-all duration-300 hover:shadow-lg text-lg px-8 py-3"
+                      className="bg-amber-600 hover:bg-amber-700 text-white transition-all duration-300 hover:shadow-lg text-base md:text-lg px-6 md:px-8 py-3"
                     >
                       Shop Now
                       <motion.div
@@ -267,7 +267,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="transition-all duration-300 hover:shadow-lg text-lg px-8 py-3"
+                      className="transition-all duration-300 hover:shadow-lg text-base md:text-lg px-6 md:px-8 py-3"
                     >
                       Learn More
                     </Button>
@@ -276,7 +276,7 @@ export default function Home() {
               </motion.div>
 
               <motion.div
-                className="flex flex-wrap items-center gap-6 lg:gap-8 text-sm lg:text-base text-gray-600"
+                className="flex flex-wrap items-center gap-4 md:gap-6 lg:gap-8 text-sm md:text-base lg:text-base text-gray-600"
                 variants={fadeInUp}
               >
                 <motion.div
@@ -322,13 +322,13 @@ export default function Home() {
             </motion.div>
 
             <motion.div
-              className="relative flex items-start justify-center lg:justify-end pt-4 lg:pt-6"
+              className="relative flex items-start justify-center lg:justify-end pt-3 md:pt-4 lg:pt-6"
               initial={{ opacity: 0, x: 60 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <motion.div
-                className="relative z-10 h-[480px] lg:h-[520px] w-full max-w-2xl"
+                className="relative z-10 h-[260px] sm:h-[340px] md:h-[420px] lg:h-[520px] w-full max-w-2xl"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
@@ -336,7 +336,7 @@ export default function Home() {
                   images={carouselImages}
                   autoScroll={true}
                   interval={4000}
-                  className="h-full w-full shadow-2xl"
+                  className="h-full w-full shadow-xl md:shadow-2xl"
                 />
               </motion.div>
               <motion.div
@@ -348,7 +348,7 @@ export default function Home() {
                 transition={{ duration: 3, repeat: Infinity }}
               ></motion.div>
               <motion.div
-                className="absolute -bottom-6 -left-6 w-28 h-28 bg-orange-200 rounded-full opacity-50"
+                className="absolute -bottom-6 -left-6 w-20 h-20 md:w-28 md:h-28 bg-orange-200 rounded-full opacity-50"
                 animate={{
                   scale: [1, 1.2, 1],
                   opacity: [0.5, 0.8, 0.5],
