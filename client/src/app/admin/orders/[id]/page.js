@@ -20,6 +20,9 @@ import {
   Clock,
   Truck,
   Home,
+  DollarSign,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -31,6 +34,11 @@ export default function AdminOrderDetail() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [processingRefund, setProcessingRefund] = useState(false);
+  const [refundDetails, setRefundDetails] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,6 +61,22 @@ export default function AdminOrderDetail() {
     try {
       const response = await adminAPI.getOrderById(orderId);
       setOrder(response.data.order);
+
+      // Fetch refund details if refund exists
+      if (
+        response.data.order.refundInfo &&
+        response.data.order.refundInfo.refundId
+      ) {
+        try {
+          const refundResponse = await adminAPI.getRefundDetails(orderId);
+          setRefundDetails(refundResponse.data.refund);
+        } catch (refundError) {
+          console.warn(
+            "Refund details fetch failed (non-critical):",
+            refundError
+          );
+        }
+      }
     } catch (error) {
       console.error("Order fetch error:", error);
       toast.error("Failed to load order details");
@@ -71,6 +95,67 @@ export default function AdminOrderDetail() {
       console.error("Update order error:", error);
       toast.error("Failed to update order status");
     }
+  };
+
+  const handleProcessRefund = async () => {
+    if (!refundReason.trim()) {
+      toast.error("Please provide a reason for refund");
+      return;
+    }
+
+    try {
+      setProcessingRefund(true);
+      const response = await adminAPI.processRefund(orderId, {
+        amount: refundAmount ? parseFloat(refundAmount) : undefined,
+        reason: refundReason,
+      });
+
+      // Update order with refund info
+      setOrder((prevOrder) => ({
+        ...prevOrder,
+        orderStatus: "Cancelled",
+        cancelledAt: new Date(),
+        refundInfo: {
+          refundId: response.data.refund.id,
+          amount: response.data.refund.amount,
+          status: response.data.refund.status,
+          reason: response.data.refund.reason,
+          refundedAt: new Date(),
+        },
+      }));
+
+      setRefundDetails(response.data.refund);
+      setShowRefundModal(false);
+      setRefundAmount("");
+      setRefundReason("");
+
+      toast.success("Refund processed successfully");
+    } catch (error) {
+      console.error("Refund processing error:", error);
+      const errorMessage =
+        error.response?.data?.message || "Failed to process refund";
+
+      if (errorMessage.includes("Refund already exists")) {
+        toast.error(
+          "A refund has already been processed for this order. Please refresh the page to see the refund details."
+        );
+
+        fetchOrderDetails();
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setProcessingRefund(false);
+    }
+  };
+
+  const canProcessRefund = () => {
+    return (
+      order &&
+      order.paymentInfo.method !== "cod" &&
+      order.paymentInfo.status === "completed" &&
+      (!order.refundInfo || !order.refundInfo.refundId)
+    );
   };
 
   const getStatusColor = (status) => {
@@ -563,6 +648,83 @@ export default function AdminOrderDetail() {
               </div>
             </div>
 
+            {/* Refund Information */}
+            {order.refundInfo && order.refundInfo.refundId && (
+              <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+                  Refund Information
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Refund ID:</span>
+                    <span className="text-sm font-medium text-gray-900 font-mono">
+                      {order.refundInfo.refundId}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Amount:</span>
+                    <span className="text-sm font-medium text-green-600">
+                      {formatINR(order.refundInfo.amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Status:</span>
+                    <span
+                      className={`text-sm font-medium px-2 py-1 rounded-full ${
+                        order.refundInfo.status === "processed"
+                          ? "bg-green-100 text-green-800"
+                          : order.refundInfo.status === "failed"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {order.refundInfo.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Reason:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {order.refundInfo.reason}
+                    </span>
+                  </div>
+                  {order.refundInfo.refundedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">
+                        Refunded At:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {new Date(order.refundInfo.refundedAt).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {refundDetails && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-2">
+                        Razorpay Details:
+                      </p>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>Receipt:</span>
+                          <span className="font-mono">
+                            {refundDetails.receipt || "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Created:</span>
+                          <span>
+                            {new Date(
+                              refundDetails.created_at * 1000
+                            ).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Order Summary */}
             <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -624,9 +786,147 @@ export default function AdminOrderDetail() {
                 </div>
               </div>
             </div>
+
+            {/* Refund Actions */}
+            {canProcessRefund() && (
+              <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <RefreshCw className="h-5 w-5 mr-2 text-blue-600" />
+                  Refund Management
+                </h2>
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-blue-800 mb-1">
+                          Refund Information:
+                        </p>
+                        <ul className="text-blue-700 space-y-1 text-xs">
+                          <li>• Refund will be processed through Razorpay</li>
+                          <li>• Customer will receive email notification</li>
+                          <li>• Order status will be updated to "Cancelled"</li>
+                          <li>• Product stock will be restored</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setRefundAmount(order.totalPrice.toString());
+                      setShowRefundModal(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    Process Refund
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Refund Modal */}
+      {showRefundModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Process Refund
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Refund for Order #{order._id}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Refund Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  placeholder={order.totalPrice.toString()}
+                  min="0"
+                  max={order.totalPrice}
+                  step="0.01"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty for full refund (₹{order.totalPrice})
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Refund *
+                </label>
+                <textarea
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Please provide a reason for this refund..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows={4}
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {refundReason.length}/500 characters
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-800 mb-1">Important:</p>
+                  <ul className="text-yellow-700 space-y-1 text-xs">
+                    <li>• This action cannot be undone</li>
+                    <li>• Customer will receive email notification</li>
+                    <li>• Order status will be updated to "Cancelled"</li>
+                    <li>• Product stock will be restored</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRefundModal(false);
+                  setRefundAmount("");
+                  setRefundReason("");
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProcessRefund}
+                disabled={processingRefund || !refundReason.trim()}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {processingRefund ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <DollarSign className="w-4 h-4" />
+                )}
+                Process Refund
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

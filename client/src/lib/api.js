@@ -139,7 +139,7 @@ export const ordersAPI = {
   createOrder: (orderData) => api.post("/order/new", orderData),
   getOrders: () => api.get("/orders/me"),
   getOrderById: (id) => api.get(`/order/${id}`),
-  cancelOrder: (id) => api.put(`/order/${id}/cancel`),
+  cancelOrder: (id, reason) => api.put(`/order/${id}/cancel`, { reason }),
   getOrderInvoice: (id) => api.get(`/order/${id}/invoice`),
   createPaymentOrder: (orderData) =>
     api.post("/payment/create-order", orderData),
@@ -257,6 +257,11 @@ export const adminAPI = {
   updateOrder: (id, orderData) => api.put(`/admin/order/${id}`, orderData),
   deleteOrder: (id) => api.delete(`/admin/order/${id}`),
   getOrderStats: () => api.get("/admin/orders/stats"),
+
+  // Refunds
+  processRefund: (id, refundData) =>
+    api.post(`/admin/order/${id}/refund`, refundData),
+  getRefundDetails: (id) => api.get(`/admin/order/${id}/refund`),
 
   // Users
   getAllUsers: (params = {}) => api.get("/admin/users", { params }),

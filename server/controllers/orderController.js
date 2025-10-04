@@ -326,8 +326,151 @@ exports.getOrderStats = async (req, res, next) => {
   }
 };
 
-// Cancel order => /api/v1/order/:id/cancel
-exports.cancelOrder = async (req, res, next) => {
+// Process refund - Admin => /api/v1/admin/order/:id/refund
+exports.processRefund = async (req, res, next) => {
+  try {
+    const { amount, reason } = req.body;
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+
+    if (!order) {
+      return next(new ErrorHandler("Order not found", 404));
+    }
+
+    if (order.paymentInfo.method === "cod") {
+      return next(
+        new ErrorHandler("Cannot process refund for COD orders", 400)
+      );
+    }
+
+    // Check for payment ID in different possible locations
+    const paymentId =
+      order.paymentInfo.razorpay_payment_id || order.paymentInfo.id;
+
+    if (!paymentId) {
+      return next(new ErrorHandler("Payment ID not found", 400));
+    }
+
+    // Check if refund already exists
+    if (order.refundInfo && order.refundInfo.refundId) {
+      return next(
+        new ErrorHandler(
+          "Refund already exists for this order. Refund ID: " +
+            order.refundInfo.refundId,
+          400
+        )
+      );
+    }
+
+    try {
+      const Razorpay = require("razorpay");
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const refundAmount = amount
+        ? Math.round(amount * 100)
+        : Math.round(order.totalPrice * 100);
+
+      const refundOptions = {
+        payment_id: paymentId,
+        amount: refundAmount,
+        notes: {
+          reason: reason || "Refund processed by admin",
+          processed_by: req.user.id,
+          processed_at: new Date().toISOString(),
+        },
+      };
+
+      const refund = await razorpay.payments.refund(paymentId, refundOptions);
+
+      // Update order with refund information
+      order.refundInfo = {
+        refundId: refund.id,
+        amount: refund.amount / 100,
+        status: refund.status,
+        reason: reason || "Refund processed by admin",
+        refundedAt: new Date(),
+      };
+
+      // Update order status to cancelled if not already
+      if (order.orderStatus !== "Cancelled") {
+        order.orderStatus = "Cancelled";
+        order.cancelledAt = new Date();
+      }
+
+      await order.save();
+
+      try {
+        await sendEmail({
+          email: order.user.email,
+          subject: "Refund Processed - Pure Ghee Store",
+          message: `Your refund has been processed. Refund ID: ${refund.id}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #f97316;">Refund Processed</h2>
+              <p>Dear ${order.user.name},</p>
+              <p>Your refund has been successfully processed.</p>
+              
+              <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Refund Details</h3>
+                <p><strong>Order ID:</strong> ${order._id}</p>
+                <p><strong>Refund Amount:</strong> ₹${refund.amount / 100}</p>
+                <p><strong>Refund ID:</strong> ${refund.id}</p>
+                <p><strong>Refund Status:</strong> ${refund.status}</p>
+                <p><strong>Refund Reason:</strong> ${
+                  reason || "Refund processed by admin"
+                }</p>
+              </div>
+              
+              <p>Your refund will be credited to your original payment method within 5-7 business days.</p>
+              <p>Best regards,<br>Pure Ghee Store Team</p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.error("Refund email sending failed:", emailError);
+      }
+
+      // Create database notifications
+      try {
+        await NotificationService.createOrderNotification(
+          order,
+          "refund_processed"
+        );
+      } catch (error) {
+        console.error("Error creating refund notifications:", error);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Refund processed successfully",
+        refund: {
+          id: refund.id,
+          amount: refund.amount / 100,
+          status: refund.status,
+          reason: reason || "Refund processed by admin",
+        },
+      });
+    } catch (refundError) {
+      console.error("Refund processing failed:", refundError);
+      return next(
+        new ErrorHandler(
+          "Refund processing failed: " + refundError.message,
+          500
+        )
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get refund details - Admin => /api/v1/admin/order/:id/refund
+exports.getRefundDetails = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
 
@@ -335,7 +478,78 @@ exports.cancelOrder = async (req, res, next) => {
       return next(new ErrorHandler("Order not found", 404));
     }
 
-    if (order.user.toString() !== req.user.id) {
+    if (!order.refundInfo || !order.refundInfo.refundId) {
+      return next(new ErrorHandler("No refund found for this order", 404));
+    }
+
+    // Get payment ID for refund lookup
+    const paymentId =
+      order.paymentInfo.razorpay_payment_id || order.paymentInfo.id;
+
+    if (!paymentId) {
+      return next(new ErrorHandler("Payment ID not found", 400));
+    }
+
+    try {
+      const Razorpay = require("razorpay");
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const refund = await razorpay.refunds.fetch(order.refundInfo.refundId);
+
+      res.status(200).json({
+        success: true,
+        refund: {
+          id: refund.id,
+          amount: refund.amount / 100,
+          status: refund.status,
+          notes: refund.notes,
+          created_at: refund.created_at,
+          receipt: refund.receipt,
+        },
+      });
+    } catch (refundError) {
+      console.error("Fetch refund details failed:", refundError);
+
+      // Check if it's a Razorpay API error
+      if (refundError.response) {
+        const errorMessage =
+          refundError.response.data?.error?.description ||
+          refundError.response.data?.error?.message ||
+          "Razorpay API error";
+        return next(
+          new ErrorHandler(
+            `Failed to fetch refund details: ${errorMessage}`,
+            500
+          )
+        );
+      }
+
+      return next(
+        new ErrorHandler("Failed to fetch refund details from Razorpay", 500)
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Cancel order => /api/v1/order/:id/cancel
+exports.cancelOrder = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+
+    if (!order) {
+      return next(new ErrorHandler("Order not found", 404));
+    }
+
+    if (order.user._id.toString() !== req.user.id) {
       return next(
         new ErrorHandler("You are not authorized to cancel this order", 403)
       );
@@ -347,7 +561,98 @@ exports.cancelOrder = async (req, res, next) => {
       );
     }
 
+    if (order.orderStatus === "Cancelled") {
+      return next(new ErrorHandler("Order is already cancelled", 400));
+    }
+
     order.orderStatus = "Cancelled";
+    order.cancelledAt = new Date();
+
+    // If payment was made and not COD, initiate refund
+    if (
+      order.paymentInfo.method !== "cod" &&
+      order.paymentInfo.status === "completed"
+    ) {
+      try {
+        const Razorpay = require("razorpay");
+        const razorpay = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
+        // Get payment ID from different possible locations
+        const paymentId =
+          order.paymentInfo.razorpay_payment_id || order.paymentInfo.id;
+
+        if (!paymentId) {
+          throw new Error("Payment ID not found for refund");
+        }
+
+        const refundOptions = {
+          payment_id: paymentId,
+          amount: Math.round(order.totalPrice * 100),
+          notes: {
+            reason: reason || "Order cancelled by customer",
+            cancelled_by: req.user.id,
+            cancelled_at: new Date().toISOString(),
+          },
+        };
+
+        const refund = await razorpay.payments.refund(paymentId, refundOptions);
+
+        // Update order with refund information
+        order.refundInfo = {
+          refundId: refund.id,
+          amount: refund.amount / 100,
+          status: refund.status,
+          reason: reason || "Order cancelled by customer",
+          refundedAt: new Date(),
+        };
+
+        // Send refund notification email
+        try {
+          await sendEmail({
+            email: order.user.email,
+            subject: "Order Cancelled & Refund Initiated - Pure Ghee Store",
+            message: `Your order has been cancelled and refund has been initiated. Refund ID: ${refund.id}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #f97316;">Order Cancelled & Refund Initiated</h2>
+                <p>Dear ${order.user.name},</p>
+                <p>Your order has been successfully cancelled and refund has been initiated.</p>
+                
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <h3>Order Details</h3>
+                  <p><strong>Order ID:</strong> ${order._id}</p>
+                  <p><strong>Refund Amount:</strong> ₹${order.totalPrice}</p>
+                  <p><strong>Refund ID:</strong> ${refund.id}</p>
+                  <p><strong>Refund Status:</strong> ${refund.status}</p>
+                  <p><strong>Cancellation Reason:</strong> ${
+                    reason || "Order cancelled by customer"
+                  }</p>
+                </div>
+                
+                <p>Your refund will be processed within 5-7 business days and will be credited to your original payment method.</p>
+                <p>Best regards,<br>Pure Ghee Store Team</p>
+              </div>
+            `,
+          });
+        } catch (emailError) {
+          console.error("Refund email sending failed:", emailError);
+        }
+      } catch (refundError) {
+        console.error("Refund processing failed:", refundError);
+        // Still cancel the order even if refund fails
+        order.refundInfo = {
+          refundId: null,
+          amount: order.totalPrice,
+          status: "failed",
+          reason: reason || "Order cancelled by customer",
+          refundedAt: null,
+        };
+      }
+    }
+
     await order.save();
 
     // Create database notifications for order cancellation
@@ -366,9 +671,23 @@ exports.cancelOrder = async (req, res, next) => {
       }
     }
 
+    // Send real-time notification to admins
+    if (global.wss) {
+      global.wss.sendToAdmins({
+        type: "order_cancelled",
+        title: "Order Cancelled",
+        message: `Order #${order._id} cancelled by ${req.user.name}`,
+        orderId: order._id,
+        customerName: req.user.name,
+        amount: order.totalPrice,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: "Order cancelled successfully",
+      refundInfo: order.refundInfo,
     });
   } catch (error) {
     next(error);

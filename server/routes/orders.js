@@ -8,6 +8,8 @@ const {
   deleteOrder,
   getOrderStats,
   cancelOrder,
+  processRefund,
+  getRefundDetails,
 } = require("../controllers/orderController");
 
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
@@ -30,5 +32,11 @@ router
 router
   .route("/admin/orders/stats")
   .get(isAuthenticatedUser, authorizeRoles("admin"), getOrderStats);
+
+// Admin refund routes
+router
+  .route("/admin/order/:id/refund")
+  .post(isAuthenticatedUser, authorizeRoles("admin"), processRefund)
+  .get(isAuthenticatedUser, authorizeRoles("admin"), getRefundDetails);
 
 module.exports = router;

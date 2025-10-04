@@ -125,6 +125,7 @@ const orderSchema = new mongoose.Schema({
     ],
   },
   deliveredAt: Date,
+  cancelledAt: Date,
   trackingNumber: {
     type: String,
     default: null,

@@ -20,6 +20,8 @@ import {
   Truck,
   Home,
   User,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { ordersAPI, invoiceAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -32,6 +34,9 @@ export default function OrderDetails() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const orderId = params.id;
 
@@ -126,6 +131,47 @@ export default function OrderDetails() {
     } finally {
       setDownloadingInvoice(false);
     }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation");
+      return;
+    }
+
+    try {
+      setCancellingOrder(true);
+      const response = await ordersAPI.cancelOrder(order._id, cancelReason);
+      
+      setOrder(prevOrder => ({
+        ...prevOrder,
+        orderStatus: "Cancelled",
+        cancelledAt: new Date(),
+        refundInfo: response.data.refundInfo
+      }));
+      
+      setShowCancelModal(false);
+      setCancelReason("");
+      
+      if (response.data.refundInfo) {
+        toast.success("Order cancelled successfully. Refund has been initiated and will be processed within 5-7 business days.");
+      } else {
+        toast.success("Order cancelled successfully.");
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error(error.response?.data?.message || "Failed to cancel order. Please try again.");
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
+  const canCancelOrder = () => {
+    return order && 
+           order.orderStatus !== "Delivered" && 
+           order.orderStatus !== "Shipped" && 
+           order.orderStatus !== "Cancelled" &&
+           order.orderStatus !== "Returned";
   };
 
   const getStatusColor = (status) => {
@@ -661,6 +707,62 @@ export default function OrderDetails() {
               </CardContent>
             </Card>
 
+            {/* Refund Information */}
+            {order.refundInfo && order.refundInfo.refundId && (
+              <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold">💰</span>
+                    </div>
+                    Refund Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-600 font-medium">Refund ID:</span>
+                      <span className="text-base font-semibold text-gray-900">
+                        {order.refundInfo.refundId}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-600 font-medium">Amount:</span>
+                      <span className="text-base font-semibold text-green-600">
+                        {formatPrice(order.refundInfo.amount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-600 font-medium">Status:</span>
+                      <Badge className={`px-3 py-1 text-sm font-semibold ${
+                        order.refundInfo.status === "processed" 
+                          ? "bg-green-100 text-green-800 border-green-200"
+                          : order.refundInfo.status === "failed"
+                          ? "bg-red-100 text-red-800 border-red-200"
+                          : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                      }`}>
+                        {order.refundInfo.status}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-base text-gray-600 font-medium">Reason:</span>
+                      <span className="text-base font-medium text-gray-700">
+                        {order.refundInfo.reason}
+                      </span>
+                    </div>
+                    {order.refundInfo.refundedAt && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-base text-gray-600 font-medium">Refunded At:</span>
+                        <span className="text-base font-medium text-gray-700">
+                          {formatDate(order.refundInfo.refundedAt)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Actions */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
@@ -684,6 +786,22 @@ export default function OrderDetails() {
                   )}
                   Download Invoice
                 </Button>
+                
+                {canCancelOrder() && (
+                  <Button
+                    onClick={() => setShowCancelModal(true)}
+                    disabled={cancellingOrder}
+                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+                  >
+                    {cancellingOrder ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <XCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Cancel Order
+                  </Button>
+                )}
+                
                 <Button
                   variant="outline"
                   onClick={loadOrderDetails}
@@ -697,6 +815,80 @@ export default function OrderDetails() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Cancel Order</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for cancellation *
+              </label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Please provide a reason for cancelling this order..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                rows={4}
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {cancelReason.length}/500 characters
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-800 mb-1">Important Information:</p>
+                  <ul className="text-yellow-700 space-y-1 text-xs">
+                    <li>• Your order will be cancelled immediately</li>
+                    <li>• If payment was made, refund will be initiated automatically</li>
+                    <li>• Refund will be processed within 5-7 business days</li>
+                    <li>• Product stock will be restored</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelReason("");
+                }}
+                variant="outline"
+                className="flex-1 hover:bg-gray-50"
+              >
+                Keep Order
+              </Button>
+              <Button
+                onClick={handleCancelOrder}
+                disabled={cancellingOrder || !cancelReason.trim()}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              >
+                {cancellingOrder ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <XCircle className="w-4 h-4 mr-2" />
+                )}
+                Cancel Order
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
