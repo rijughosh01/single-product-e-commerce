@@ -239,6 +239,22 @@ export const invoiceAPI = {
   deleteInvoice: (id) => api.delete(`/admin/invoice/${id}`),
 };
 
+// Returns API
+export const returnsAPI = {
+  createReturnRequest: (returnData) => api.post("/return/request", returnData),
+  getMyReturns: () => api.get("/return/my-returns"),
+  getReturnRequest: (id) => api.get(`/return/${id}`),
+  cancelReturnRequest: (id) => api.put(`/return/${id}/cancel`),
+
+  // Admin
+  getAllReturns: (params = {}) => api.get("/return/admin/returns", { params }),
+  updateReturnStatus: (id, statusData) =>
+    api.put(`/return/admin/${id}/status`, statusData),
+  processReturnRefund: (id, refundData) =>
+    api.post(`/return/admin/${id}/refund`, refundData),
+  getReturnStats: () => api.get("/return/admin/returns/stats"),
+};
+
 // Admin API
 export const adminAPI = {
   getDashboardStats: () => api.get("/admin/dashboard/stats"),

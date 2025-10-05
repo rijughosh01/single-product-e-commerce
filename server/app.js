@@ -24,6 +24,7 @@ const wishlist = require("./routes/wishlist");
 const notifications = require("./routes/notifications");
 const subscriptions = require("./routes/subscriptions");
 const payment = require("./routes/payment");
+const returns = require("./routes/returns");
 const admin = require("./routes/admin");
 
 connectDB();
@@ -83,6 +84,7 @@ app.use("/api/v1", wishlist);
 app.use("/api/v1", notifications);
 app.use("/api/v1", subscriptions);
 app.use("/api/v1", payment);
+app.use("/api/v1/return", returns);
 app.use("/api/v1", admin);
 
 // Health check route

@@ -124,6 +124,11 @@ const orderSchema = new mongoose.Schema({
       "Returned",
     ],
   },
+  returnRequest: {
+    type: mongoose.Schema.ObjectId,
+    ref: "ReturnRequest",
+    default: null,
+  },
   deliveredAt: Date,
   cancelledAt: Date,
   trackingNumber: {

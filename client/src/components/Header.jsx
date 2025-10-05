@@ -378,6 +378,12 @@ const Header = () => {
                     >
                       My Coupons
                     </Link>
+                    <Link
+                      href="/returns"
+                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
+                    >
+                      My Returns
+                    </Link>
                     {user?.role === "admin" && (
                       <Link
                         href="/admin"
@@ -538,6 +544,13 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   My Coupons
+                </Link>
+                <Link
+                  href="/returns"
+                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  My Returns
                 </Link>
                 {user?.role === "admin" && (
                   <Link

@@ -28,6 +28,7 @@ import {
   Truck,
   FileText,
   Calendar,
+  RotateCcw,
 } from "lucide-react";
 import NotificationSystem from "./NotificationSystem";
 
@@ -74,6 +75,12 @@ const AdminLayout = ({ children }) => {
       href: "/admin/orders",
       icon: ShoppingCart,
       description: "Order management",
+    },
+    {
+      name: "Returns",
+      href: "/admin/returns",
+      icon: RotateCcw,
+      description: "Return management",
     },
     {
       name: "Users",

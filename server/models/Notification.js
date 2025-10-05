@@ -17,7 +17,15 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     required: [true, "Please specify notification type"],
-    enum: ["order", "payment", "shipping", "promotion", "system", "stock"],
+    enum: [
+      "order",
+      "payment",
+      "shipping",
+      "promotion",
+      "system",
+      "stock",
+      "return",
+    ],
   },
   priority: {
     type: String,

@@ -4,6 +4,10 @@ const User = require("../models/User");
 class NotificationService {
   static async createNotification(notificationData) {
     try {
+      console.log(
+        "NotificationService: Creating notification with data:",
+        notificationData
+      );
       const {
         userId,
         title,
@@ -18,6 +22,12 @@ class NotificationService {
 
       // Validate required fields
       if (!userId || !title || !message || !type) {
+        console.error("NotificationService: Missing required fields:", {
+          userId,
+          title,
+          message,
+          type,
+        });
         throw new Error("Missing required notification fields");
       }
 
@@ -50,7 +60,6 @@ class NotificationService {
   // Create notifications for all admin users
   static async createAdminNotification(notificationData) {
     try {
-      
       const adminUsers = await User.find({ role: "admin" });
 
       if (adminUsers.length === 0) {
@@ -306,6 +315,103 @@ class NotificationService {
       shipped: "medium",
       delivered: "medium",
       out_for_delivery: "medium",
+    };
+    return priorities[eventType] || "medium";
+  }
+
+  // Create return-related notifications
+  static async createReturnNotification(returnRequest, eventType) {
+    try {
+      console.log(
+        "NotificationService: Creating return notification for event:",
+        eventType
+      );
+      console.log("NotificationService: Return request ID:", returnRequest._id);
+      console.log("NotificationService: User ID:", returnRequest.user);
+      const notifications = [];
+
+      // Notification for customer
+      const customerNotification = await this.createNotification({
+        userId: returnRequest.user,
+        title: this.getReturnTitle(eventType),
+        message: this.getReturnMessage(returnRequest, eventType),
+        type: "return",
+        priority: this.getReturnPriority(eventType),
+        metadata: {
+          returnId: returnRequest._id,
+          orderId: returnRequest.order._id,
+        },
+        actionUrl: `/returns/${returnRequest._id}`,
+        actionText: "View Return",
+      });
+      notifications.push(customerNotification);
+
+      // Notification for admins
+      const adminNotifications = await this.createAdminNotification({
+        title: `Admin: ${this.getReturnTitle(eventType)}`,
+        message: `Return #${returnRequest._id} for Order #${
+          returnRequest.order._id
+        } - ${this.getReturnMessage(returnRequest, eventType)}`,
+        type: "return",
+        priority: this.getReturnPriority(eventType),
+        metadata: {
+          returnId: returnRequest._id,
+          orderId: returnRequest.order._id,
+        },
+        actionUrl: `/admin/returns/${returnRequest._id}`,
+        actionText: "View Return",
+      });
+      notifications.push(...adminNotifications);
+
+      return notifications;
+    } catch (error) {
+      console.error("Error creating return notifications:", error);
+      throw error;
+    }
+  }
+
+  // Helper methods for return notifications
+  static getReturnTitle(eventType) {
+    const titles = {
+      requested: "Return Request Submitted",
+      approved: "Return Request Approved",
+      rejected: "Return Request Rejected",
+      return_shipped: "Return Shipped",
+      return_received: "Return Received",
+      refund_processed: "Return Refund Processed",
+      completed: "Return Completed",
+      cancelled: "Return Request Cancelled",
+    };
+    return titles[eventType] || "Return Update";
+  }
+
+  static getReturnMessage(returnRequest, eventType) {
+    const messages = {
+      requested: `Your return request for order #${returnRequest.order._id} has been submitted and is under review.`,
+      approved: `Your return request for order #${returnRequest.order._id} has been approved. Please ship the items back.`,
+      rejected: `Your return request for order #${returnRequest.order._id} has been rejected. Please contact support for more information.`,
+      return_shipped: `Your return for order #${returnRequest.order._id} has been shipped back to us.`,
+      return_received: `We have received your return for order #${returnRequest.order._id}. Refund will be processed soon.`,
+      refund_processed: `Your refund for order #${returnRequest.order._id} has been processed successfully.`,
+      completed: `Your return for order #${returnRequest.order._id} has been completed.`,
+      cancelled: `Your return request for order #${returnRequest.order._id} has been cancelled.`,
+    };
+    return (
+      messages[eventType] ||
+      `Return update for order #${returnRequest.order._id}.`
+    );
+  }
+
+  static getReturnPriority(eventType) {
+    const priorities = {
+      requested: "medium",
+      approved: "medium",
+      rejected: "high",
+      return_shipped: "low",
+      return_received: "medium",
+      refund_processed: "medium",
+      completed: "low",
+      cancelled: "low",
     };
     return priorities[eventType] || "medium";
   }
