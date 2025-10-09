@@ -23,7 +23,7 @@ import {
   Edit,
   Save,
 } from "lucide-react";
-import { returnsAPI } from "@/lib/api";
+import { returnsAPI, profileAPI } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -39,10 +39,27 @@ export default function AdminReturnDetailsPage() {
   const [updating, setUpdating] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showCODRefundModal, setShowCODRefundModal] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [refundAmount, setRefundAmount] = useState("");
   const [refundReason, setRefundReason] = useState("");
+
+  // COD refund states
+  const [codRefundMethod, setCodRefundMethod] = useState("");
+  const [bankTransferDetails, setBankTransferDetails] = useState({
+    transactionId: "",
+    bankName: "",
+    accountNumber: "",
+    ifscCode: "",
+    referenceNumber: "",
+    transferDate: "",
+  });
+  const [upiDetails, setUpiDetails] = useState({
+    upiId: "",
+    transactionId: "",
+    transferDate: "",
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -143,6 +160,142 @@ export default function AdminReturnDetailsPage() {
     }
   };
 
+  const handleProcessCODRefund = async () => {
+    if (!refundReason.trim()) {
+      toast.error("Please provide a reason for refund");
+      return;
+    }
+
+    if (!codRefundMethod) {
+      toast.error("Please select a refund method");
+      return;
+    }
+
+    if (codRefundMethod === "bank_transfer") {
+      if (!bankTransferDetails.transactionId || !bankTransferDetails.bankName) {
+        toast.error("Please provide bank transfer details");
+        return;
+      }
+    }
+
+    if (codRefundMethod === "upi") {
+      if (!upiDetails.upiId || !upiDetails.transactionId) {
+        toast.error("Please provide UPI details");
+        return;
+      }
+    }
+
+    try {
+      setUpdating(true);
+      const response = await returnsAPI.processCODRefund(returnId, {
+        refundMethod: codRefundMethod,
+        bankTransferDetails:
+          codRefundMethod === "bank_transfer" ? bankTransferDetails : undefined,
+        upiDetails: codRefundMethod === "upi" ? upiDetails : undefined,
+        amount: refundAmount ? parseFloat(refundAmount) : undefined,
+        reason: refundReason,
+      });
+
+      setReturnRequest((prev) => ({
+        ...prev,
+        status: "refund_processed",
+        refundInfo: {
+          refundId: response.data.refund.id,
+          amount: response.data.refund.amount,
+          status: response.data.refund.status,
+          reason: response.data.refund.reason,
+          refundedAt: new Date(),
+          refundMethod: response.data.refund.method,
+          bankTransferDetails: bankTransferDetails,
+          upiDetails: upiDetails,
+        },
+      }));
+
+      setShowCODRefundModal(false);
+      setRefundAmount("");
+      setRefundReason("");
+      setCodRefundMethod("");
+      setBankTransferDetails({
+        transactionId: "",
+        bankName: "",
+        accountNumber: "",
+        ifscCode: "",
+        referenceNumber: "",
+        transferDate: "",
+      });
+      setUpiDetails({
+        upiId: "",
+        transactionId: "",
+        transferDate: "",
+      });
+      toast.success("COD refund processed successfully");
+    } catch (error) {
+      console.error("Error processing COD refund:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to process COD refund"
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleVerifyBankDetails = async () => {
+    try {
+      setUpdating(true);
+      const response = await profileAPI.verifyBankDetails(
+        returnRequest.user._id
+      );
+
+      if (response.data.success) {
+        toast.success("Bank details verified successfully!");
+
+        setReturnRequest((prev) => ({
+          ...prev,
+          user: {
+            ...prev.user,
+            bankDetails: {
+              ...prev.user.bankDetails,
+              isVerified: true,
+              isRejected: false,
+            },
+          },
+        }));
+      } else {
+        toast.error(response.data.message || "Failed to verify bank details");
+      }
+    } catch (error) {
+      console.error("Error verifying bank details:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to verify bank details"
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRejectBankDetails = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to reject these bank details? The customer will need to update them."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      toast.info(
+        "Bank details rejected. Customer should update their details."
+      );
+    } catch (error) {
+      console.error("Error rejecting bank details:", error);
+      toast.error("Failed to reject bank details");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -211,6 +364,15 @@ export default function AdminReturnDetailsPage() {
       returnRequest &&
       returnRequest.status === "return_received" &&
       returnRequest.order.paymentInfo.method !== "cod" &&
+      (!returnRequest.refundInfo || !returnRequest.refundInfo.refundId)
+    );
+  };
+
+  const canProcessCODRefund = () => {
+    return (
+      returnRequest &&
+      returnRequest.status === "return_received" &&
+      returnRequest.order.paymentInfo.method === "cod" &&
       (!returnRequest.refundInfo || !returnRequest.refundInfo.refundId)
     );
   };
@@ -567,6 +729,162 @@ export default function AdminReturnDetailsPage() {
               </div>
             </div>
 
+            {/* Customer Bank Details - Only show for COD orders */}
+            {returnRequest.order.paymentInfo.method === "cod" &&
+              returnRequest.user.bankDetails && (
+                <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+                    Customer Bank Details
+                    {returnRequest.user.bankDetails.isVerified ? (
+                      <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </span>
+                    ) : (
+                      <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Pending Verification
+                      </span>
+                    )}
+                  </h2>
+                  <div className="space-y-3">
+                    {returnRequest.user.bankDetails.accountHolderName && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Account Holder Name
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium">
+                          {returnRequest.user.bankDetails.accountHolderName}
+                        </p>
+                      </div>
+                    )}
+
+                    {returnRequest.user.bankDetails.accountNumber && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Account Number
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium font-mono">
+                          ****
+                          {returnRequest.user.bankDetails.accountNumber.slice(
+                            -4
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {returnRequest.user.bankDetails.ifscCode && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          IFSC Code
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium font-mono">
+                          {returnRequest.user.bankDetails.ifscCode}
+                        </p>
+                      </div>
+                    )}
+
+                    {returnRequest.user.bankDetails.bankName && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Bank Name
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium">
+                          {returnRequest.user.bankDetails.bankName}
+                        </p>
+                      </div>
+                    )}
+
+                    {returnRequest.user.bankDetails.branchName && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Branch Name
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium">
+                          {returnRequest.user.bankDetails.branchName}
+                        </p>
+                      </div>
+                    )}
+
+                    {returnRequest.user.bankDetails.upiId && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          UPI ID
+                        </label>
+                        <p className="text-sm text-gray-900 font-medium">
+                          {returnRequest.user.bankDetails.upiId}
+                        </p>
+                      </div>
+                    )}
+
+                    {!returnRequest.user.bankDetails.accountHolderName &&
+                      !returnRequest.user.bankDetails.accountNumber &&
+                      !returnRequest.user.bankDetails.ifscCode && (
+                        <div className="text-center py-4">
+                          <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">
+                            Customer has not provided bank details yet.
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            They need to add bank details in their profile for
+                            COD refunds.
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Verification Actions */}
+                    {returnRequest.user.bankDetails.accountHolderName && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">
+                            Verification Status:
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {returnRequest.user.bankDetails.isVerified ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verified
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Pending
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {!returnRequest.user.bankDetails.isVerified && (
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={handleVerifyBankDetails}
+                              disabled={updating}
+                              className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                              {updating ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
+                              Verify Bank Details
+                            </button>
+                            <button
+                              onClick={handleRejectBankDetails}
+                              disabled={updating}
+                              className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
             {/* Order Information */}
             <div className="bg-white rounded-2xl shadow-sm border border-orange-100/60 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -748,6 +1066,25 @@ export default function AdminReturnDetailsPage() {
                     Process Refund
                   </button>
                 )}
+
+                {canProcessCODRefund() && (
+                  <button
+                    onClick={() => {
+                      setRefundAmount(
+                        returnRequest.returnItems
+                          .reduce(
+                            (total, item) => total + item.price * item.quantity,
+                            0
+                          )
+                          .toString()
+                      );
+                      setShowCODRefundModal(true);
+                    }}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Process COD Refund
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -913,6 +1250,334 @@ export default function AdminReturnDetailsPage() {
                   <DollarSign className="w-4 h-4" />
                 )}
                 Process Refund
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* COD Refund Modal */}
+      {showCODRefundModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Process COD Refund
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Return #{returnRequest._id}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Refund Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  placeholder={returnRequest.returnItems
+                    .reduce(
+                      (total, item) => total + item.price * item.quantity,
+                      0
+                    )
+                    .toString()}
+                  min="0"
+                  step="0.01"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave empty for full refund
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Refund Method *
+                </label>
+                <select
+                  value={codRefundMethod}
+                  onChange={(e) => setCodRefundMethod(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                >
+                  <option value="">Select refund method</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="upi">UPI Transfer</option>
+                  <option value="cash">Cash Refund</option>
+                </select>
+              </div>
+
+              {/* Bank Transfer Details */}
+              {codRefundMethod === "bank_transfer" && (
+                <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-900">
+                      Bank Transfer Details
+                    </h4>
+                    {returnRequest.user.bankDetails &&
+                      returnRequest.user.bankDetails.bankName && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBankTransferDetails({
+                              ...bankTransferDetails,
+                              bankName:
+                                returnRequest.user.bankDetails.bankName || "",
+                              accountNumber:
+                                returnRequest.user.bankDetails.accountNumber ||
+                                "",
+                              ifscCode:
+                                returnRequest.user.bankDetails.ifscCode || "",
+                            });
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Use Customer's Bank Details
+                        </button>
+                      )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Transaction ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={bankTransferDetails.transactionId}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            transactionId: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter transaction ID"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Bank Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={bankTransferDetails.bankName}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            bankName: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter bank name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Account Number
+                      </label>
+                      <input
+                        type="text"
+                        value={bankTransferDetails.accountNumber}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            accountNumber: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter account number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        IFSC Code
+                      </label>
+                      <input
+                        type="text"
+                        value={bankTransferDetails.ifscCode}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            ifscCode: e.target.value.toUpperCase(),
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter IFSC code"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Reference Number
+                      </label>
+                      <input
+                        type="text"
+                        value={bankTransferDetails.referenceNumber}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            referenceNumber: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter reference number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Transfer Date
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={bankTransferDetails.transferDate}
+                        onChange={(e) =>
+                          setBankTransferDetails({
+                            ...bankTransferDetails,
+                            transferDate: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* UPI Details */}
+              {codRefundMethod === "upi" && (
+                <div className="space-y-4 p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-gray-900">
+                      UPI Transfer Details
+                    </h4>
+                    {returnRequest.user.bankDetails &&
+                      returnRequest.user.bankDetails.upiId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUpiDetails({
+                              ...upiDetails,
+                              upiId: returnRequest.user.bankDetails.upiId || "",
+                            });
+                          }}
+                          className="text-xs text-green-600 hover:text-green-800 underline"
+                        >
+                          Use Customer's UPI ID
+                        </button>
+                      )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        UPI ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={upiDetails.upiId}
+                        onChange={(e) =>
+                          setUpiDetails({
+                            ...upiDetails,
+                            upiId: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter UPI ID"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Transaction ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={upiDetails.transactionId}
+                        onChange={(e) =>
+                          setUpiDetails({
+                            ...upiDetails,
+                            transactionId: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        placeholder="Enter transaction ID"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Transfer Date
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={upiDetails.transferDate}
+                        onChange={(e) =>
+                          setUpiDetails({
+                            ...upiDetails,
+                            transferDate: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Refund *
+                </label>
+                <textarea
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Please provide a reason for this refund..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+                  rows={3}
+                  maxLength={500}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCODRefundModal(false);
+                  setRefundAmount("");
+                  setRefundReason("");
+                  setCodRefundMethod("");
+                  setBankTransferDetails({
+                    transactionId: "",
+                    bankName: "",
+                    accountNumber: "",
+                    ifscCode: "",
+                    referenceNumber: "",
+                    transferDate: "",
+                  });
+                  setUpiDetails({
+                    upiId: "",
+                    transactionId: "",
+                    transferDate: "",
+                  });
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProcessCODRefund}
+                disabled={updating || !refundReason.trim() || !codRefundMethod}
+                className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {updating ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <DollarSign className="w-4 h-4" />
+                )}
+                Process COD Refund
               </button>
             </div>
           </div>

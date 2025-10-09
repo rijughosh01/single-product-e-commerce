@@ -134,6 +134,52 @@ const returnRequestSchema = new mongoose.Schema({
       type: Date,
       default: null,
     },
+    // COD refund specific fields
+    refundMethod: {
+      type: String,
+      enum: ["razorpay", "bank_transfer", "upi", "cash"],
+      default: null,
+    },
+    bankTransferDetails: {
+      transactionId: {
+        type: String,
+        default: "",
+      },
+      bankName: {
+        type: String,
+        default: "",
+      },
+      accountNumber: {
+        type: String,
+        default: "",
+      },
+      ifscCode: {
+        type: String,
+        default: "",
+      },
+      transferDate: {
+        type: Date,
+        default: null,
+      },
+      referenceNumber: {
+        type: String,
+        default: "",
+      },
+    },
+    upiDetails: {
+      upiId: {
+        type: String,
+        default: "",
+      },
+      transactionId: {
+        type: String,
+        default: "",
+      },
+      transferDate: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   returnWindow: {
     type: Number,

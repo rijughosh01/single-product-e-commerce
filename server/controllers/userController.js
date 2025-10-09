@@ -276,3 +276,137 @@ exports.getUserStats = async (req, res, next) => {
     next(error);
   }
 };
+
+// Update bank details => /api/v1/bank-details
+exports.updateBankDetails = async (req, res, next) => {
+  try {
+    const {
+      accountHolderName,
+      accountNumber,
+      ifscCode,
+      bankName,
+      branchName,
+      upiId,
+    } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Update bank details
+    user.bankDetails = {
+      accountHolderName:
+        accountHolderName || user.bankDetails.accountHolderName,
+      accountNumber: accountNumber || user.bankDetails.accountNumber,
+      ifscCode: ifscCode || user.bankDetails.ifscCode,
+      bankName: bankName || user.bankDetails.bankName,
+      branchName: branchName || user.bankDetails.branchName,
+      upiId: upiId || user.bankDetails.upiId,
+      isVerified: false,
+    };
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bank details updated successfully",
+      bankDetails: user.bankDetails,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get bank details => /api/v1/bank-details
+exports.getBankDetails = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("bankDetails");
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      bankDetails: user.bankDetails,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Verify bank details - Admin => /api/v1/admin/bank-details/:userId/verify
+exports.verifyBankDetails = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    if (!user.bankDetails.accountHolderName) {
+      return next(new ErrorHandler("User has not provided bank details", 400));
+    }
+
+    // Mark bank details as verified
+    user.bankDetails.isVerified = true;
+    user.bankDetails.isRejected = false;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bank details verified successfully",
+      bankDetails: user.bankDetails,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Reject bank details (Admin) => /api/v1/admin/bank-details/:userId/reject
+exports.rejectBankDetails = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    if (!user.bankDetails.accountHolderName) {
+      return next(new ErrorHandler("User has not provided bank details", 400));
+    }
+
+    // Mark bank details as rejected
+    user.bankDetails.isVerified = false;
+    user.bankDetails.isRejected = true;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Bank details rejected successfully",
+      bankDetails: user.bankDetails,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get all users with bank details (Admin) => /api/v1/admin/users/bank-details
+exports.getAllUsersWithBankDetails = async (req, res, next) => {
+  try {
+    const users = await User.find({
+      "bankDetails.accountHolderName": { $exists: true, $ne: "" },
+    }).select("name email bankDetails createdAt");
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

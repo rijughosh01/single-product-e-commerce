@@ -64,6 +64,41 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
+  bankDetails: {
+    accountHolderName: {
+      type: String,
+      default: "",
+    },
+    accountNumber: {
+      type: String,
+      default: "",
+    },
+    ifscCode: {
+      type: String,
+      default: "",
+      match: [/^[A-Z]{4}0[A-Z0-9]{6}$/, "Please enter a valid IFSC code"],
+    },
+    bankName: {
+      type: String,
+      default: "",
+    },
+    branchName: {
+      type: String,
+      default: "",
+    },
+    upiId: {
+      type: String,
+      default: "",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isRejected: {
+      type: Boolean,
+      default: false,
+    },
+  },
   avatar: {
     public_id: {
       type: String,

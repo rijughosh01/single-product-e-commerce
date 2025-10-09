@@ -305,9 +305,9 @@ export default function ReturnRequestPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-6">
             {/* Order Items */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
@@ -337,7 +337,7 @@ export default function ReturnRequestPage() {
                             : "border-gray-200 bg-white hover:border-orange-300"
                         }`}
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <div className="flex-shrink-0">
                             <input
                               type="checkbox"
@@ -348,8 +348,8 @@ export default function ReturnRequestPage() {
                               className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                             />
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                               <img
                                 src={
                                   typeof item.image === "string"
@@ -357,10 +357,10 @@ export default function ReturnRequestPage() {
                                     : item.image?.url || "/placeholder-ghee.jpg"
                                 }
                                 alt={item.name}
-                                className="w-16 h-16 object-cover rounded-lg"
+                                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                               />
-                              <div className="flex-1">
-                                <h3 className="text-lg font-semibold text-gray-900">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-semibold text-gray-900 break-words">
                                   {item.name}
                                 </h3>
                                 <p className="text-sm text-gray-600">
@@ -464,7 +464,7 @@ export default function ReturnRequestPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
             {/* Order Summary */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
@@ -562,7 +562,7 @@ export default function ReturnRequestPage() {
                       rows={2}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         City *
@@ -596,7 +596,7 @@ export default function ReturnRequestPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Pincode *
@@ -633,6 +633,45 @@ export default function ReturnRequestPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* COD Notice */}
+            {order && order.paymentInfo.method === "cod" && (
+              <Card className="shadow-xl border-0 bg-blue-50/80 backdrop-blur-sm border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <DollarSign className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-900 mb-2">
+                        COD Order Refund Information
+                      </h3>
+                      <p className="text-blue-700 text-sm mb-3">
+                        Since this is a Cash on Delivery order, your refund will
+                        be processed manually. Please ensure your bank details
+                        are up to date in your profile for faster refund
+                        processing.
+                      </p>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <Button
+                          onClick={() =>
+                            router.push("/profile?tab=bank-details")
+                          }
+                          variant="outline"
+                          size="sm"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100 w-full sm:w-auto"
+                        >
+                          Update Bank Details
+                        </Button>
+                        <span className="text-xs text-blue-600 text-center sm:text-left">
+                          Refunds typically take 1-3 business days
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Submit Button */}
             <Button

@@ -5,6 +5,7 @@ const {
   getReturnRequest,
   updateReturnStatus,
   processReturnRefund,
+  processCODRefund,
   getAllReturns,
   cancelReturnRequest,
   getReturnStats,
@@ -37,6 +38,12 @@ router.post(
   isAuthenticatedUser,
   authorizeRoles("admin"),
   processReturnRefund
+);
+router.post(
+  "/admin/:id/cod-refund",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  processCODRefund
 );
 router.get(
   "/admin/returns/stats",

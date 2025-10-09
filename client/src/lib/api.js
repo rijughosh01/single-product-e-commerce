@@ -224,6 +224,15 @@ export const profileAPI = {
   deleteAddress: (id) => api.delete(`/address/${id}`),
   setDefaultAddress: (id) => api.put(`/address/${id}/default`),
   updatePassword: (passwords) => api.put("/password/update", passwords),
+
+  // Bank details
+  getBankDetails: () => api.get("/bank-details"),
+  updateBankDetails: (bankData) => api.put("/bank-details", bankData),
+  verifyBankDetails: (userId) =>
+    api.put(`/admin/bank-details/${userId}/verify`),
+  rejectBankDetails: (userId) =>
+    api.put(`/admin/bank-details/${userId}/reject`),
+  getAllUsersWithBankDetails: () => api.get("/admin/users/bank-details"),
 };
 
 // Invoice API
@@ -252,6 +261,8 @@ export const returnsAPI = {
     api.put(`/return/admin/${id}/status`, statusData),
   processReturnRefund: (id, refundData) =>
     api.post(`/return/admin/${id}/refund`, refundData),
+  processCODRefund: (id, refundData) =>
+    api.post(`/return/admin/${id}/cod-refund`, refundData),
   getReturnStats: () => api.get("/return/admin/returns/stats"),
 };
 

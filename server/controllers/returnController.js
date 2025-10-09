@@ -186,7 +186,7 @@ exports.getReturnRequest = async (req, res, next) => {
   try {
     const returnRequest = await ReturnRequest.findById(req.params.id)
       .populate("order")
-      .populate("user", "name email");
+      .populate("user", "name email bankDetails");
 
     if (!returnRequest) {
       return next(new ErrorHandler("Return request not found", 404));
@@ -352,9 +352,10 @@ exports.processReturnRefund = async (req, res, next) => {
       );
     }
 
+    // For COD orders, need to process manual refunds
     if (returnRequest.order.paymentInfo.method === "cod") {
       return next(
-        new ErrorHandler("Cannot process refund for COD orders", 400)
+        new ErrorHandler("Use processCODRefund endpoint for COD orders", 400)
       );
     }
 
@@ -548,6 +549,194 @@ exports.cancelReturnRequest = async (req, res, next) => {
       success: true,
       message: "Return request cancelled successfully",
       returnRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Process COD refund (Admin) => /api/v1/admin/return/:id/cod-refund
+exports.processCODRefund = async (req, res, next) => {
+  try {
+    const { refundMethod, bankTransferDetails, upiDetails, amount, reason } =
+      req.body;
+
+    const returnRequest = await ReturnRequest.findById(req.params.id)
+      .populate("order")
+      .populate("user", "name email bankDetails");
+
+    if (!returnRequest) {
+      return next(new ErrorHandler("Return request not found", 404));
+    }
+
+    if (returnRequest.status !== "return_received") {
+      return next(
+        new ErrorHandler(
+          "Return must be received before processing refund",
+          400
+        )
+      );
+    }
+
+    if (returnRequest.order.paymentInfo.method !== "cod") {
+      return next(
+        new ErrorHandler("This endpoint is only for COD orders", 400)
+      );
+    }
+
+    // Check if refund already exists
+    if (returnRequest.refundInfo && returnRequest.refundInfo.refundId) {
+      return next(
+        new ErrorHandler("Refund already processed for this return", 400)
+      );
+    }
+
+    const refundAmount = amount || returnRequest.order.totalPrice;
+
+    // Validate refund method and details
+    if (!refundMethod) {
+      return next(new ErrorHandler("Refund method is required", 400));
+    }
+
+    if (refundMethod === "bank_transfer" && !bankTransferDetails) {
+      return next(new ErrorHandler("Bank transfer details are required", 400));
+    }
+
+    if (refundMethod === "upi" && !upiDetails) {
+      return next(new ErrorHandler("UPI details are required", 400));
+    }
+
+    const refundId = `COD_REFUND_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)
+      .toUpperCase()}`;
+
+    // Update return request with refund information
+    returnRequest.refundInfo = {
+      refundId: refundId,
+      amount: refundAmount,
+      status: "processed",
+      reason: reason || "COD return refund processed",
+      refundedAt: new Date(),
+      refundMethod: refundMethod,
+      bankTransferDetails: bankTransferDetails || {},
+      upiDetails: upiDetails || {},
+    };
+
+    returnRequest.status = "refund_processed";
+    await returnRequest.save();
+
+    try {
+      await sendEmail({
+        email: returnRequest.user.email,
+        subject: "COD Return Refund Processed - Pure Ghee Store",
+        message: `Your COD return refund has been processed. Refund ID: ${refundId}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #f97316;">COD Return Refund Processed</h2>
+            <p>Dear ${returnRequest.user.name},</p>
+            <p>Your COD return refund has been successfully processed.</p>
+            
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3>Refund Details</h3>
+              <p><strong>Return ID:</strong> ${returnRequest._id}</p>
+              <p><strong>Order ID:</strong> ${returnRequest.order._id}</p>
+              <p><strong>Refund Amount:</strong> ₹${refundAmount}</p>
+              <p><strong>Refund ID:</strong> ${refundId}</p>
+              <p><strong>Refund Method:</strong> ${refundMethod
+                .replace("_", " ")
+                .toUpperCase()}</p>
+              <p><strong>Refund Reason:</strong> ${
+                reason || "COD return refund processed"
+              }</p>
+              <p><strong>Processed At:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+            
+            ${
+              refundMethod === "bank_transfer" && bankTransferDetails
+                ? `
+              <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Bank Transfer Details</h3>
+                <p><strong>Transaction ID:</strong> ${
+                  bankTransferDetails.transactionId || "N/A"
+                }</p>
+                <p><strong>Bank Name:</strong> ${
+                  bankTransferDetails.bankName || "N/A"
+                }</p>
+                <p><strong>Account Number:</strong> ${
+                  bankTransferDetails.accountNumber
+                    ? "****" + bankTransferDetails.accountNumber.slice(-4)
+                    : "N/A"
+                }</p>
+                <p><strong>IFSC Code:</strong> ${
+                  bankTransferDetails.ifscCode || "N/A"
+                }</p>
+                <p><strong>Reference Number:</strong> ${
+                  bankTransferDetails.referenceNumber || "N/A"
+                }</p>
+                ${
+                  bankTransferDetails.transferDate
+                    ? `<p><strong>Transfer Date:</strong> ${new Date(
+                        bankTransferDetails.transferDate
+                      ).toLocaleString()}</p>`
+                    : ""
+                }
+              </div>
+            `
+                : ""
+            }
+            
+            ${
+              refundMethod === "upi" && upiDetails
+                ? `
+              <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>UPI Transfer Details</h3>
+                <p><strong>UPI ID:</strong> ${upiDetails.upiId || "N/A"}</p>
+                <p><strong>Transaction ID:</strong> ${
+                  upiDetails.transactionId || "N/A"
+                }</p>
+                ${
+                  upiDetails.transferDate
+                    ? `<p><strong>Transfer Date:</strong> ${new Date(
+                        upiDetails.transferDate
+                      ).toLocaleString()}</p>`
+                    : ""
+                }
+              </div>
+            `
+                : ""
+            }
+            
+            <p>Your refund has been processed and should reflect in your account within 1-3 business days.</p>
+            <p>If you have any questions about this refund, please contact our support team with the Refund ID: ${refundId}</p>
+            <p>Best regards,<br>Pure Ghee Store Team</p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error("COD refund email sending failed:", emailError);
+    }
+
+    // Create database notifications
+    try {
+      await NotificationService.createReturnNotification(
+        returnRequest,
+        "refund_processed"
+      );
+    } catch (error) {
+      console.error("Error creating COD refund notifications:", error);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "COD refund processed successfully",
+      refund: {
+        id: refundId,
+        amount: refundAmount,
+        status: "processed",
+        method: refundMethod,
+        reason: reason || "COD return refund processed",
+      },
     });
   } catch (error) {
     next(error);

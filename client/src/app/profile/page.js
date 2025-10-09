@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import ProfileOverview from "@/components/profile/ProfileOverview";
 import ProfileEdit from "@/components/profile/ProfileEdit";
 import AddressManagement from "@/components/profile/AddressManagement";
+import BankDetailsManagement from "@/components/profile/BankDetailsManagement";
 import OrderHistory from "@/components/profile/OrderHistory";
 import PasswordChange from "@/components/profile/PasswordChange";
 import SubscriptionManager from "@/components/SubscriptionManager";
@@ -22,6 +23,7 @@ import {
   Calendar,
   Crown,
   Sparkles,
+  CreditCard,
 } from "lucide-react";
 
 const ProfilePage = () => {
@@ -75,6 +77,12 @@ const ProfilePage = () => {
       color: "from-green-500 to-emerald-500",
     },
     {
+      id: "bank-details",
+      label: "Bank Details",
+      icon: CreditCard,
+      color: "from-teal-500 to-cyan-500",
+    },
+    {
       id: "orders",
       label: "Order History",
       icon: ShoppingBag,
@@ -108,6 +116,8 @@ const ProfilePage = () => {
         return <ProfileEdit user={user} />;
       case "addresses":
         return <AddressManagement />;
+      case "bank-details":
+        return <BankDetailsManagement />;
       case "orders":
         return <OrderHistory />;
       case "subscriptions":

@@ -29,6 +29,7 @@ import {
   FileText,
   Calendar,
   RotateCcw,
+  Banknote,
 } from "lucide-react";
 import NotificationSystem from "./NotificationSystem";
 
@@ -81,6 +82,12 @@ const AdminLayout = ({ children }) => {
       href: "/admin/returns",
       icon: RotateCcw,
       description: "Return management",
+    },
+    {
+      name: "Bank Verification",
+      href: "/admin/bank-verification",
+      icon: Banknote,
+      description: "Verify bank details",
     },
     {
       name: "Users",
@@ -297,7 +304,6 @@ const AdminLayout = ({ children }) => {
                 />
               </div>
 
-              {/* Notifications */}
               <NotificationSystem />
 
               {/* Quick Stats */}
