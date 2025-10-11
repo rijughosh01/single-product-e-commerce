@@ -70,17 +70,59 @@ export default function AddProduct() {
     }
   };
 
-  const handleImageUpload = (e) => {
+  const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file) => ({
-      public_id: `temp_${Date.now()}_${Math.random()}`,
-      url: URL.createObjectURL(file),
-      file: file,
-    }));
+    const compressedImages = [];
+
+    for (const file of files) {
+      try {
+        const compressedDataUrl = await compressImage(file);
+        compressedImages.push({
+          public_id: `temp_${Date.now()}_${Math.random()}`,
+          url: compressedDataUrl,
+          file: file,
+        });
+      } catch (error) {
+        console.error("Error compressing image:", error);
+        // Fallback to original file
+        compressedImages.push({
+          public_id: `temp_${Date.now()}_${Math.random()}`,
+          url: URL.createObjectURL(file),
+          file: file,
+        });
+      }
+    }
 
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, ...newImages],
+      images: [...prev.images, ...compressedImages],
     }));
   };
 
@@ -150,19 +192,8 @@ export default function AddProduct() {
         return;
       }
 
-      // Convert images to base64 for upload
-      const imagePromises = formData.images.map(async (image) => {
-        if (image.file) {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(image.file);
-          });
-        }
-        return image.url; // Already a URL
-      });
-
-      const imageUrls = await Promise.all(imagePromises);
+      // Use already compressed images
+      const imageUrls = formData.images.map((image) => image.url);
 
       // Prepare product data with proper structure
       const productData = {
@@ -195,15 +226,34 @@ export default function AddProduct() {
       };
 
       console.log("Sending product data:", productData);
+      console.log(
+        "Product data size:",
+        JSON.stringify(productData).length,
+        "characters"
+      );
 
-      await adminAPI.createProduct(productData);
+      const response = await adminAPI.createProduct(productData);
+      console.log("Product created successfully:", response.data);
 
       toast.success("Product created successfully!");
       router.push("/admin/products");
     } catch (error) {
       console.error("Create product error:", error);
       console.error("Error details:", error.response?.data);
-      toast.error(error.response?.data?.message || "Failed to create product");
+      console.error("Error status:", error.response?.status);
+      console.error("Error headers:", error.response?.headers);
+
+      if (error.response?.status === 413) {
+        toast.error(
+          "Image files are too large. Please compress them or use smaller images."
+        );
+      } else if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check if the server is running.");
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to create product"
+        );
+      }
     } finally {
       setLoading(false);
     }

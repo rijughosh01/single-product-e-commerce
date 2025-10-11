@@ -55,6 +55,14 @@ exports.getSingleProduct = async (req, res, next) => {
 // Create new product => /api/v1/admin/product/new
 exports.newProduct = async (req, res, next) => {
   try {
+    console.log("Product creation request received");
+    console.log(
+      "Request body size:",
+      JSON.stringify(req.body).length,
+      "characters"
+    );
+    console.log("Images count:", req.body.images ? req.body.images.length : 0);
+
     req.body.user = req.user.id;
 
     // Handle image uploads if images are provided
@@ -165,6 +173,7 @@ exports.newProduct = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Product creation error:", error);
+    console.error("Error stack:", error.stack);
 
     // Handle specific validation errors
     if (error.name === "ValidationError") {
@@ -178,6 +187,19 @@ exports.newProduct = async (req, res, next) => {
     if (error.code === 11000) {
       return next(
         new ErrorHandler("Product with this information already exists", 400)
+      );
+    }
+
+    // Handle payload too large errors
+    if (
+      error.code === "LIMIT_FILE_SIZE" ||
+      error.message.includes("too large")
+    ) {
+      return next(
+        new ErrorHandler(
+          "Request payload too large. Please reduce image sizes.",
+          413
+        )
       );
     }
 

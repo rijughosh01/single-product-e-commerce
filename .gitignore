@@ -127,3 +127,6 @@ check-*.js
 
 # System Design Documentation
 SYSTEM_DESIGN.md
+
+# Test Flders
+tests/

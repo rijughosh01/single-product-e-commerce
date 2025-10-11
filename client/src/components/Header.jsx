@@ -294,6 +294,7 @@ const Header = () => {
             <button
               className="md:hidden p-2 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Open search"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -428,6 +429,7 @@ const Header = () => {
             <button
               className="lg:hidden p-2 md:p-3 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Menu"
             >
               {isMenuOpen ? (
                 <X className="w-5 h-5" />
