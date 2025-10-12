@@ -266,8 +266,8 @@ export default function ReturnRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
@@ -305,13 +305,13 @@ export default function ReturnRequestPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
-          <div className="xl:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             {/* Order Items */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-sm font-bold">🛒</span>
                   </div>
@@ -319,7 +319,7 @@ export default function ReturnRequestPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {order.orderItems.map((item, index) => {
                     const isSelected = selectedItems.some(
                       (selected) => selected.product === item.product
@@ -331,14 +331,14 @@ export default function ReturnRequestPage() {
                     return (
                       <div
                         key={index}
-                        className={`p-4 border-2 rounded-xl transition-all duration-300 ${
+                        className={`p-5 border-2 rounded-xl transition-all duration-300 ${
                           isSelected
                             ? "border-orange-500 bg-orange-50"
                             : "border-gray-200 bg-white hover:border-orange-300"
                         }`}
                       >
-                        <div className="flex items-start gap-3 sm:gap-4">
-                          <div className="flex-shrink-0">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 mt-1">
                             <input
                               type="checkbox"
                               checked={isSelected}
@@ -349,7 +349,7 @@ export default function ReturnRequestPage() {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                               <img
                                 src={
                                   typeof item.image === "string"
@@ -357,25 +357,27 @@ export default function ReturnRequestPage() {
                                     : item.image?.url || "/placeholder-ghee.jpg"
                                 }
                                 alt={item.name}
-                                className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                                className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                               />
                               <div className="flex-1 min-w-0">
-                                <h3 className="text-lg font-semibold text-gray-900 break-words">
+                                <h3 className="text-lg font-semibold text-gray-900 break-words mb-2">
                                   {item.name}
                                 </h3>
-                                <p className="text-sm text-gray-600">
-                                  Qty: {item.quantity} ×{" "}
-                                  {formatPrice(item.price)}
-                                </p>
-                                <p className="text-sm font-medium text-gray-900">
-                                  Total:{" "}
-                                  {formatPrice(item.price * item.quantity)}
-                                </p>
+                                <div className="space-y-1">
+                                  <p className="text-sm text-gray-600">
+                                    Qty: {item.quantity} ×{" "}
+                                    {formatPrice(item.price)}
+                                  </p>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    Total:{" "}
+                                    {formatPrice(item.price * item.quantity)}
+                                  </p>
+                                </div>
                               </div>
                             </div>
 
                             {isSelected && (
-                              <div className="mt-4 space-y-4">
+                              <div className="mt-6 space-y-4">
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Reason for return *
@@ -388,7 +390,7 @@ export default function ReturnRequestPage() {
                                         e.target.value
                                       )
                                     }
-                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
                                   >
                                     <option value="">Select a reason</option>
                                     {RETURN_REASONS.map((reason) => (
@@ -414,10 +416,14 @@ export default function ReturnRequestPage() {
                                       )
                                     }
                                     placeholder="Please provide more details about the issue..."
-                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"
                                     rows={3}
                                     maxLength={500}
                                   />
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {selectedItem?.description?.length || 0}/500
+                                    characters
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -433,7 +439,7 @@ export default function ReturnRequestPage() {
             {/* Return Reason */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-sm font-bold">📝</span>
                   </div>
@@ -443,18 +449,18 @@ export default function ReturnRequestPage() {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Overall reason for return *
                     </label>
                     <textarea
                       value={returnReason}
                       onChange={(e) => setReturnReason(e.target.value)}
                       placeholder="Please describe why you want to return this order..."
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
-                      rows={4}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"
+                      rows={5}
                       maxLength={1000}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-2">
                       {returnReason.length}/1000 characters
                     </p>
                   </div>
@@ -464,11 +470,11 @@ export default function ReturnRequestPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+          <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
             {/* Order Summary */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-sm font-bold">📋</span>
                   </div>
@@ -479,19 +485,19 @@ export default function ReturnRequestPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Order Date:</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-right">
                       {formatDate(order.createdAt)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Delivered:</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-right">
                       {formatDate(order.deliveredAt)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Total Amount:</span>
-                    <span className="font-bold">
+                    <span className="font-bold text-right">
                       {formatPrice(order.totalPrice)}
                     </span>
                   </div>
@@ -521,7 +527,7 @@ export default function ReturnRequestPage() {
             {/* Return Address */}
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-sm font-bold">📍</span>
                   </div>
@@ -531,7 +537,7 @@ export default function ReturnRequestPage() {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Name *
                     </label>
                     <input
@@ -543,11 +549,12 @@ export default function ReturnRequestPage() {
                           name: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                      placeholder="Enter your full name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Address *
                     </label>
                     <textarea
@@ -558,13 +565,14 @@ export default function ReturnRequestPage() {
                           address: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
-                      rows={2}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none text-sm"
+                      rows={3}
+                      placeholder="Enter your complete address"
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         City *
                       </label>
                       <input
@@ -576,11 +584,12 @@ export default function ReturnRequestPage() {
                             city: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        placeholder="Enter city name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         State *
                       </label>
                       <input
@@ -592,13 +601,14 @@ export default function ReturnRequestPage() {
                             state: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        placeholder="Enter state name"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Pincode *
                       </label>
                       <input
@@ -610,11 +620,12 @@ export default function ReturnRequestPage() {
                             pincode: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        placeholder="Enter pincode"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Phone *
                       </label>
                       <input
@@ -626,7 +637,8 @@ export default function ReturnRequestPage() {
                             phone: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                        placeholder="Enter phone number"
                       />
                     </div>
                   </div>
@@ -638,34 +650,34 @@ export default function ReturnRequestPage() {
             {order && order.paymentInfo.method === "cod" && (
               <Card className="shadow-xl border-0 bg-blue-50/80 backdrop-blur-sm border-blue-200">
                 <CardContent className="p-6">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <DollarSign className="w-4 h-4 text-blue-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <DollarSign className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-blue-900 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-blue-900 mb-3 text-base">
                         COD Order Refund Information
                       </h3>
-                      <p className="text-blue-700 text-sm mb-3">
+                      <p className="text-blue-700 text-sm mb-4 leading-relaxed">
                         Since this is a Cash on Delivery order, your refund will
                         be processed manually. Please ensure your bank details
                         are up to date in your profile for faster refund
                         processing.
                       </p>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="space-y-3">
                         <Button
                           onClick={() =>
                             router.push("/profile?tab=bank-details")
                           }
                           variant="outline"
                           size="sm"
-                          className="border-blue-300 text-blue-700 hover:bg-blue-100 w-full sm:w-auto"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100 w-full"
                         >
                           Update Bank Details
                         </Button>
-                        <span className="text-xs text-blue-600 text-center sm:text-left">
+                        <p className="text-xs text-blue-600 text-center">
                           Refunds typically take 1-3 business days
-                        </span>
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -674,25 +686,32 @@ export default function ReturnRequestPage() {
             )}
 
             {/* Submit Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                submitting || selectedItems.length === 0 || !returnReason.trim()
-              }
-              className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              {submitting ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Submitting...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4" />
-                  Submit Return Request
-                </div>
-              )}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  submitting ||
+                  selectedItems.length === 0 ||
+                  !returnReason.trim()
+                }
+                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Submitting...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    Submit Return Request
+                  </div>
+                )}
+              </Button>
+              <p className="text-xs text-gray-500 text-center">
+                By submitting, you agree to our return policy
+              </p>
+            </div>
           </div>
         </div>
       </div>

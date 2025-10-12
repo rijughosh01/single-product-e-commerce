@@ -30,9 +30,11 @@ import {
   Whatsapp,
   Mail,
   StarHalf,
+  Award
 } from "lucide-react";
 import { productsAPI } from "@/lib/api";
 import RatingStars from "@/components/RatingStars";
+import ProductImageCarousel from "@/components/ProductImageCarousel";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WishlistButton from "@/components/WishlistButton";
@@ -45,6 +47,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
 
@@ -381,59 +384,163 @@ export default function ProductDetail() {
           variants={staggerContainer}
         >
           {/* Product Images */}
-          <motion.div className="space-y-4" variants={fadeInUp}>
-            <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow">
-              <motion.div
-                whileHover={{ scale: 1.06 }}
-                transition={{ duration: 0.35 }}
-                className="w-full h-full cursor-zoom-in"
-              >
-                <Image
-                  src={
-                    product.images?.[selectedImage]?.url ||
-                    "/placeholder-ghee.jpg"
-                  }
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              </motion.div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
+          <motion.div className="space-y-6" variants={fadeInUp}>
+            {/* Main Carousel */}
+            <div className="relative">
+              <ProductImageCarousel
+                images={product.images.map(img => img?.url || "/placeholder-ghee.jpg")}
+                autoScroll={true}
+                interval={5000}
+                className="aspect-square shadow-2xl"
+                currentIndex={currentCarouselIndex}
+                setCurrentIndex={setCurrentCarouselIndex}
+                onImageChange={(index) => setSelectedImage(index)}
+              />
+              
+              {/* Discount Badge */}
               {product.discount > 0 && (
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className="absolute top-4 left-4"
+                  className="absolute top-6 left-6 z-20"
                 >
-                  <span className="product-badge">{product.discount}% OFF</span>
+                  <div className="relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-5 py-3 rounded-full font-bold text-lg shadow-2xl border-2 border-white/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                          <span className="text-sm">🔥</span>
+                        </div>
+                        <span>{product.discount}% OFF</span>
+                      </div>
+                      {/* Background Pattern */}
+                      <div className="absolute inset-0 opacity-15">
+                        <div className="absolute top-1 left-3 w-1 h-1 bg-white rounded-full"></div>
+                        <div className="absolute top-4 right-4 w-1 h-1 bg-white rounded-full"></div>
+                        <div className="absolute bottom-2 left-6 w-1 h-1 bg-white rounded-full"></div>
+                        <div className="absolute bottom-1 right-3 w-1 h-1 bg-white rounded-full"></div>
+                        <div className="absolute top-2 right-2 w-1 h-1 bg-white rounded-full"></div>
+                        <div className="absolute bottom-3 left-2 w-1 h-1 bg-white rounded-full"></div>
+                      </div>
+                      {/* Animated Border */}
+                      <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-pulse"></div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
+
+              {/* Product Quality Badges */}
+              <div className="absolute top-6 right-6 z-20 space-y-3">
+                {/* 100% Pure Badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+                  className="relative overflow-hidden"
+                >
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-3 h-3" />
+                      </div>
+                      <span>100% Pure</span>
+                    </div>
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-1 left-2 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute top-3 right-3 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-2 left-4 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-1 right-2 w-1 h-1 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Organic Certified Badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: 0.7, type: "spring", stiffness: 200 }}
+                  className="relative overflow-hidden"
+                >
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                        <Leaf className="w-3 h-3" />
+                      </div>
+                      <span>Organic Certified</span>
+                    </div>
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-1 left-2 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute top-3 right-3 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-2 left-4 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-1 right-2 w-1 h-1 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Premium Quality Badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ delay: 0.9, type: "spring", stiffness: 200 }}
+                  className="relative overflow-hidden"
+                >
+                  <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-xl border-2 border-white/20 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                        <Award className="w-3 h-3" />
+                      </div>
+                      <span>Premium Quality</span>
+                    </div>
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute top-1 left-2 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute top-3 right-3 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-2 left-4 w-1 h-1 bg-white rounded-full"></div>
+                      <div className="absolute bottom-1 right-2 w-1 h-1 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
             </div>
 
-            {/* Thumbnail Images */}
+            {/* Thumbnail Navigation */}
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.map((image, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index
-                        ? "border-amber-500"
-                        : "border-gray-200"
-                    }`}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Image
-                      src={image?.url || "/placeholder-ghee.jpg"}
-                      alt={`${product.name} ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </motion.button>
-                ))}
+              <div className="bg-white p-4 rounded-2xl shadow-lg">
+                {/* <h3 className="text-sm font-semibold text-gray-700 mb-3 text-center">
+                  View All Images ({product.images.length})
+                </h3> */}
+                <div className="grid grid-cols-4 gap-3">
+                  {product.images.map((image, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => {
+                        setSelectedImage(index);
+                        setCurrentCarouselIndex(index);
+                      }}
+                      className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                        currentCarouselIndex === index
+                          ? "border-amber-500 ring-2 ring-amber-200"
+                          : "border-gray-200 hover:border-amber-300"
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Image
+                        src={image?.url || "/placeholder-ghee.jpg"}
+                        alt={`${product.name} ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      {currentCarouselIndex === index && (
+                        <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
+                          <CheckCircle className="w-6 h-6 text-amber-600" />
+                        </div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
