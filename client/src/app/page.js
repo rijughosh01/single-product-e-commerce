@@ -30,8 +30,30 @@ import ImageCarousel from "@/components/ImageCarousel";
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState({});
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+
+  // Handle image cycling on hover
+  useEffect(() => {
+    if (!hoveredProduct || !featuredProducts.length) return;
+
+    const product = featuredProducts.find((p) => p._id === hoveredProduct);
+    if (!product || !product.images || product.images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => ({
+        ...prev,
+        [hoveredProduct]:
+          (prev[hoveredProduct] || 0) === product.images.length - 1
+            ? 0
+            : (prev[hoveredProduct] || 0) + 1,
+      }));
+    }, 900);
+
+    return () => clearInterval(interval);
+  }, [hoveredProduct, featuredProducts]);
 
   // Animation variants
   const fadeInUp = {
@@ -529,22 +551,47 @@ export default function Home() {
                   whileHover={{ y: -10 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div className="product-card group h-full">
+                  <div
+                    className="product-card group h-full"
+                    onMouseEnter={() => setHoveredProduct(product._id)}
+                    onMouseLeave={() => setHoveredProduct(null)}
+                  >
                     <div className="product-card-image">
                       <div className="relative overflow-hidden">
                         <motion.div
                           whileHover={{ scale: 1.05 }}
                           transition={{ duration: 0.5, ease: "easeOut" }}
                         >
-                          <Image
-                            src={
-                              product.images[0]?.url || "/placeholder-ghee.jpg"
-                            }
-                            alt={product.name}
-                            width={300}
-                            height={200}
-                            className="w-full h-48 object-cover transition-transform duration-500"
-                          />
+                          <div className="relative w-full h-48 overflow-hidden">
+                            {product.images && product.images.length > 0 ? (
+                              product.images.map((image, imgIndex) => (
+                                <Image
+                                  key={imgIndex}
+                                  src={image?.url || "/placeholder-ghee.jpg"}
+                                  alt={product.name}
+                                  width={300}
+                                  height={200}
+                                  className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                                    imgIndex ===
+                                    (currentImageIndex[product._id] || 0)
+                                      ? "opacity-100 translate-x-0"
+                                      : imgIndex <
+                                        (currentImageIndex[product._id] || 0)
+                                      ? "opacity-0 -translate-x-full"
+                                      : "opacity-0 translate-x-full"
+                                  }`}
+                                />
+                              ))
+                            ) : (
+                              <Image
+                                src="/placeholder-ghee.jpg"
+                                alt={product.name}
+                                width={300}
+                                height={200}
+                                className="w-full h-48 object-cover transition-transform duration-500"
+                              />
+                            )}
+                          </div>
                         </motion.div>
                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         {product.discount > 0 && (
@@ -562,6 +609,23 @@ export default function Home() {
                               {product.discount}% OFF
                             </span>
                           </motion.div>
+                        )}
+
+                        {/* Image Indicators */}
+                        {product.images && product.images.length > 1 && (
+                          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+                            {product.images.map((_, imgIndex) => (
+                              <div
+                                key={imgIndex}
+                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                  imgIndex ===
+                                  (currentImageIndex[product._id] || 0)
+                                    ? "bg-white scale-125 shadow-lg"
+                                    : "bg-white/50 hover:bg-white/75"
+                                }`}
+                              />
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>

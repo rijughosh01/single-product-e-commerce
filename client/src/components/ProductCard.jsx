@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,23 @@ const ProductCard = ({ product }) => {
   const { isAuthenticated } = useAuth();
   const [addingToCart, setAddingToCart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Handle image cycling on hover
+  useEffect(() => {
+    if (!isHovered || !product.images || product.images.length <= 1) {
+      setCurrentImageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 900);
+
+    return () => clearInterval(interval);
+  }, [isHovered, product.images]);
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -105,14 +122,34 @@ const ProductCard = ({ product }) => {
       <CardHeader className="pb-0 p-0">
         <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
           <Link href={`/products/${product._id}`}>
-            <Image
-              src={product.images?.[0]?.url || "/placeholder-ghee.jpg"}
-              alt={product.name}
-              fill
-              className={`object-cover transition-all duration-500 ${
-                isHovered ? "scale-110" : "scale-100"
-              }`}
-            />
+            <div className="relative w-full h-full">
+              {product.images && product.images.length > 0 ? (
+                product.images.map((image, index) => (
+                  <Image
+                    key={index}
+                    src={image?.url || "/placeholder-ghee.jpg"}
+                    alt={product.name}
+                    fill
+                    className={`absolute inset-0 object-cover transition-all duration-700 ${
+                      index === currentImageIndex 
+                        ? "opacity-100 translate-x-0" 
+                        : index < currentImageIndex 
+                          ? "opacity-0 -translate-x-full" 
+                          : "opacity-0 translate-x-full"
+                    } ${isHovered ? "scale-110" : "scale-100"}`}
+                  />
+                ))
+              ) : (
+                <Image
+                  src="/placeholder-ghee.jpg"
+                  alt={product.name}
+                  fill
+                  className={`object-cover transition-all duration-500 ${
+                    isHovered ? "scale-110" : "scale-100"
+                  }`}
+                />
+              )}
+            </div>
           </Link>
 
           {/* Overlay with Quick View */}
@@ -137,6 +174,22 @@ const ProductCard = ({ product }) => {
 
           {/* Bottom Gradient */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/30 to-transparent" />
+          
+          {/* Image Indicators */}
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+              {product.images.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentImageIndex
+                      ? "bg-white scale-125 shadow-lg"
+                      : "bg-white/50 hover:bg-white/75"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </CardHeader>
 
