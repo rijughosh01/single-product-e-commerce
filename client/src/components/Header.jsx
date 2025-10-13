@@ -208,7 +208,7 @@ const Header = () => {
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
-                Pure Ghee
+                Ghee-Rito
               </h1>
               <p className="hidden md:block text-sm text-gray-500 font-medium">
                 Premium Quality

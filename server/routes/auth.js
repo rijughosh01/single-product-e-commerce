@@ -23,7 +23,7 @@ router.route("/logout").get(logout).post(logout);
 router.route("/password/forgot").post(forgotPassword);
 router.route("/password/reset").put(resetPassword);
 
-router.route("/email/verify/:token").post(verifyEmail);
+router.route("/email/verify/:token").get(verifyEmail);
 router.route("/email/resend-verification").post(resendVerification);
 
 router.route("/me").get(isAuthenticatedUser, getUserProfile);

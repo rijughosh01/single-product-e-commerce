@@ -239,10 +239,11 @@ exports.resetPassword = async (req, res, next) => {
 exports.verifyEmail = async (req, res, next) => {
   try {
     const { token } = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     // Find user by verification token
     const user = await User.findOne({
-      emailVerificationToken: token,
+      emailVerificationToken: hashedToken,
       emailVerificationExpire: { $gt: Date.now() },
     });
 
