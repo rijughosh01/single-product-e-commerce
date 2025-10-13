@@ -38,6 +38,7 @@ export default function BankDetailsManagement() {
     branchName: "",
     upiId: "",
   });
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     loadBankDetails();
@@ -69,9 +70,62 @@ export default function BankDetailsManagement() {
       ...prev,
       [field]: value,
     }));
+
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [field]: "",
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Required field validation
+    if (!formData.accountHolderName.trim()) {
+      errors.accountHolderName = "Account holder name is required";
+    }
+
+    if (!formData.accountNumber.trim()) {
+      errors.accountNumber = "Account number is required";
+    } else if (!/^\d{9,18}$/.test(formData.accountNumber)) {
+      errors.accountNumber = "Account number must be 9-18 digits";
+    }
+
+    if (!formData.ifscCode.trim()) {
+      errors.ifscCode = "IFSC code is required";
+    } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(formData.ifscCode)) {
+      errors.ifscCode = "Please enter a valid IFSC code (e.g., SBIN0001234)";
+    }
+
+    if (!formData.bankName.trim()) {
+      errors.bankName = "Bank name is required";
+    }
+
+    // UPI ID validation
+    if (
+      formData.upiId &&
+      !/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/.test(formData.upiId)
+    ) {
+      errors.upiId = "Please enter a valid UPI ID (e.g., user@paytm)";
+    }
+
+    return errors;
   };
 
   const handleSave = async () => {
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+
+      const firstError = Object.values(validationErrors)[0];
+      toast.error(firstError);
+      return;
+    }
+
+    setFieldErrors({});
+
     try {
       setSaving(true);
       const response = await profileAPI.updateBankDetails(formData);
@@ -80,9 +134,23 @@ export default function BankDetailsManagement() {
       toast.success("Bank details updated successfully");
     } catch (error) {
       console.error("Error updating bank details:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to update bank details"
-      );
+
+      // Handle different types of errors
+      if (error.response?.status === 400) {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          "Invalid bank details";
+        toast.error(errorMessage);
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again to continue");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection");
+      } else {
+        toast.error("Failed to update bank details. Please try again");
+      }
     } finally {
       setSaving(false);
     }
@@ -97,6 +165,7 @@ export default function BankDetailsManagement() {
       branchName: bankDetails.branchName || "",
       upiId: bankDetails.upiId || "",
     });
+    setFieldErrors({});
     setEditing(false);
   };
 
@@ -206,8 +275,17 @@ export default function BankDetailsManagement() {
                     handleInputChange("accountHolderName", e.target.value)
                   }
                   placeholder="Enter account holder name"
-                  className="w-full"
+                  className={`w-full ${
+                    fieldErrors.accountHolderName
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
+                {fieldErrors.accountHolderName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.accountHolderName}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -219,8 +297,17 @@ export default function BankDetailsManagement() {
                     handleInputChange("accountNumber", e.target.value)
                   }
                   placeholder="Enter account number"
-                  className="w-full"
+                  className={`w-full ${
+                    fieldErrors.accountNumber
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
+                {fieldErrors.accountNumber && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.accountNumber}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -232,8 +319,17 @@ export default function BankDetailsManagement() {
                     handleInputChange("ifscCode", e.target.value.toUpperCase())
                   }
                   placeholder="Enter IFSC code"
-                  className="w-full"
+                  className={`w-full ${
+                    fieldErrors.ifscCode
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
+                {fieldErrors.ifscCode && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.ifscCode}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -245,8 +341,17 @@ export default function BankDetailsManagement() {
                     handleInputChange("bankName", e.target.value)
                   }
                   placeholder="Enter bank name"
-                  className="w-full"
+                  className={`w-full ${
+                    fieldErrors.bankName
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
+                {fieldErrors.bankName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.bankName}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -269,8 +374,17 @@ export default function BankDetailsManagement() {
                   value={formData.upiId}
                   onChange={(e) => handleInputChange("upiId", e.target.value)}
                   placeholder="Enter UPI ID (optional)"
-                  className="w-full"
+                  className={`w-full ${
+                    fieldErrors.upiId
+                      ? "border-red-500 focus:border-red-500"
+                      : ""
+                  }`}
                 />
+                {fieldErrors.upiId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.upiId}
+                  </p>
+                )}
               </div>
             </div>
 

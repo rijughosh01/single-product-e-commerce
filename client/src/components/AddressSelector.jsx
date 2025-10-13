@@ -100,7 +100,21 @@ const AddressSelector = ({
       }
     } catch (error) {
       console.error("Error saving address:", error);
-      toast.error("Failed to save address");
+
+      // Handle different types of errors
+      if (error.response?.status === 400) {
+        const errorMessage =
+          error.response?.data?.message || "Invalid address data";
+        toast.error(errorMessage);
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again to continue");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection");
+      } else {
+        toast.error("Failed to save address. Please try again");
+      }
     } finally {
       setLoading(false);
     }
@@ -145,7 +159,21 @@ const AddressSelector = ({
       }
     } catch (error) {
       console.error("Error deleting address:", error);
-      toast.error("Failed to delete address");
+
+      // Handle different types of errors
+      if (error.response?.status === 400) {
+        const errorMessage =
+          error.response?.data?.message || "Cannot delete address";
+        toast.error(errorMessage);
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again to continue");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection");
+      } else {
+        toast.error("Failed to delete address. Please try again");
+      }
     }
   };
 
@@ -161,7 +189,21 @@ const AddressSelector = ({
       }
     } catch (error) {
       console.error("Error setting default address:", error);
-      toast.error("Failed to update default address");
+
+      // Handle different types of errors
+      if (error.response?.status === 400) {
+        const errorMessage =
+          error.response?.data?.message || "Cannot set default address";
+        toast.error(errorMessage);
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again to continue");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection");
+      } else {
+        toast.error("Failed to update default address. Please try again");
+      }
     }
   };
 

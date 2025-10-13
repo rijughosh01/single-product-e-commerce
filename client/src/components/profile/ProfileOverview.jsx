@@ -16,8 +16,10 @@ import {
   Sparkles,
   Award,
   TrendingUp,
+  AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const ProfileOverview = ({ user }) => {
   const [stats, setStats] = useState({
@@ -26,6 +28,8 @@ const ProfileOverview = ({ user }) => {
     favoriteProducts: 0,
     memberSince: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -34,6 +38,9 @@ const ProfileOverview = ({ user }) => {
 
   const fetchUserStats = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       if (!user) return;
 
       // Fetch orders and wishlist in parallel
@@ -118,6 +125,23 @@ const ProfileOverview = ({ user }) => {
       setStats(finalStats);
     } catch (error) {
       console.error("Error fetching user stats:", error);
+
+      // Handle different types of errors
+      if (error.response?.status === 401) {
+        setError("Please login again to view your profile");
+        toast.error("Session expired. Please login again");
+      } else if (error.response?.status >= 500) {
+        setError("Server error. Please try again later");
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "ERR_NETWORK") {
+        setError("Network error. Please check your connection");
+        toast.error("Network error. Please check your connection");
+      } else {
+        setError("Failed to load profile data");
+        toast.error("Failed to load profile data");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,6 +162,39 @@ const ProfileOverview = ({ user }) => {
         <div className="rounded-2xl p-6 border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
           <div className="h-6 w-40 bg-amber-200 rounded mb-4 animate-pulse" />
           <div className="h-4 w-64 bg-amber-200 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl p-6 border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+          <div className="h-6 w-40 bg-amber-200 rounded mb-4 animate-pulse" />
+          <div className="h-4 w-64 bg-amber-200 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl p-6 border border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+            <h3 className="text-lg font-semibold text-red-800">
+              Error Loading Profile
+            </h3>
+          </div>
+          <p className="text-red-700 mb-4">{error}</p>
+          <button
+            onClick={() => fetchUserStats()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
