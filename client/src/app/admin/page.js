@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import AdminLayout from "@/components/AdminLayout";
 import { adminAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalUsers: 0,
@@ -89,40 +91,60 @@ export default function AdminDashboard() {
     }
   };
 
-  const quickActions = [
-    {
-      title: "Add Product",
-      description: "Create new product listing",
-      icon: Plus,
-      href: "/admin/products/new",
-      color: "bg-blue-500 hover:bg-blue-600",
-      iconColor: "text-blue-500",
-    },
-    {
-      title: "View Orders",
-      description: "Manage customer orders",
-      icon: ShoppingCart,
-      href: "/admin/orders",
-      color: "bg-green-500 hover:bg-green-600",
-      iconColor: "text-green-500",
-    },
-    {
-      title: "Manage Users",
-      description: "Customer management",
-      icon: UserCheck,
-      href: "/admin/users",
-      color: "bg-purple-500 hover:bg-purple-600",
-      iconColor: "text-purple-500",
-    },
-    {
-      title: "Analytics",
-      description: "Business insights",
-      icon: BarChart3,
-      href: "/admin/analytics",
-      color: "bg-orange-500 hover:bg-orange-600",
-      iconColor: "text-orange-500",
-    },
-  ];
+  const quickActions =
+    user?.role === "vendor"
+      ? [
+          {
+            title: "View Orders",
+            description: "Manage customer orders",
+            icon: ShoppingCart,
+            href: "/admin/orders",
+            color: "bg-green-500 hover:bg-green-600",
+            iconColor: "text-green-500",
+          },
+          {
+            title: "Manage Returns",
+            description: "Return management",
+            icon: Truck,
+            href: "/admin/returns",
+            color: "bg-yellow-500 hover:bg-yellow-600",
+            iconColor: "text-yellow-500",
+          },
+        ]
+      : [
+          {
+            title: "Add Product",
+            description: "Create new product listing",
+            icon: Plus,
+            href: "/admin/products/new",
+            color: "bg-blue-500 hover:bg-blue-600",
+            iconColor: "text-blue-500",
+          },
+          {
+            title: "View Orders",
+            description: "Manage customer orders",
+            icon: ShoppingCart,
+            href: "/admin/orders",
+            color: "bg-green-500 hover:bg-green-600",
+            iconColor: "text-green-500",
+          },
+          {
+            title: "Manage Users",
+            description: "Customer management",
+            icon: UserCheck,
+            href: "/admin/users",
+            color: "bg-purple-500 hover:bg-purple-600",
+            iconColor: "text-purple-500",
+          },
+          {
+            title: "Analytics",
+            description: "Business insights",
+            icon: BarChart3,
+            href: "/admin/analytics",
+            color: "bg-orange-500 hover:bg-orange-600",
+            iconColor: "text-orange-500",
+          },
+        ];
 
   const statCards = [
     {
@@ -183,66 +205,72 @@ export default function AdminDashboard() {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, Admin!</h1>
+              <h1 className="text-3xl font-bold mb-2">
+                Welcome back, {user?.role === "vendor" ? "Vendor" : "Admin"}!
+              </h1>
               <p className="text-blue-100 text-lg">
                 Here&apos;s what&apos;s happening with your store today.
               </p>
             </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{stats.totalOrders}</div>
-                <div className="text-blue-100 text-sm">Orders Today</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats.totalRevenue)}
+            {user?.role !== "vendor" && (
+              <div className="hidden md:flex items-center space-x-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{stats.totalOrders}</div>
+                  <div className="text-blue-100 text-sm">Orders Today</div>
                 </div>
-                <div className="text-blue-100 text-sm">Revenue Today</div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">
+                    {formatCurrency(stats.totalRevenue)}
+                  </div>
+                  <div className="text-blue-100 text-sm">Revenue Today</div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((card, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div
-                className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
-              >
-                <card.icon className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex items-center space-x-1">
-                {card.changeType === "positive" ? (
-                  <TrendingUp className="w-4 h-4 text-green-500" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-red-500" />
-                )}
-                <span
-                  className={`text-sm font-medium ${
-                    card.changeType === "positive"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
+      {/* Stats Cards - hidden for vendors */}
+      {user?.role !== "vendor" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((card, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div
+                  className={`w-12 h-12 ${card.color} rounded-lg flex items-center justify-center`}
                 >
-                  {card.change}
-                </span>
+                  <card.icon className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-1">
+                  {card.changeType === "positive" ? (
+                    <TrendingUp className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-500" />
+                  )}
+                  <span
+                    className={`text-sm font-medium ${
+                      card.changeType === "positive"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {card.change}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-gray-900 mb-1">
+                  {card.value}
+                </p>
+                <p className="text-sm text-gray-500">{card.title}</p>
               </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900 mb-1">
-                {card.value}
-              </p>
-              <p className="text-sm text-gray-500">{card.title}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="mb-8">

@@ -46,8 +46,8 @@ const AdminLayout = ({ children }) => {
       return;
     }
 
-    if (user && user.role !== "admin") {
-      toast.error("Access denied. Admin privileges required.");
+    if (user && !["admin", "vendor"].includes(user.role)) {
+      toast.error("Access denied. Admin or Vendor privileges required.");
       router.push("/");
       return;
     }
@@ -58,87 +58,108 @@ const AdminLayout = ({ children }) => {
     router.push("/");
   };
 
-  const navigation = [
-    {
-      name: "Dashboard",
-      href: "/admin",
-      icon: Home,
-      description: "Overview and analytics",
-    },
-    {
-      name: "Products",
-      href: "/admin/products",
-      icon: Package,
-      description: "Manage product catalog",
-    },
-    {
-      name: "Orders",
-      href: "/admin/orders",
-      icon: ShoppingCart,
-      description: "Order management",
-    },
-    {
-      name: "Returns",
-      href: "/admin/returns",
-      icon: RotateCcw,
-      description: "Return management",
-    },
-    {
-      name: "Bank Verification",
-      href: "/admin/bank-verification",
-      icon: Banknote,
-      description: "Verify bank details",
-    },
-    {
-      name: "Users",
-      href: "/admin/users",
-      icon: Users,
-      description: "Customer management",
-    },
-    {
-      name: "Coupons",
-      href: "/admin/coupons",
-      icon: Tag,
-      description: "Discount management",
-    },
-    {
-      name: "Shipping",
-      href: "/admin/shipping",
-      icon: Truck,
-      description: "Shipping rules",
-    },
-    {
-      name: "Payments",
-      href: "/admin/payments",
-      icon: DollarSign,
-      description: "Payment management",
-    },
-    {
-      name: "Invoices",
-      href: "/admin/invoices",
-      icon: FileText,
-      description: "Invoice management",
-    },
-    {
-      name: "Subscriptions",
-      href: "/admin/subscriptions",
-      icon: Calendar,
-      description: "Subscription management",
-    },
-    {
-      name: "Analytics",
-      href: "/admin/analytics",
-      icon: BarChart3,
-      description: "Business insights",
-    },
-  ];
+  const getNavigationItems = () => {
+    const allNavigation = [
+      {
+        name: "Dashboard",
+        href: "/admin",
+        icon: Home,
+        description: "Overview and analytics",
+        roles: ["admin", "vendor"],
+      },
+      {
+        name: "Products",
+        href: "/admin/products",
+        icon: Package,
+        description: "Manage product catalog",
+        roles: ["admin"],
+      },
+      {
+        name: "Orders",
+        href: "/admin/orders",
+        icon: ShoppingCart,
+        description: "Order management",
+        roles: ["admin", "vendor"],
+      },
+      {
+        name: "Returns",
+        href: "/admin/returns",
+        icon: RotateCcw,
+        description: "Return management",
+        roles: ["admin", "vendor"],
+      },
+      {
+        name: "Bank Verification",
+        href: "/admin/bank-verification",
+        icon: Banknote,
+        description: "Verify bank details",
+        roles: ["admin"],
+      },
+      {
+        name: "Users",
+        href: "/admin/users",
+        icon: Users,
+        description: "Customer management",
+        roles: ["admin"],
+      },
+      {
+        name: "Coupons",
+        href: "/admin/coupons",
+        icon: Tag,
+        description: "Discount management",
+        roles: ["admin"],
+      },
+      {
+        name: "Shipping",
+        href: "/admin/shipping",
+        icon: Truck,
+        description: "Shipping rules",
+        roles: ["admin"],
+      },
+      {
+        name: "Payments",
+        href: "/admin/payments",
+        icon: DollarSign,
+        description: "Payment management",
+        roles: ["admin"],
+      },
+      {
+        name: "Invoices",
+        href: "/admin/invoices",
+        icon: FileText,
+        description: "Invoice management",
+        roles: ["admin"],
+      },
+      {
+        name: "Subscriptions",
+        href: "/admin/subscriptions",
+        icon: Calendar,
+        description: "Subscription management",
+        roles: ["admin"],
+      },
+      {
+        name: "Analytics",
+        href: "/admin/analytics",
+        icon: BarChart3,
+        description: "Business insights",
+        roles: ["admin"],
+      },
+    ];
+
+    // Filter navigation items based on user role
+    return allNavigation.filter((item) =>
+      item.roles.includes(user?.role || "")
+    );
+  };
+
+  const navigation = getNavigationItems();
 
   const getPageTitle = () => {
     const currentNav = navigation.find((nav) => nav.href === pathname);
     return currentNav ? currentNav.name : "Admin Dashboard";
   };
 
-  if (!isAuthenticated || (user && user.role !== "admin")) {
+  if (!isAuthenticated || (user && !["admin", "vendor"].includes(user.role))) {
     return null;
   }
 
@@ -157,7 +178,9 @@ const AdminLayout = ({ children }) => {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+              <h1 className="text-xl font-bold text-white">
+                {user?.role === "vendor" ? "Vendor Panel" : "Admin Panel"}
+              </h1>
               <p className="text-xs text-blue-100">Pure Ghee Store</p>
             </div>
           </div>
@@ -288,7 +311,8 @@ const AdminLayout = ({ children }) => {
                   {getPageTitle()}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Welcome back, {user?.name}
+                  Welcome back, {user?.name} (
+                  {user?.role === "vendor" ? "Vendor" : "Admin"})
                 </p>
               </div>
             </div>

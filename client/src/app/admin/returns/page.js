@@ -39,8 +39,8 @@ export default function AdminReturnsPage() {
       return;
     }
 
-    if (user && user.role !== "admin") {
-      toast.error("Access denied. Admin privileges required.");
+    if (user && !["admin", "vendor"].includes(user.role)) {
+      toast.error("Access denied. Admin or Vendor privileges required.");
       router.push("/");
       return;
     }

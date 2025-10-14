@@ -385,13 +385,15 @@ const Header = () => {
                     >
                       My Returns
                     </Link>
-                    {user?.role === "admin" && (
+                    {(user?.role === "admin" || user?.role === "vendor") && (
                       <Link
                         href="/admin"
                         className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 border-t border-gray-100 transition-colors duration-200"
                       >
                         <Settings className="w-4 h-4 inline mr-2" />
-                        Admin Panel
+                        {user?.role === "vendor"
+                          ? "Vendor Panel"
+                          : "Admin Panel"}
                       </Link>
                     )}
                     <button
@@ -554,14 +556,14 @@ const Header = () => {
                 >
                   My Returns
                 </Link>
-                {user?.role === "admin" && (
+                {(user?.role === "admin" || user?.role === "vendor") && (
                   <Link
                     href="/admin"
                     className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium border-t border-gray-100 transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Settings className="w-4 h-4 inline mr-2" />
-                    Admin Panel
+                    {user?.role === "vendor" ? "Vendor Panel" : "Admin Panel"}
                   </Link>
                 )}
                 <button

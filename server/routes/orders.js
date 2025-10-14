@@ -24,14 +24,14 @@ router.route("/order/:id/cancel").put(isAuthenticatedUser, cancelOrder);
 // Admin routes
 router
   .route("/admin/orders")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), allOrders);
+  .get(isAuthenticatedUser, authorizeRoles("admin", "vendor"), allOrders);
 router
   .route("/admin/order/:id")
-  .put(isAuthenticatedUser, authorizeRoles("admin"), updateOrder)
+  .put(isAuthenticatedUser, authorizeRoles("admin", "vendor"), updateOrder)
   .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteOrder);
 router
   .route("/admin/orders/stats")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), getOrderStats);
+  .get(isAuthenticatedUser, authorizeRoles("admin", "vendor"), getOrderStats);
 
 // Admin refund routes
 router

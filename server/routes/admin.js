@@ -29,7 +29,11 @@ const router = express.Router();
 // Dashboard routes
 router
   .route("/admin/dashboard/stats")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), getDashboardStats);
+  .get(
+    isAuthenticatedUser,
+    authorizeRoles("admin", "vendor"),
+    getDashboardStats
+  );
 
 // Analytics routes
 router
@@ -55,7 +59,7 @@ router
   .get(isAuthenticatedUser, authorizeRoles("admin"), allOrders);
 router
   .route("/admin/order/:id")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), getSingleOrder)
+  .get(isAuthenticatedUser, authorizeRoles("admin", "vendor"), getSingleOrder)
   .put(isAuthenticatedUser, authorizeRoles("admin"), updateOrder)
   .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteOrder);
 

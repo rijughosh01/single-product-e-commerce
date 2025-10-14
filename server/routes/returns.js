@@ -24,13 +24,13 @@ router.put("/:id/cancel", isAuthenticatedUser, cancelReturnRequest);
 router.get(
   "/admin/returns",
   isAuthenticatedUser,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "vendor"),
   getAllReturns
 );
 router.put(
   "/admin/:id/status",
   isAuthenticatedUser,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "vendor"),
   updateReturnStatus
 );
 router.post(
@@ -48,7 +48,7 @@ router.post(
 router.get(
   "/admin/returns/stats",
   isAuthenticatedUser,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "vendor"),
   getReturnStats
 );
 
