@@ -115,6 +115,17 @@ const NotificationSystem = ({ className = "" }) => {
       setUnreadCount((prev) => Math.max(0, prev - 1));
       toast.success("Notification deleted");
     } catch (error) {
+      const status = error?.response?.status;
+
+      if (status === 404) {
+        setNotifications((prev) =>
+          prev.filter((notif) => notif._id !== notificationId)
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        toast.info("Notification was already deleted");
+        return;
+      }
+
       console.error("Error deleting notification:", error);
       toast.error("Failed to delete notification");
     }

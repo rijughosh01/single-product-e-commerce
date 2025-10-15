@@ -7,7 +7,7 @@ const API_BASE_URL =
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -36,17 +36,42 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
-      console.error(
-        "Network Error - Check if server is running on:",
-        API_BASE_URL
-      );
+    const config = error.config || {};
 
-      if (error.config && !error.config._retry) {
-        error.config._retry = true;
-        console.log("Retrying network request...");
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return api.request(error.config);
+    // Checks if the error is temporary and should be retried
+    const isTimeout =
+      error.code === "ECONNABORTED" || /timeout/i.test(error.message || "");
+    const isNetwork =
+      error.code === "ERR_NETWORK" || error.message === "Network Error";
+    const status = error.response?.status;
+    const isRetryableStatus =
+      status === 502 || status === 503 || status === 504;
+
+    // Retries idempotent GET requests up to 2 times by default
+    const method = (config.method || "get").toLowerCase();
+    const defaultMaxRetries = method === "get" ? 2 : 0;
+    const maxRetries =
+      typeof config.maxRetries === "number"
+        ? config.maxRetries
+        : defaultMaxRetries;
+    config._retryCount = config._retryCount || 0;
+
+    if (isNetwork || isTimeout || isRetryableStatus) {
+      if (isNetwork) {
+        console.error(
+          "Network Error - Check if server is running on:",
+          API_BASE_URL
+        );
+      }
+
+      if (config._retryCount < maxRetries) {
+        config._retryCount += 1;
+        const backoffMs = Math.min(
+          1000 * Math.pow(2, config._retryCount - 1),
+          5000
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        return api.request(config);
       }
     }
 
@@ -64,12 +89,8 @@ api.interceptors.response.use(
       }
     }
 
-    // Only log network errors
-    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
-      console.error(
-        "Network Error - Check if server is running on:",
-        API_BASE_URL
-      );
+    if (isNetwork) {
+      console.error("Network request failed after retries:", config?.url);
     }
 
     return Promise.reject(error);
