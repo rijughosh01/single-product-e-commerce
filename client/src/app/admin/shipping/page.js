@@ -17,6 +17,8 @@ import {
   Loader2,
   AlertCircle,
   Upload,
+  X,
+  Settings,
 } from "lucide-react";
 import { shippingAPI } from "@/lib/api";
 import { toast } from "sonner";
@@ -31,11 +33,15 @@ export default function AdminShippingPage() {
   const [editingRule, setEditingRule] = useState(null);
   const [newRule, setNewRule] = useState({
     name: "",
+    description: "",
+    pincodeType: "single",
     pincodes: "",
-    shippingCharge: 0,
-    freeShippingThreshold: 0,
-    estimatedDays: 1,
+    shippingCharges: "",
+    freeShippingThreshold: "",
+    estimatedMin: "",
+    estimatedMax: "",
     isActive: true,
+    priority: 1,
   });
 
   useEffect(() => {
@@ -70,16 +76,43 @@ export default function AdminShippingPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await shippingAPI.createShippingRule(newRule);
+      const pincodesArray = (newRule.pincodes || "")
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      const payload = {
+        name: newRule.name,
+        description: newRule.description || `${newRule.name} shipping rule`,
+        pincodeType: newRule.pincodeType || "single",
+        pincodes: newRule.pincodeType === "single" ? pincodesArray : [],
+        pincodeRanges: [],
+        states: [],
+        zones: [],
+        shippingCharges: Number(newRule.shippingCharges || 0),
+        freeShippingThreshold: Number(newRule.freeShippingThreshold || 0),
+        estimatedDeliveryDays: {
+          min: Number(newRule.estimatedMin || 1),
+          max: Number(newRule.estimatedMax || newRule.estimatedMin || 1),
+        },
+        isActive: Boolean(newRule.isActive),
+        priority: Number(newRule.priority || 1),
+      };
+
+      await shippingAPI.createShippingRule(payload);
       toast.success("Shipping rule created successfully!");
       setShowCreateForm(false);
       setNewRule({
         name: "",
+        description: "",
+        pincodeType: "single",
         pincodes: "",
-        shippingCharge: 0,
-        freeShippingThreshold: 0,
-        estimatedDays: 1,
+        shippingCharges: "",
+        freeShippingThreshold: "",
+        estimatedMin: "",
+        estimatedMax: "",
         isActive: true,
+        priority: 1,
       });
       fetchShippingRules();
     } catch (error) {
@@ -95,7 +128,45 @@ export default function AdminShippingPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await shippingAPI.updateShippingRule(editingRule._id, editingRule);
+      const pincodesArray = (
+        editingRule.pincodesInput ??
+        (Array.isArray(editingRule.pincodes)
+          ? editingRule.pincodes.join(",")
+          : "")
+      )
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      const payload = {
+        name: editingRule.name,
+        description:
+          editingRule.description || `${editingRule.name} shipping rule`,
+        pincodeType: editingRule.pincodeType || "single",
+        pincodes: editingRule.pincodeType === "single" ? pincodesArray : [],
+        pincodeRanges: editingRule.pincodeRanges || [],
+        states: editingRule.states || [],
+        zones: editingRule.zones || [],
+        shippingCharges: Number(editingRule.shippingCharges || 0),
+        freeShippingThreshold: Number(editingRule.freeShippingThreshold || 0),
+        estimatedDeliveryDays: {
+          min: Number(
+            editingRule.estimatedDeliveryDays?.min ??
+              editingRule.estimatedMin ??
+              1
+          ),
+          max: Number(
+            editingRule.estimatedDeliveryDays?.max ??
+              editingRule.estimatedMax ??
+              editingRule.estimatedMin ??
+              1
+          ),
+        },
+        isActive: Boolean(editingRule.isActive),
+        priority: Number(editingRule.priority || 1),
+      };
+
+      await shippingAPI.updateShippingRule(editingRule._id, payload);
       toast.success("Shipping rule updated successfully!");
       setEditingRule(null);
       fetchShippingRules();
@@ -153,11 +224,15 @@ export default function AdminShippingPage() {
     }).format(price);
   };
 
-  const filteredRules = shippingRules.filter(
-    (rule) =>
+  const filteredRules = shippingRules.filter((rule) => {
+    const pins = Array.isArray(rule.pincodes)
+      ? rule.pincodes.join(",")
+      : rule.pincodes || "";
+    return (
       rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rule.pincodes.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      pins.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   if (!isAuthenticated || user?.role !== "admin") {
     return null;
@@ -244,12 +319,16 @@ export default function AdminShippingPage() {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4" />
-                          <span>{rule.pincodes}</span>
+                          <span>
+                            {Array.isArray(rule.pincodes)
+                              ? rule.pincodes.join(", ")
+                              : rule.pincodes}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Truck className="w-4 h-4" />
                           <span>
-                            Charge: {formatPrice(rule.shippingCharge)}
+                            Charge: {formatPrice(rule.shippingCharges || 0)}
                           </span>
                         </div>
                         <div>
@@ -259,7 +338,10 @@ export default function AdminShippingPage() {
                           </span>
                         </div>
                         <div>
-                          <span>Delivery: {rule.estimatedDays} days</span>
+                          <span>
+                            Delivery: {rule.estimatedDeliveryDays?.min ?? "-"}-
+                            {rule.estimatedDeliveryDays?.max ?? "-"} days
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -292,210 +374,399 @@ export default function AdminShippingPage() {
 
         {/* Create/Edit Rule Modal */}
         {(showCreateForm || editingRule) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>
-                  {editingRule
-                    ? "Edit Shipping Rule"
-                    : "Create New Shipping Rule"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Rule Name
-                    </label>
-                    <Input
-                      value={editingRule ? editingRule.name : newRule.name}
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            name: e.target.value,
-                          }));
-                        }
-                      }}
-                      placeholder="Enter rule name"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Pincodes
-                    </label>
-                    <Input
-                      value={
-                        editingRule ? editingRule.pincodes : newRule.pincodes
-                      }
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            pincodes: e.target.value,
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            pincodes: e.target.value,
-                          }));
-                        }
-                      }}
-                      placeholder="Enter pincodes (comma separated)"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Shipping Charge
-                    </label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={
-                        editingRule
-                          ? editingRule.shippingCharge
-                          : newRule.shippingCharge
-                      }
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            shippingCharge: parseFloat(e.target.value),
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            shippingCharge: parseFloat(e.target.value),
-                          }));
-                        }
-                      }}
-                      placeholder="Enter shipping charge"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Free Shipping Threshold
-                    </label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={
-                        editingRule
-                          ? editingRule.freeShippingThreshold
-                          : newRule.freeShippingThreshold
-                      }
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            freeShippingThreshold: parseFloat(e.target.value),
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            freeShippingThreshold: parseFloat(e.target.value),
-                          }));
-                        }
-                      }}
-                      placeholder="Enter free shipping threshold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Estimated Delivery Days
-                    </label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={
-                        editingRule
-                          ? editingRule.estimatedDays
-                          : newRule.estimatedDays
-                      }
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            estimatedDays: parseInt(e.target.value),
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            estimatedDays: parseInt(e.target.value),
-                          }));
-                        }
-                      }}
-                      placeholder="Enter estimated delivery days"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="isActive"
-                      checked={
-                        editingRule ? editingRule.isActive : newRule.isActive
-                      }
-                      onChange={(e) => {
-                        if (editingRule) {
-                          setEditingRule((prev) => ({
-                            ...prev,
-                            isActive: e.target.checked,
-                          }));
-                        } else {
-                          setNewRule((prev) => ({
-                            ...prev,
-                            isActive: e.target.checked,
-                          }));
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <label htmlFor="isActive" className="text-sm font-medium">
-                      Active
-                    </label>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={loading} className="flex-1">
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : editingRule ? (
-                        "Update Rule"
-                      ) : (
-                        "Create Rule"
-                      )}
-                    </Button>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[100] p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <Card className="shadow-2xl border-0">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl font-bold">
+                      {editingRule
+                        ? "Edit Shipping Rule"
+                        : "Create New Shipping Rule"}
+                    </CardTitle>
                     <Button
-                      type="button"
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setShowCreateForm(false);
                         setEditingRule(null);
                       }}
+                      className="text-white hover:bg-white/20"
                     >
-                      Cancel
+                      <X className="w-5 h-5" />
                     </Button>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <form
+                    onSubmit={editingRule ? handleUpdateRule : handleCreateRule}
+                    className="space-y-6"
+                  >
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Basic Information
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Rule Name
+                        </label>
+                        <Input
+                          value={editingRule ? editingRule.name : newRule.name}
+                          onChange={(e) => {
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }));
+                            }
+                          }}
+                          placeholder="Enter rule name"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Description
+                        </label>
+                        <Input
+                          value={
+                            editingRule
+                              ? editingRule.description ?? ""
+                              : newRule.description
+                          }
+                          onChange={(e) => {
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                description: e.target.value,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                description: e.target.value,
+                              }));
+                            }
+                          }}
+                          placeholder="Short description"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Pincode Settings
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Pincode Type
+                        </label>
+                        <select
+                          value={
+                            editingRule
+                              ? editingRule.pincodeType || "single"
+                              : newRule.pincodeType
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                pincodeType: value,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                pincodeType: value,
+                              }));
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                        >
+                          <option value="single">Specific pincodes</option>
+                          <option value="all">All pincodes (default)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Pincodes
+                        </label>
+                        <Input
+                          value={
+                            editingRule
+                              ? editingRule.pincodesInput ??
+                                (Array.isArray(editingRule.pincodes)
+                                  ? editingRule.pincodes.join(",")
+                                  : "")
+                              : newRule.pincodes
+                          }
+                          onChange={(e) => {
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                pincodesInput: e.target.value,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                pincodes: e.target.value,
+                              }));
+                            }
+                          }}
+                          placeholder="Enter pincodes (comma separated)"
+                          disabled={
+                            (editingRule
+                              ? editingRule.pincodeType || "single"
+                              : newRule.pincodeType) !== "single"
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Charges
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Shipping Charge
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={
+                            editingRule
+                              ? editingRule.shippingCharges ?? ""
+                              : newRule.shippingCharges ?? ""
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                shippingCharges: val === "" ? "" : val,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                shippingCharges: val === "" ? "" : val,
+                              }));
+                            }
+                          }}
+                          placeholder="Enter shipping charge"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Free Shipping Threshold
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={
+                            editingRule
+                              ? editingRule.freeShippingThreshold ?? ""
+                              : newRule.freeShippingThreshold ?? ""
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                freeShippingThreshold: val === "" ? "" : val,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                freeShippingThreshold: val === "" ? "" : val,
+                              }));
+                            }
+                          }}
+                          placeholder="Enter free shipping threshold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Estimated Delivery
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Estimated Delivery Days (Min)
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={
+                            editingRule
+                              ? editingRule.estimatedDeliveryDays?.min ??
+                                editingRule.estimatedMin ??
+                                ""
+                              : newRule.estimatedMin ?? ""
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                estimatedMin: val === "" ? "" : val,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                estimatedMin: val === "" ? "" : val,
+                              }));
+                            }
+                          }}
+                          placeholder="Minimum delivery days"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Estimated Delivery Days (Max)
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={
+                            editingRule
+                              ? editingRule.estimatedDeliveryDays?.max ??
+                                editingRule.estimatedMax ??
+                                ""
+                              : newRule.estimatedMax ?? ""
+                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                estimatedMax: val === "" ? "" : val,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                estimatedMax: val === "" ? "" : val,
+                              }));
+                            }
+                          }}
+                          placeholder="Maximum delivery days"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <Settings className="w-5 h-5 mr-2 text-amber-600" />{" "}
+                        Status
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="isActive"
+                          checked={
+                            editingRule
+                              ? editingRule.isActive
+                              : newRule.isActive
+                          }
+                          onChange={(e) => {
+                            if (editingRule) {
+                              setEditingRule((prev) => ({
+                                ...prev,
+                                isActive: e.target.checked,
+                              }));
+                            } else {
+                              setNewRule((prev) => ({
+                                ...prev,
+                                isActive: e.target.checked,
+                              }));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <label
+                          htmlFor="isActive"
+                          className="text-sm font-medium"
+                        >
+                          Active
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Priority
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={
+                          editingRule
+                            ? editingRule.priority ?? 1
+                            : newRule.priority ?? 1
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (editingRule) {
+                            setEditingRule((prev) => ({
+                              ...prev,
+                              priority: val === "" ? 1 : Number(val),
+                            }));
+                          } else {
+                            setNewRule((prev) => ({
+                              ...prev,
+                              priority: val === "" ? 1 : Number(val),
+                            }));
+                          }
+                        }}
+                        placeholder="Rule priority (1 = highest)"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-gray-200">
+                      <Button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                            {editingRule ? "Updating..." : "Creating..."}
+                          </>
+                        ) : editingRule ? (
+                          "Update Rule"
+                        ) : (
+                          "Create Rule"
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowCreateForm(false);
+                          setEditingRule(null);
+                        }}
+                        className="px-6"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </div>
