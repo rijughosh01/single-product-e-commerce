@@ -324,4 +324,17 @@ export const adminAPI = {
     api.get(`/admin/analytics?range=${timeRange}`),
 };
 
+// Analytics API
+export const analyticsAPI = {
+  getDashboard: (params = {}) => api.get("/analytics/dashboard", { params }),
+  getFinancialReports: (params = {}) =>
+    api.get("/analytics/financial-reports", { params }),
+  getRevenueTrends: (params = {}) =>
+    api.get("/analytics/revenue-trends", { params }),
+  getProductPerformance: (params = {}) =>
+    api.get("/analytics/product-performance", { params }),
+  export: (params = {}) =>
+    api.get("/analytics/export", { params, responseType: "blob" }),
+};
+
 export default api;

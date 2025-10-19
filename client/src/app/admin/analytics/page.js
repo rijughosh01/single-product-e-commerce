@@ -1,170 +1,92 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { adminAPI } from "@/lib/api";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  BarChart3,
   TrendingUp,
+  TrendingDown,
   DollarSign,
   ShoppingCart,
   Users,
   Package,
+  BarChart3,
+  PieChart,
   Calendar,
-  ArrowUp,
-  ArrowDown,
+  Download,
+  RefreshCw,
+  Eye,
+  Target,
+  Award,
+  Clock,
+  MapPin,
+  CreditCard,
+  Gift,
 } from "lucide-react";
-import Link from "next/link";
-import {
-  RevenueChart,
-  OrderStatusChart,
-  TopProductsChart,
-  UserGrowthChart,
-} from "@/components/charts/AnalyticsCharts";
+import RevenueChart from "@/components/charts/RevenueChart";
+import OrderTrendsChart from "@/components/charts/OrderTrendsChart";
+import ProductPerformanceChart from "@/components/charts/ProductPerformanceChart";
+import PaymentMethodChart from "@/components/charts/PaymentMethodChart";
+import GeographicChart from "@/components/charts/GeographicChart";
+import TimeAnalysisChart from "@/components/charts/TimeAnalysisChart";
+import { analyticsAPI } from "@/lib/api";
 
-export default function AdminAnalytics() {
-  const { user, isAuthenticated } = useAuth();
-  const router = useRouter();
-  const [analytics, setAnalytics] = useState({
-    revenue: {
-      total: 0,
-      monthly: 0,
-      weekly: 0,
-      daily: 0,
-      growth: 0,
-    },
-    orders: {
-      total: 0,
-      monthly: 0,
-      weekly: 0,
-      daily: 0,
-      growth: 0,
-    },
-    users: {
-      total: 0,
-      monthly: 0,
-      weekly: 0,
-      daily: 0,
-      growth: 0,
-    },
-    products: {
-      total: 0,
-      active: 0,
-      featured: 0,
-      outOfStock: 0,
-    },
-    topProducts: [],
-    recentActivity: [],
-    // Chart data
-    revenueChart: {
-      labels: [],
-      values: [],
-    },
-    orderStatusChart: {
-      labels: [],
-      values: [],
-    },
-    topProductsChart: {
-      labels: [],
-      values: [],
-    },
-    userGrowthChart: {
-      labels: [],
-      values: [],
-    },
-  });
+export default function AnalyticsDashboard() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [financialReports, setFinancialReports] = useState(null);
+  const [revenueTrends, setRevenueTrends] = useState(null);
+  const [productPerformance, setProductPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("month");
+  const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const [selectedReportType, setSelectedReportType] = useState("comprehensive");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-      return;
-    }
+    fetchAnalyticsData();
+  }, [selectedPeriod]);
 
-    if (user && user.role !== "admin") {
-      toast.error("Access denied. Admin privileges required.");
-      router.push("/");
-      return;
-    }
-
-    fetchAnalytics();
-  }, [isAuthenticated, user, router, timeRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalyticsData = async () => {
     try {
-      const response = await adminAPI.getAnalytics(timeRange);
-      const data = response.data.data;
+      setLoading(true);
 
-      setAnalytics({
-        revenue: {
-          total: data.totalRevenue || 0,
-          monthly: data.totalRevenue || 0,
-          weekly: data.totalRevenue || 0,
-          daily: data.totalRevenue || 0,
-          growth: data.revenueGrowth || 0,
-        },
-        orders: {
-          total: data.totalOrders || 0,
-          monthly: data.totalOrders || 0,
-          weekly: data.totalOrders || 0,
-          daily: data.totalOrders || 0,
-          growth: data.ordersGrowth || 0,
-        },
-        users: {
-          total: data.totalUsers || 0,
-          monthly: data.totalUsers || 0,
-          weekly: data.totalUsers || 0,
-          daily: data.totalUsers || 0,
-          growth: data.usersGrowth || 0,
-        },
-        products: {
-          total: data.totalProducts || 0,
-          active: data.activeProducts || 0,
-          featured: data.featuredProducts || 0,
-          outOfStock: data.outOfStockProducts || 0,
-        },
-        topProducts: (data.topProducts || []).map((product) => ({
-          name: product.name || "Unknown Product",
-          sales: product.totalQuantity || 0,
-          revenue: product.totalRevenue || 0,
-        })),
-        recentActivity: data.recentActivity || [],
-        // Chart data from API
-        revenueChart: data.revenueChart || {
-          labels: [],
-          values: [],
-        },
-        orderStatusChart: data.orderStatusChart || {
-          labels: [],
-          values: [],
-        },
-        topProductsChart: data.topProductsChart || {
-          labels: [],
-          values: [],
-        },
-        userGrowthChart: data.userGrowthChart || {
-          labels: [],
-          values: [],
-        },
-      });
+      const [dashboardRes, financialRes, trendsRes, productRes] =
+        await Promise.all([
+          analyticsAPI.getDashboard({ period: selectedPeriod }),
+          analyticsAPI.getFinancialReports({ reportType: selectedReportType }),
+          analyticsAPI.getRevenueTrends({ period: selectedPeriod }),
+          analyticsAPI.getProductPerformance({ limit: 10 }),
+        ]);
+
+      setDashboardData(dashboardRes.data?.data || null);
+      setFinancialReports(financialRes.data?.data || null);
+      setRevenueTrends(trendsRes.data?.data || null);
+      setProductPerformance(productRes.data?.data || null);
     } catch (error) {
-      console.error("Analytics fetch error:", error);
-      toast.error("Failed to load analytics");
+      console.error("Error fetching analytics data:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat("en-IN").format(num);
+  };
+
   const getGrowthIcon = (growth) => {
-    if (growth > 0) {
-      return <ArrowUp className="h-4 w-4 text-green-500" />;
-    } else if (growth < 0) {
-      return <ArrowDown className="h-4 w-4 text-red-500" />;
-    }
-    return null;
+    if (growth > 0) return <TrendingUp className="w-4 h-4 text-green-500" />;
+    if (growth < 0) return <TrendingDown className="w-4 h-4 text-red-500" />;
+    return <BarChart3 className="w-4 h-4 text-gray-500" />;
   };
 
   const getGrowthColor = (growth) => {
@@ -173,367 +95,640 @@ export default function AdminAnalytics() {
     return "text-gray-600";
   };
 
+  const tabs = [
+    { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "financial", label: "Financial Reports", icon: DollarSign },
+    { id: "products", label: "Product Performance", icon: Package },
+    { id: "customers", label: "Customer Analytics", icon: Users },
+    { id: "geographic", label: "Geographic Analysis", icon: MapPin },
+    { id: "time", label: "Time Analysis", icon: Clock },
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+            <div className="h-96 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case where data is not loaded yet
+  if (!dashboardData || !dashboardData.summary) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📊</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Loading Analytics...
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Fetching your business data and generating insights.
+            </p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 Analytics Dashboard
               </h1>
-              <p className="text-gray-600">
-                Business insights and performance metrics
+              <p className="text-gray-600 mt-1">
+                Comprehensive insights into your business performance
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               >
-                <option value="week">Last 7 days</option>
-                <option value="month">Last 30 days</option>
-                <option value="quarter">Last 3 months</option>
-                <option value="year">Last year</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="1y">Last year</option>
               </select>
-              <button
-                onClick={() => {
-                  setLoading(true);
-                  fetchAnalytics();
+              <Button
+                onClick={fetchAnalyticsData}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </Button>
+              <Button
+                size="sm"
+                className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700"
+                onClick={async () => {
+                  try {
+                    const params = {
+                      type:
+                        activeTab === "overview"
+                          ? "overview"
+                          : activeTab === "financial"
+                          ? "financial"
+                          : activeTab === "products"
+                          ? "products"
+                          : "overview",
+                      period: selectedPeriod,
+                    };
+                    const res = await analyticsAPI.export(params);
+                    const blob = new Blob([res.data], { type: "text/csv" });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `analytics-${params.type}-${selectedPeriod}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                  } catch (e) {
+                    console.error("Export failed", e);
+                    alert("Export failed. Please try again.");
+                  }
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Tab Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex flex-wrap gap-2 border-b border-gray-200">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? "border-amber-500 text-amber-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                <span>Refresh</span>
-              </button>
-              <Link
-                href="/admin"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Dashboard
-              </Link>
-            </div>
+                  <Icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Revenue
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ₹{analytics.revenue.total.toLocaleString()}
-                </p>
-                <div className="flex items-center mt-2">
-                  {getGrowthIcon(analytics.revenue.growth)}
-                  <span
-                    className={`text-sm font-medium ml-1 ${getGrowthColor(
-                      analytics.revenue.growth
-                    )}`}
-                  >
-                    {analytics.revenue.growth > 0 ? "+" : ""}
-                    {analytics.revenue.growth}%
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">
-                    vs last period
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Orders
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics.orders.total}
-                </p>
-                <div className="flex items-center mt-2">
-                  {getGrowthIcon(analytics.orders.growth)}
-                  <span
-                    className={`text-sm font-medium ml-1 ${getGrowthColor(
-                      analytics.orders.growth
-                    )}`}
-                  >
-                    {analytics.orders.growth > 0 ? "+" : ""}
-                    {analytics.orders.growth}%
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">
-                    vs last period
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <ShoppingCart className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics.users.total}
-                </p>
-                <div className="flex items-center mt-2">
-                  {getGrowthIcon(analytics.users.growth)}
-                  <span
-                    className={`text-sm font-medium ml-1 ${getGrowthColor(
-                      analytics.users.growth
-                    )}`}
-                  >
-                    {analytics.users.growth > 0 ? "+" : ""}
-                    {analytics.users.growth}%
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">
-                    vs last period
-                  </span>
-                </div>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Active Products
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analytics.products.active}
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {analytics.products.featured} featured,{" "}
-                  {analytics.products.outOfStock} out of stock
-                </p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-lg">
-                <Package className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Top Products */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Top Selling Products
-              </h2>
-              <Link
-                href="/admin/products"
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                View all
-              </Link>
-            </div>
-            <div className="space-y-4">
-              {analytics.topProducts && analytics.topProducts.length > 0 ? (
-                analytics.topProducts.map((product, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-sm font-medium text-blue-600">
-                          {index + 1}
+        {/* Overview Tab */}
+        {activeTab === "overview" && dashboardData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            {/* Key Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Total Revenue
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          dashboardData.summary?.totalRevenue || 0
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {getGrowthIcon(
+                          dashboardData.summary?.revenueGrowth || 0
+                        )}
+                        <span
+                          className={`text-sm ${getGrowthColor(
+                            dashboardData.summary?.revenueGrowth || 0
+                          )}`}
+                        >
+                          {Math.abs(
+                            dashboardData.summary?.revenueGrowth || 0
+                          ).toFixed(1)}
+                          %
                         </span>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {product.name || "Unknown Product"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {product.sales || 0} units sold
-                        </p>
+                    </div>
+                    <div className="p-3 bg-green-100 rounded-full">
+                      <DollarSign className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Total Orders
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(dashboardData.summary?.totalOrders || 0)}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {getGrowthIcon(dashboardData.summary?.orderGrowth || 0)}
+                        <span
+                          className={`text-sm ${getGrowthColor(
+                            dashboardData.summary?.orderGrowth || 0
+                          )}`}
+                        >
+                          {Math.abs(
+                            dashboardData.summary?.orderGrowth || 0
+                          ).toFixed(1)}
+                          %
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        ₹{(product.revenue || 0).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500">Revenue</p>
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      <ShoppingCart className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg font-medium">No Product Sales Data</p>
-                  <p className="text-sm">
-                    No products have been sold in the selected period
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+                </CardContent>
+              </Card>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Recent Activity
-              </h2>
-              <Calendar className="h-5 w-5 text-gray-400" />
-            </div>
-            <div className="space-y-4">
-              {analytics.recentActivity &&
-              analytics.recentActivity.length > 0 ? (
-                analytics.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div
-                      className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.type === "order"
-                          ? "bg-blue-500"
-                          : activity.type === "user"
-                          ? "bg-green-500"
-                          : "bg-yellow-500"
-                      }`}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">
-                        {activity.message}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        New Customers
                       </p>
-                      <p className="text-xs text-gray-500">{activity.time}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(
+                          dashboardData.summary?.totalCustomers || 0
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {getGrowthIcon(
+                          dashboardData.summary?.customerGrowth || 0
+                        )}
+                        <span
+                          className={`text-sm ${getGrowthColor(
+                            dashboardData.summary?.customerGrowth || 0
+                          )}`}
+                        >
+                          {Math.abs(
+                            dashboardData.summary?.customerGrowth || 0
+                          ).toFixed(1)}
+                          %
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-purple-100 rounded-full">
+                      <Users className="w-6 h-6 text-purple-600" />
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-lg font-medium">No Recent Activity</p>
-                  <p className="text-sm">No recent activity to display</p>
-                </div>
-              )}
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Avg Order Value
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          dashboardData.summary?.averageOrderValue || 0
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Target className="w-4 h-4 text-amber-500" />
+                        <span className="text-sm text-gray-600">
+                          Target: ₹500
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-amber-100 rounded-full">
+                      <Award className="w-6 h-6 text-amber-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </div>
 
-        {/* Charts Section */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Revenue Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Revenue Trend
-            </h2>
-            <RevenueChart data={analytics.revenueChart} timeRange={timeRange} />
-          </div>
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    Revenue Trends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RevenueChart data={revenueTrends?.trends || []} />
+                </CardContent>
+              </Card>
 
-          {/* Orders Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Order Status Distribution
-            </h2>
-            <OrderStatusChart data={analytics.orderStatusChart} />
-          </div>
-        </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5" />
+                    Order Trends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <OrderTrendsChart data={revenueTrends?.trends || []} />
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Additional Charts */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Top Products Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Top Selling Products
-            </h2>
-            <TopProductsChart data={analytics.topProductsChart} />
-          </div>
+            {/* Top Products */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Top Selling Products
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductPerformanceChart
+                  data={productPerformance?.products || []}
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
-          {/* User Growth Chart */}
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              User Growth
-            </h2>
-            <UserGrowthChart data={analytics.userGrowthChart} />
-          </div>
-        </div>
+        {/* Financial Reports Tab */}
+        {activeTab === "financial" && financialReports && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            {/* Revenue Analysis */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Gross Revenue
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          financialReports.revenueAnalysis.grossRevenue
+                        )}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/admin/products/new"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Package className="h-5 w-5 text-blue-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Add New Product
-                </p>
-                <p className="text-xs text-gray-500">
-                  Create a new product listing
-                </p>
-              </div>
-            </Link>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Net Revenue
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          financialReports.revenueAnalysis.netRevenue
+                        )}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Link
-              href="/admin/orders"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ShoppingCart className="h-5 w-5 text-green-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  Manage Orders
-                </p>
-                <p className="text-xs text-gray-500">
-                  View and update order status
-                </p>
-              </div>
-            </Link>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Refunded
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          financialReports.revenueAnalysis.refundedAmount
+                        )}
+                      </p>
+                    </div>
+                    <TrendingDown className="w-8 h-8 text-red-600" />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Link
-              href="/admin/users"
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <Users className="h-5 w-5 text-purple-600 mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">
-                  User Management
-                </p>
-                <p className="text-xs text-gray-500">Manage user accounts</p>
-              </div>
-            </Link>
-          </div>
-        </div>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Tax Collected
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          financialReports.revenueAnalysis.taxCollected
+                        )}
+                      </p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Payment Methods
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentMethodChart data={financialReports.paymentAnalysis} />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Gift className="w-5 h-5" />
+                    Coupon Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Total Coupons Used
+                      </span>
+                      <span className="font-semibold">
+                        {formatNumber(
+                          financialReports.couponAnalysis.totalCouponsUsed
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Total Discount Given
+                      </span>
+                      <span className="font-semibold text-green-600">
+                        {formatCurrency(
+                          financialReports.couponAnalysis.totalDiscountGiven
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Average Discount
+                      </span>
+                      <span className="font-semibold">
+                        {formatCurrency(
+                          financialReports.couponAnalysis
+                            .averageDiscountPerOrder
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Effectiveness
+                      </span>
+                      <Badge variant="secondary">
+                        {financialReports.couponAnalysis.couponEffectiveness.toFixed(
+                          1
+                        )}
+                        %
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Product Performance Tab */}
+        {activeTab === "products" && productPerformance && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Product Performance Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductPerformanceChart
+                  data={productPerformance?.products || []}
+                  detailed={true}
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Customer Analytics Tab */}
+        {activeTab === "customers" && financialReports && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Total Customers
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(
+                          financialReports.customerAnalysis.totalCustomers
+                        )}
+                      </p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        New Customers
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(
+                          financialReports.customerAnalysis.newCustomers
+                        )}
+                      </p>
+                    </div>
+                    <Users className="w-8 h-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Repeat Customers
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatNumber(
+                          financialReports.customerAnalysis.repeatCustomers
+                        )}
+                      </p>
+                    </div>
+                    <Users className="w-8 h-8 text-purple-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Avg Order Value
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatCurrency(
+                          financialReports.customerAnalysis.averageOrderValue
+                        )}
+                      </p>
+                    </div>
+                    <Award className="w-8 h-8 text-amber-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Geographic Analysis Tab */}
+        {activeTab === "geographic" && financialReports && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Geographic Sales Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <GeographicChart data={financialReports.geographicAnalysis} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Time Analysis Tab */}
+        {activeTab === "time" && financialReports && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Time-based Sales Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TimeAnalysisChart data={financialReports.timeAnalysis} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
       </div>
     </div>
   );

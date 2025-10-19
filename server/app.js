@@ -26,6 +26,7 @@ const subscriptions = require("./routes/subscriptions");
 const payment = require("./routes/payment");
 const returns = require("./routes/returns");
 const admin = require("./routes/admin");
+const analytics = require("./routes/analytics");
 
 connectDB();
 
@@ -40,12 +41,18 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" 
-      ? process.env.FRONTEND_URL 
-      : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin:
+      process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_URL
+        : ["http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
     optionsSuccessStatus: 200,
   })
 );
@@ -88,6 +95,7 @@ app.use("/api/v1", subscriptions);
 app.use("/api/v1", payment);
 app.use("/api/v1/return", returns);
 app.use("/api/v1", admin);
+app.use("/api/v1/analytics", analytics);
 
 // Health check route
 app.get("/api/health", (req, res) => {
