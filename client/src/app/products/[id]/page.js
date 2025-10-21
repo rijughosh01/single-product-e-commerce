@@ -5,7 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,11 +36,13 @@ import {
   Whatsapp,
   Mail,
   StarHalf,
-  Award
+  Award,
+  Zap,
 } from "lucide-react";
 import { productsAPI } from "@/lib/api";
 import RatingStars from "@/components/RatingStars";
 import ProductImageCarousel from "@/components/ProductImageCarousel";
+import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WishlistButton from "@/components/WishlistButton";
@@ -61,6 +69,8 @@ export default function ProductDetail() {
   const [pageSize, setPageSize] = useState(10);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(false);
 
   const fadeInUp = {
     initial: { opacity: 0, y: 40 },
@@ -105,6 +115,12 @@ export default function ProductDetail() {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    if (product) {
+      fetchRecommendedProducts();
+    }
+  }, [product]);
+
   // Close share menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -127,6 +143,26 @@ export default function ProductDetail() {
       console.error("Error fetching product:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecommendedProducts = async () => {
+    if (!product) return;
+
+    setLoadingRecommended(true);
+    try {
+      const response = await productsAPI.getByType(product.type);
+      const allProducts = response.data.products || [];
+
+      const recommended = allProducts
+        .filter((p) => p._id !== product._id)
+        .slice(0, 4);
+
+      setRecommendedProducts(recommended);
+    } catch (error) {
+      console.error("Error fetching recommended products:", error);
+    } finally {
+      setLoadingRecommended(false);
     }
   };
 
@@ -388,7 +424,9 @@ export default function ProductDetail() {
             {/* Main Carousel */}
             <div className="relative">
               <ProductImageCarousel
-                images={product.images.map(img => img?.url || "/placeholder-ghee.jpg")}
+                images={product.images.map(
+                  (img) => img?.url || "/placeholder-ghee.jpg"
+                )}
                 autoScroll={true}
                 interval={5000}
                 className="aspect-square shadow-2xl"
@@ -396,7 +434,7 @@ export default function ProductDetail() {
                 setCurrentIndex={setCurrentCarouselIndex}
                 onImageChange={(index) => setSelectedImage(index)}
               />
-              
+
               {/* Discount Badge */}
               {product.discount > 0 && (
                 <motion.div
@@ -1116,6 +1154,46 @@ export default function ProductDetail() {
             )}
           </div>
         </motion.div>
+
+        {/* You May Like Section */}
+        {recommendedProducts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="mt-8 md:mt-16"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-8 md:mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 md:mb-4">
+                  You May Like
+                </h2>
+                <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto px-4">
+                  Discover more premium ghee products that match your taste
+                </p>
+              </div>
+
+              {loadingRecommended ? (
+                <div className="flex justify-center items-center py-8 md:py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-b-2 border-amber-600"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {recommendedProducts.map((recommendedProduct) => (
+                    <motion.div
+                      key={recommendedProduct._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                    >
+                      <ProductCard product={recommendedProduct} />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

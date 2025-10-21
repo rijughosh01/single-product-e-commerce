@@ -12,12 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import WishlistButton from "./WishlistButton";
 import {
   ShoppingCart,
   Package,
   Star,
-  Heart,
   Truck,
   Shield,
   Leaf,
@@ -44,7 +42,7 @@ const ProductCard = ({ product }) => {
     }
 
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
+      setCurrentImageIndex((prevIndex) =>
         prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
       );
     }, 900);
@@ -113,11 +111,6 @@ const ProductCard = ({ product }) => {
         {stockStatus.text}
       </Badge>
 
-      {/* Wishlist Button */}
-      <div className="absolute top-4 right-16 z-10">
-        <WishlistButton productId={product._id} />
-      </div>
-
       {/* Image Container */}
       <CardHeader className="pb-0 p-0">
         <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
@@ -131,11 +124,11 @@ const ProductCard = ({ product }) => {
                     alt={product.name}
                     fill
                     className={`absolute inset-0 object-cover transition-all duration-700 ${
-                      index === currentImageIndex 
-                        ? "opacity-100 translate-x-0" 
-                        : index < currentImageIndex 
-                          ? "opacity-0 -translate-x-full" 
-                          : "opacity-0 translate-x-full"
+                      index === currentImageIndex
+                        ? "opacity-100 translate-x-0"
+                        : index < currentImageIndex
+                        ? "opacity-0 -translate-x-full"
+                        : "opacity-0 translate-x-full"
                     } ${isHovered ? "scale-110" : "scale-100"}`}
                   />
                 ))
@@ -158,12 +151,15 @@ const ProductCard = ({ product }) => {
               isHovered ? "opacity-100" : "opacity-0"
             }`}
           >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Link href={`/products/${product._id}`}>
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <Link
+                href={`/products/${product._id}`}
+                className="cursor-pointer z-30"
+              >
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="bg-white/90 hover:bg-white text-gray-800 font-medium px-4 py-2 rounded-full shadow-lg"
+                  className="bg-white/90 hover:bg-white text-gray-800 font-medium px-4 py-2 rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform duration-200 z-30"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   Quick View
@@ -174,7 +170,7 @@ const ProductCard = ({ product }) => {
 
           {/* Bottom Gradient */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/30 to-transparent" />
-          
+
           {/* Image Indicators */}
           {product.images && product.images.length > 1 && (
             <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
@@ -265,12 +261,12 @@ const ProductCard = ({ product }) => {
       </CardContent>
 
       {/* Footer */}
-      <CardFooter className="pt-0 px-6 pb-6">
+      <CardFooter className="pt-0 px-6 pb-6 relative z-10">
         <Button
           onClick={handleAddToCart}
           className={`w-full font-semibold py-3 rounded-xl transition-all duration-300 ${
             product.stock > 0
-              ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg hover:shadow-xl"
+              ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg hover:shadow-xl cursor-pointer hover:scale-105"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
           disabled={!product.stock || product.stock === 0 || addingToCart}

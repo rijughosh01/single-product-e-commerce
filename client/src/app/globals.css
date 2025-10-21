@@ -3,6 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  a {
+    cursor: pointer;
+  }
+
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
