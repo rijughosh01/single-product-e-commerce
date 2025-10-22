@@ -377,128 +377,183 @@ export default function OrderDetails() {
                     </div>
                   )}
 
-                  {/* Processing - Show if status is Processing or higher */}
-                  {(order.orderStatus === "Processing" ||
-                    order.orderStatus === "Confirmed" ||
-                    order.orderStatus === "Shipped" ||
-                    order.orderStatus === "Out for Delivery" ||
-                    order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-yellow-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Processing
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.paidAt
-                            ? formatDate(order.paidAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Dynamic Status Timeline */}
+                  {order.statusTimeline && order.statusTimeline.length > 0 ? (
+                    order.statusTimeline
+                      .sort(
+                        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+                      )
+                      .map((statusEntry, index) => {
+                        const getStatusColor = (status) => {
+                          switch (status) {
+                            case "Processing":
+                              return "bg-yellow-600";
+                            case "Confirmed":
+                              return "bg-blue-600";
+                            case "Shipped":
+                              return "bg-purple-600";
+                            case "Out for Delivery":
+                              return "bg-orange-600";
+                            case "Delivered":
+                              return "bg-green-600";
+                            case "Cancelled":
+                              return "bg-red-600";
+                            case "Returned":
+                              return "bg-gray-600";
+                            default:
+                              return "bg-gray-600";
+                          }
+                        };
 
-                  {/* Confirmed - Show if status is Confirmed or higher */}
-                  {(order.orderStatus === "Confirmed" ||
-                    order.orderStatus === "Shipped" ||
-                    order.orderStatus === "Out for Delivery" ||
-                    order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-blue-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Confirmed
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.paidAt
-                            ? formatDate(order.paidAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-4"
+                          >
+                            <div className="flex-shrink-0">
+                              <div
+                                className={`w-3 h-3 ${getStatusColor(
+                                  statusEntry.status
+                                )} rounded-full shadow-lg`}
+                              ></div>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-base font-semibold text-gray-900">
+                                {statusEntry.status}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {formatDate(statusEntry.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <>
+                      {/* Processing - Show if status is Processing or higher */}
+                      {(order.orderStatus === "Processing" ||
+                        order.orderStatus === "Confirmed" ||
+                        order.orderStatus === "Shipped" ||
+                        order.orderStatus === "Out for Delivery" ||
+                        order.orderStatus === "Delivered") && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-yellow-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Processing
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.paidAt
+                                ? formatDate(order.paidAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Shipped - Show if status is Shipped or higher */}
-                  {(order.orderStatus === "Shipped" ||
-                    order.orderStatus === "Out for Delivery" ||
-                    order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-purple-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Shipped
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.shippedAt
-                            ? formatDate(order.shippedAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                      {/* Confirmed - Show if status is Confirmed or higher */}
+                      {(order.orderStatus === "Confirmed" ||
+                        order.orderStatus === "Shipped" ||
+                        order.orderStatus === "Out for Delivery" ||
+                        order.orderStatus === "Delivered") && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-blue-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Confirmed
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.paidAt
+                                ? formatDate(order.paidAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Out for Delivery - Show if status is Out for Delivery or Delivered */}
-                  {(order.orderStatus === "Out for Delivery" ||
-                    order.orderStatus === "Delivered") && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-orange-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Out for Delivery
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.outForDeliveryAt
-                            ? formatDate(order.outForDeliveryAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                      {/* Shipped - Show if status is Shipped or higher */}
+                      {(order.orderStatus === "Shipped" ||
+                        order.orderStatus === "Out for Delivery" ||
+                        order.orderStatus === "Delivered") && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-purple-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Shipped
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.shippedAt
+                                ? formatDate(order.shippedAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Delivered - Show only if status is Delivered */}
-                  {order.orderStatus === "Delivered" && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-green-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Delivered
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.deliveredAt
-                            ? formatDate(order.deliveredAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                      {/* Out for Delivery - Show if status is Out for Delivery or Delivered */}
+                      {(order.orderStatus === "Out for Delivery" ||
+                        order.orderStatus === "Delivered") && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-orange-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Out for Delivery
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.outForDeliveryAt
+                                ? formatDate(order.outForDeliveryAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Cancelled - Show if status is Cancelled */}
-                  {order.orderStatus === "Cancelled" && (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-red-600 rounded-full shadow-lg"></div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-semibold text-gray-900">
-                          Cancelled
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.cancelledAt
-                            ? formatDate(order.cancelledAt)
-                            : formatDate(order.createdAt)}
-                        </p>
-                      </div>
-                    </div>
+                      {/* Delivered - Show only if status is Delivered */}
+                      {order.orderStatus === "Delivered" && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-green-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Delivered
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.deliveredAt
+                                ? formatDate(order.deliveredAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Cancelled - Show if status is Cancelled */}
+                      {order.orderStatus === "Cancelled" && (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-3 h-3 bg-red-600 rounded-full shadow-lg"></div>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-base font-semibold text-gray-900">
+                              Cancelled
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.cancelledAt
+                                ? formatDate(order.cancelledAt)
+                                : formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </CardContent>

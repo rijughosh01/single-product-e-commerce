@@ -312,6 +312,15 @@ exports.verifyPayment = async (req, res, next) => {
         });
       }
 
+      // Initialize status timeline
+      orderDataToCreate.statusTimeline = [
+        {
+          status: "Processing",
+          timestamp: new Date(),
+          changedBy: req.user.id,
+        },
+      ];
+
       order = await Order.create(orderDataToCreate);
 
       console.log("Order created successfully:", {
@@ -382,7 +391,11 @@ exports.verifyPayment = async (req, res, next) => {
     // Create database notifications
     try {
       await NotificationService.createOrderNotification(order, "created");
-      await NotificationService.createPaymentNotification(payment, order, "success");
+      await NotificationService.createPaymentNotification(
+        payment,
+        order,
+        "success"
+      );
     } catch (error) {
       console.error("Error creating payment notifications:", error);
     }
@@ -721,6 +734,15 @@ exports.createCODOrder = async (req, res, next) => {
         message: "Invalid shipping information",
       });
     }
+
+    // Initialize status timeline
+    orderDataToCreate.statusTimeline = [
+      {
+        status: "Processing",
+        timestamp: new Date(),
+        changedBy: req.user.id,
+      },
+    ];
 
     const order = await Order.create(orderDataToCreate);
 

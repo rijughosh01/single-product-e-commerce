@@ -49,6 +49,13 @@ exports.newOrder = async (req, res, next) => {
       paidAt: Date.now(),
       user: req.user.id,
       coupon: normalizedCoupon,
+      statusTimeline: [
+        {
+          status: "Processing",
+          timestamp: new Date(),
+          changedBy: req.user.id,
+        },
+      ],
     });
 
     // Update product stock
@@ -197,7 +204,17 @@ exports.updateOrder = async (req, res, next) => {
     }
 
     const newStatus = req.body.orderStatus || req.body.status;
+    const oldStatus = order.orderStatus;
     order.orderStatus = newStatus;
+
+    // Track status change in timeline
+    if (oldStatus !== newStatus) {
+      order.statusTimeline.push({
+        status: newStatus,
+        timestamp: new Date(),
+        changedBy: req.user._id,
+      });
+    }
 
     // If admin marks Delivered, auto-complete COD payment and set paidAt
     if (newStatus === "Delivered") {
@@ -567,6 +584,13 @@ exports.cancelOrder = async (req, res, next) => {
 
     order.orderStatus = "Cancelled";
     order.cancelledAt = new Date();
+
+    // Track status change in timeline
+    order.statusTimeline.push({
+      status: "Cancelled",
+      timestamp: new Date(),
+      changedBy: req.user.id,
+    });
 
     // If payment was made and not COD, initiate refund
     if (

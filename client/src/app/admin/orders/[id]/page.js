@@ -433,128 +433,185 @@ export default function AdminOrderDetail() {
                   </div>
                 )}
 
-                {/* Processing - Show if status is Processing or higher */}
-                {(order.orderStatus === "Processing" ||
-                  order.orderStatus === "Confirmed" ||
-                  order.orderStatus === "Shipped" ||
-                  order.orderStatus === "Out for Delivery" ||
-                  order.orderStatus === "Delivered") && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Processing
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.paidAt
-                          ? new Date(order.paidAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                {/* Dynamic Status Timeline */}
+                {order.statusTimeline && order.statusTimeline.length > 0 ? (
+                  order.statusTimeline
+                    .sort(
+                      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+                    )
+                    .map((statusEntry, index) => {
+                      const getStatusColor = (status) => {
+                        switch (status) {
+                          case "Processing":
+                            return "bg-yellow-600";
+                          case "Confirmed":
+                            return "bg-blue-600";
+                          case "Shipped":
+                            return "bg-purple-600";
+                          case "Out for Delivery":
+                            return "bg-orange-600";
+                          case "Delivered":
+                            return "bg-green-600";
+                          case "Cancelled":
+                            return "bg-red-600";
+                          case "Returned":
+                            return "bg-gray-600";
+                          default:
+                            return "bg-gray-600";
+                        }
+                      };
 
-                {/* Confirmed - Show if status is Confirmed or higher */}
-                {(order.orderStatus === "Confirmed" ||
-                  order.orderStatus === "Shipped" ||
-                  order.orderStatus === "Out for Delivery" ||
-                  order.orderStatus === "Delivered") && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Confirmed
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.paidAt
-                          ? new Date(order.paidAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-3"
+                        >
+                          <div className="flex-shrink-0">
+                            <div
+                              className={`w-2 h-2 ${getStatusColor(
+                                statusEntry.status
+                              )} rounded-full`}
+                            ></div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {statusEntry.status}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(statusEntry.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <>
+                    {/* Processing - Show if status is Processing or higher */}
+                    {(order.orderStatus === "Processing" ||
+                      order.orderStatus === "Confirmed" ||
+                      order.orderStatus === "Shipped" ||
+                      order.orderStatus === "Out for Delivery" ||
+                      order.orderStatus === "Delivered") && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Processing
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.paidAt
+                              ? new Date(order.paidAt).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Shipped - Show if status is Shipped or higher */}
-                {(order.orderStatus === "Shipped" ||
-                  order.orderStatus === "Out for Delivery" ||
-                  order.orderStatus === "Delivered") && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Shipped
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.shippedAt
-                          ? new Date(order.shippedAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                    {/* Confirmed - Show if status is Confirmed or higher */}
+                    {(order.orderStatus === "Confirmed" ||
+                      order.orderStatus === "Shipped" ||
+                      order.orderStatus === "Out for Delivery" ||
+                      order.orderStatus === "Delivered") && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Confirmed
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.paidAt
+                              ? new Date(order.paidAt).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Out for Delivery - Show if status is Out for Delivery or Delivered */}
-                {(order.orderStatus === "Out for Delivery" ||
-                  order.orderStatus === "Delivered") && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Out for Delivery
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.outForDeliveryAt
-                          ? new Date(order.outForDeliveryAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                    {/* Shipped - Show if status is Shipped or higher */}
+                    {(order.orderStatus === "Shipped" ||
+                      order.orderStatus === "Out for Delivery" ||
+                      order.orderStatus === "Delivered") && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Shipped
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.shippedAt
+                              ? new Date(order.shippedAt).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Delivered - Show only if status is Delivered */}
-                {order.orderStatus === "Delivered" && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Delivered
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.deliveredAt
-                          ? new Date(order.deliveredAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                    {/* Out for Delivery - Show if status is Out for Delivery or Delivered */}
+                    {(order.orderStatus === "Out for Delivery" ||
+                      order.orderStatus === "Delivered") && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Out for Delivery
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.outForDeliveryAt
+                              ? new Date(
+                                  order.outForDeliveryAt
+                                ).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                {/* Cancelled - Show if status is Cancelled */}
-                {order.orderStatus === "Cancelled" && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Cancelled
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.cancelledAt
-                          ? new Date(order.cancelledAt).toLocaleString()
-                          : new Date(order.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
+                    {/* Delivered - Show only if status is Delivered */}
+                    {order.orderStatus === "Delivered" && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Delivered
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.deliveredAt
+                              ? new Date(order.deliveredAt).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cancelled - Show if status is Cancelled */}
+                    {order.orderStatus === "Cancelled" && (
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Cancelled
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {order.cancelledAt
+                              ? new Date(order.cancelledAt).toLocaleString()
+                              : new Date(order.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

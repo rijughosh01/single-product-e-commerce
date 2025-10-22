@@ -131,6 +131,30 @@ const orderSchema = new mongoose.Schema({
   },
   deliveredAt: Date,
   cancelledAt: Date,
+  statusTimeline: [
+    {
+      status: {
+        type: String,
+        enum: [
+          "Processing",
+          "Confirmed",
+          "Shipped",
+          "Out for Delivery",
+          "Delivered",
+          "Cancelled",
+          "Returned",
+        ],
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+      changedBy: {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    },
+  ],
   trackingNumber: {
     type: String,
     default: null,
