@@ -185,9 +185,35 @@ const ProfilePage = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-amber-100 overflow-hidden"
         >
+          {/* Mobile Tab Navigation */}
+          <div className="lg:hidden">
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-100">
+              <div className="flex space-x-1 overflow-x-auto scrollbar-hide">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex-shrink-0 flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        isActive
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md"
+                          : "text-gray-600 hover:bg-white/60 hover:text-amber-600"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-4">
-            {/* Sidebar */}
-            <div className="lg:col-span-1 bg-gradient-to-b from-amber-50 to-orange-50 border-r border-amber-100">
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block lg:col-span-1 bg-gradient-to-b from-amber-50 to-orange-50 border-r border-amber-100">
               <nav className="p-6">
                 <motion.ul
                   initial="initial"
@@ -252,7 +278,7 @@ const ProfilePage = () => {
 
             {/* Main Content */}
             <div className="lg:col-span-3">
-              <div className="p-6 lg:p-8">
+              <div className="p-4 lg:p-8">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeTab}

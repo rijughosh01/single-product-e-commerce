@@ -194,38 +194,43 @@ const InvoiceManager = ({ className = "" }) => {
 
   return (
     <div className={className}>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">Invoice Management</h2>
-        <div className="flex gap-3 items-center">
-          <div className="relative">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">Invoice Management</h2>
+
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search invoices..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-full"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="overdue">Overdue</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm"
-          >
-            <option value="date_desc">Newest first</option>
-            <option value="date_asc">Oldest first</option>
-            <option value="amount_desc">Amount: High → Low</option>
-            <option value="amount_asc">Amount: Low → High</option>
-          </select>
+
+          {/* Filters - Stack on mobile, inline on desktop */}
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm w-full sm:w-auto"
+            >
+              <option value="all">All Status</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="overdue">Overdue</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm w-full sm:w-auto"
+            >
+              <option value="date_desc">Newest first</option>
+              <option value="date_asc">Oldest first</option>
+              <option value="amount_desc">Amount: High → Low</option>
+              <option value="amount_asc">Amount: Low → High</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -253,42 +258,49 @@ const InvoiceManager = ({ className = "" }) => {
         <div className="space-y-4">
           {filteredInvoices.map((invoice) => (
             <Card key={invoice._id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-100 rounded-lg">
+                    <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0">
                       <FileText className="w-6 h-6 text-blue-600" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-semibold truncate">
                         Invoice #{invoice.invoiceNumber}
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {formatDate(invoice.createdAt)}
+                          <Calendar className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">
+                            {formatDate(invoice.createdAt)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Package className="w-4 h-4" />
-                          Order #{getDisplayOrderNumber(invoice.order)}
+                          <Package className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">
+                            Order #{getDisplayOrderNumber(invoice.order)}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          {formatPrice(invoice.totalAmount)}
+                          <DollarSign className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">
+                            {formatPrice(invoice.totalAmount)}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                     <Badge className={getStatusColor(invoice.paymentStatus)}>
                       {invoice.paymentStatus?.charAt(0).toUpperCase() +
                         invoice.paymentStatus?.slice(1) || "Unknown"}
                     </Badge>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => viewInvoiceDetails(invoice._id)}
+                        className="flex-1 sm:flex-none"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         View
@@ -299,6 +311,7 @@ const InvoiceManager = ({ className = "" }) => {
                         onClick={() =>
                           downloadInvoicePDF(invoice._id, invoice.invoiceNumber)
                         }
+                        className="flex-1 sm:flex-none"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download
