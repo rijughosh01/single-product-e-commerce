@@ -26,6 +26,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WishlistButton from "@/components/WishlistButton";
 import ImageCarousel from "@/components/ImageCarousel";
+import TraditionalProcess from "@/components/TraditionalProcess";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -506,7 +507,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 bg-white">
+      <section className="pt-16 pb-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-12"
@@ -720,6 +721,7 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      <TraditionalProcess />
 
       {/* Testimonials */}
       <section className="py-16 bg-gray-50">
