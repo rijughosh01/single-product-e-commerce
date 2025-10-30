@@ -228,7 +228,9 @@ const TraditionalProcess = () => {
                         {step.number}
                       </div>
                       <div className="enhanced-overview-label">
-                        {step.title.split(" ")[0]}
+                        {step.title.split(" ")[0].length > 8
+                          ? step.title.split(" ")[0].substring(0, 8)
+                          : step.title.split(" ")[0]}
                       </div>
                       {activeStep === step.number && (
                         <motion.div
@@ -366,7 +368,7 @@ const TraditionalProcess = () => {
                 <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-yellow-100/30 to-amber-100/30 rounded-full blur-lg"></div>
 
                 <div className="relative z-10 p-6">
-                  <div className="flex items-start space-x-4">
+                  <div className="flex items-start gap-3 md:gap-4">
                     <motion.div
                       className={`enhanced-step-number ${
                         activeStep === step.number ? "active" : ""
@@ -387,7 +389,7 @@ const TraditionalProcess = () => {
                       <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full opacity-20 animate-pulse"></div>
                     </motion.div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <h3
                         className={`enhanced-step-title ${
                           activeStep === step.number ? "active" : ""
@@ -423,7 +425,7 @@ const TraditionalProcess = () => {
                     </div>
 
                     <motion.div
-                      className="enhanced-step-image"
+                      className="enhanced-step-image flex-shrink-0"
                       initial={{ opacity: 0, scale: 0 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}

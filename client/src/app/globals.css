@@ -90,7 +90,9 @@
   }
 
   .product-card-image {
-    @apply relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom right, #fef9e7, #fed7aa);
   }
 
   .product-card-content {
@@ -325,7 +327,11 @@
 }
 
 .traditional-journey-image {
-  @apply relative w-full h-48 mx-auto;
+  position: relative;
+  width: 100%;
+  height: 12rem;
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
@@ -476,8 +482,12 @@
 }
 
 .enhanced-image-container {
-  @apply relative h-64 rounded-2xl overflow-hidden shadow-xl;
   position: relative;
+  height: 16rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .enhanced-image-overlay {
@@ -518,7 +528,12 @@
 }
 
 .enhanced-overview-item {
-  @apply text-center p-3 rounded-xl transition-all duration-300 cursor-pointer relative;
+  position: relative;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 300ms;
+  cursor: pointer;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -543,7 +558,15 @@
 }
 
 .enhanced-overview-label {
-  @apply text-xs font-medium;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  width: 100%;
+  max-width: 100%;
 }
 
 .enhanced-active-indicator {
@@ -552,8 +575,21 @@
 }
 
 .enhanced-step-card {
-  @apply bg-gradient-to-br from-white via-amber-50/20 to-orange-50/10 rounded-2xl p-6 shadow-lg border border-amber-200/50 transition-all duration-500 cursor-pointer relative overflow-hidden;
   position: relative;
+  background: linear-gradient(
+    to bottom right,
+    #ffffff,
+    rgba(254, 243, 199, 0.2),
+    rgba(255, 237, 213, 0.1)
+  );
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  transition: all 500ms;
+  cursor: pointer;
+  overflow: hidden;
 }
 
 .enhanced-step-card::before {
@@ -586,7 +622,16 @@
 }
 
 .enhanced-step-number {
-  @apply w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl relative;
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
   transition: all 0.3s ease;
@@ -626,8 +671,15 @@
 }
 
 .enhanced-step-title {
-  @apply text-xl font-bold mb-3 transition-colors duration-300;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  transition: color 300ms;
   color: #374151;
+  line-height: 1.4;
+  display: block;
+  overflow: visible;
+  white-space: normal;
 }
 
 .enhanced-step-title.active {
@@ -639,12 +691,22 @@
 }
 
 .enhanced-step-description {
-  @apply text-gray-600 leading-relaxed mb-4;
-  line-height: 1.7;
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  display: block;
+  overflow: visible;
+  white-space: normal;
 }
 
 .enhanced-step-image {
-  @apply w-20 h-20 rounded-2xl overflow-hidden shadow-xl relative;
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
   border: 3px solid rgba(245, 158, 11, 0.2);
 }
@@ -686,7 +748,12 @@
 
 /* CTA section */
 .enhanced-cta-section {
-  @apply bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 rounded-3xl p-8 text-center relative overflow-hidden;
+  position: relative;
+  background: linear-gradient(to bottom right, #f59e0b, #d97706);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  overflow: hidden;
   box-shadow: 0 20px 40px rgba(245, 158, 11, 0.2);
 }
 
@@ -784,31 +851,93 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .enhanced-main-card {
-    @apply p-6;
+    padding: 1.5rem;
   }
 
   .enhanced-step-card {
-    @apply p-4;
+    padding: 1rem;
+    min-height: auto;
   }
 
   .enhanced-step-number {
-    @apply w-14 h-14 text-lg;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1rem;
+    flex-shrink: 0;
   }
 
   .enhanced-step-image {
-    @apply w-16 h-16;
+    width: 4rem;
+    height: 4rem;
+    flex-shrink: 0;
   }
 
+  /* Single row for overview grid on mobile */
   .enhanced-overview-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.25rem;
+    width: 100%;
+    display: grid;
   }
 
   .enhanced-overview-item {
-    @apply p-2;
+    padding: 0.25rem;
+    text-align: center;
+    min-width: 0;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .enhanced-overview-number {
-    @apply w-8 h-8 text-xs;
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.625rem;
+    margin-bottom: 0.125rem;
+    flex-shrink: 0;
+  }
+
+  .enhanced-overview-label {
+    font-size: 0.5rem;
+    line-height: 1.1;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Fix alignment for step cards */
+  .enhanced-step-card .relative.z-10 {
+    padding: 1rem;
+  }
+
+  .enhanced-step-card > div > div {
+    align-items: flex-start;
+  }
+
+  .enhanced-step-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .enhanced-step-description {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .enhanced-step-number {
+    margin-top: 0.125rem;
   }
 }
