@@ -139,7 +139,8 @@ const TraditionalProcess = () => {
               key={activeStep}
               className="enhanced-main-card relative overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.2 }}
               transition={{ duration: 0.5 }}
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-200/30 to-orange-200/30 rounded-full blur-2xl"></div>
@@ -221,8 +222,9 @@ const TraditionalProcess = () => {
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: false, amount: 0.2 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
                       <div className="enhanced-overview-number">
                         {step.number}
@@ -358,10 +360,16 @@ const TraditionalProcess = () => {
                 className={`enhanced-step-card ${
                   activeStep === step.number ? "active" : ""
                 }`}
-                variants={fadeInUp}
+                initial={{ opacity: 0, y: 60 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, amount: 0.25 }}
                 whileHover={{ scale: 1.02, y: -5 }}
                 onClick={() => setActiveStep(step.number)}
-                transition={{ type: "spring", stiffness: 300 }}
+                transition={{
+                  duration: 0.6,
+                  ease: "easeOut",
+                  delay: index * 0.08,
+                }}
               >
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-100/50 to-orange-100/50 rounded-full blur-xl"></div>
