@@ -22,6 +22,7 @@ import {
   Star,
   Settings,
   Home,
+  ChevronDown,
 } from "lucide-react";
 import { couponsAPI } from "@/lib/api";
 
@@ -30,6 +31,8 @@ const Header = () => {
   const { cartCount, cartTotal } = useCart();
   const { wishlistCount } = useWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGheeTypesOpen, setIsGheeTypesOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [eligibleCoupons, setEligibleCoupons] = useState([]);
 
@@ -101,6 +104,19 @@ const Header = () => {
 
     return couponsWithDiscount[0] || null;
   }, [eligibleCoupons, cartTotal]);
+
+  const accountLinks = useMemo(
+    () => [
+      { label: "My Profile", href: "/profile" },
+      { label: "My Orders", href: "/orders" },
+      { label: "Subscriptions", href: "/subscriptions" },
+      { label: "Invoices", href: "/invoices" },
+      { label: "Wishlist", href: "/wishlist" },
+      { label: "My Coupons", href: "/coupons" },
+      { label: "My Returns", href: "/returns" },
+    ],
+    []
+  );
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -343,48 +359,15 @@ const Header = () => {
                 </button>
                 <div className="absolute top-full right-0 mt-3 w-56 bg-white border border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
                   <div className="py-2">
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      href="/orders"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      My Orders
-                    </Link>
-                    <Link
-                      href="/subscriptions"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      Subscriptions
-                    </Link>
-                    <Link
-                      href="/invoices"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      Invoices
-                    </Link>
-                    <Link
-                      href="/wishlist"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      Wishlist
-                    </Link>
-                    <Link
-                      href="/coupons"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      My Coupons
-                    </Link>
-                    <Link
-                      href="/returns"
-                      className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
-                    >
-                      My Returns
-                    </Link>
+                    {accountLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="block px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
                     {(user?.role === "admin" || user?.role === "vendor") && (
                       <Link
                         href="/admin"
@@ -446,7 +429,7 @@ const Header = () => {
       {/* Mobile menu */}
       {isMenuOpen && (
         <div className="lg:hidden border-t border-gray-200 bg-white shadow-lg">
-          <div className="px-4 py-6 space-y-6">
+          <div className="px-4 py-6 space-y-6 max-h[calc(100vh-64px)] max-h-[calc(100vh-96px)] overflow-y-auto pb-28 mobile-menu-scroll">
             {/* Mobile search */}
             <form onSubmit={handleSearch}>
               <div className="relative">
@@ -471,19 +454,34 @@ const Header = () => {
                 All Products
               </Link>
               <div className="space-y-1">
-                <div className="px-4 py-2 text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                  Ghee Types
-                </div>
-                {gheeTypes.map((type) => (
-                  <Link
-                    key={type.name}
-                    href={type.href}
-                    className="block px-6 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-300"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {type.name}
-                  </Link>
-                ))}
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-700 uppercase tracking-wide hover:bg-orange-50 rounded-xl"
+                  onClick={() => setIsGheeTypesOpen((v) => !v)}
+                  aria-expanded={isGheeTypesOpen}
+                  aria-controls="mobile-ghee-types"
+                >
+                  <span className="text-gray-500">Ghee Types</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isGheeTypesOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
+                </button>
+                {isGheeTypesOpen && (
+                  <div id="mobile-ghee-types" className="space-y-1">
+                    {gheeTypes.map((type) => (
+                      <Link
+                        key={type.name}
+                        href={type.href}
+                        className="block px-6 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-300"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {type.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
               <Link
                 href="/about"
@@ -504,74 +502,50 @@ const Header = () => {
             {/* Mobile user menu */}
             {isAuthenticated ? (
               <div className="border-t border-gray-200 pt-6 space-y-1">
-                <div className="px-4 py-2 text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                  Account
-                </div>
-                <Link
-                  href="/profile"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Profile
-                </Link>
-                <Link
-                  href="/orders"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Orders
-                </Link>
-                <Link
-                  href="/subscriptions"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Subscriptions
-                </Link>
-                <Link
-                  href="/invoices"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Invoices
-                </Link>
-                <Link
-                  href="/wishlist"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Wishlist
-                </Link>
-                <Link
-                  href="/coupons"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Coupons
-                </Link>
-                <Link
-                  href="/returns"
-                  className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  My Returns
-                </Link>
-                {(user?.role === "admin" || user?.role === "vendor") && (
-                  <Link
-                    href="/admin"
-                    className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium border-t border-gray-100 transition-all duration-300"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Settings className="w-4 h-4 inline mr-2" />
-                    {user?.role === "vendor" ? "Vendor Panel" : "Admin Panel"}
-                  </Link>
-                )}
                 <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
+                  type="button"
+                  className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-700 uppercase tracking-wide hover:bg-orange-50 rounded-xl"
+                  onClick={() => setIsAccountOpen((v) => !v)}
+                  aria-expanded={isAccountOpen}
+                  aria-controls="mobile-account-links"
                 >
-                  Logout
+                  <span className="text-gray-500">Account</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isAccountOpen ? "rotate-180" : "rotate-0"
+                    }`}
+                  />
                 </button>
+                {isAccountOpen && (
+                  <div id="mobile-account-links" className="space-y-1">
+                    {accountLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                    {(user?.role === "admin" || user?.role === "vendor") && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium border-t border-gray-100 transition-all duration-300"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4 inline mr-2" />
+                        {user?.role === "vendor" ? "Vendor Panel" : "Admin Panel"}
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-xl font-medium transition-all duration-300"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="border-t border-gray-200 pt-6 space-y-3">
