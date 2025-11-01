@@ -30,6 +30,7 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
   const [shippingLoading, setShippingLoading] = useState(false);
   const [couponError, setCouponError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [proceedLoading, setProceedLoading] = useState(false);
 
   useEffect(() => {
     fetchCartSummary();
@@ -663,11 +664,28 @@ const CartSummary = ({ onProceedToCheckout, className = "" }) => {
 
         {/* Proceed to Checkout Button */}
         <Button
-          onClick={onProceedToCheckout}
-          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          onClick={async () => {
+            if (proceedLoading) return;
+            setProceedLoading(true);
+            try {
+              await Promise.resolve(onProceedToCheckout?.());
+            } finally {
+              setProceedLoading(false);
+            }
+          }}
+          disabled={proceedLoading}
+          aria-busy={proceedLoading}
+          className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
           size="lg"
         >
-          Proceed to Checkout
+          {proceedLoading ? (
+            <span className="inline-flex items-center">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Processing...
+            </span>
+          ) : (
+            "Proceed to Checkout"
+          )}
         </Button>
       </CardContent>
     </Card>
