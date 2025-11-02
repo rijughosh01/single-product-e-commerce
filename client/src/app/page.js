@@ -129,22 +129,22 @@ export default function Home() {
 
   const features = [
     {
-      icon: <Truck className="w-8 h-8 text-amber-500" />,
+      icon: <Truck className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />,
       title: "Free Shipping",
       description: "Free shipping on orders above ₹1000",
     },
     {
-      icon: <Shield className="w-8 h-8 text-amber-500" />,
+      icon: <Shield className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />,
       title: "Quality Guarantee",
       description: "100% pure and authentic ghee products",
     },
     {
-      icon: <Leaf className="w-8 h-8 text-amber-500" />,
+      icon: <Leaf className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />,
       title: "Organic Certified",
       description: "Certified organic and natural ingredients",
     },
     {
-      icon: <Package className="w-8 h-8 text-amber-500" />,
+      icon: <Package className="w-6 h-6 md:w-8 md:h-8 text-amber-500" />,
       title: "Secure Packaging",
       description: "Safe and hygienic packaging",
     },
@@ -387,7 +387,7 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
@@ -396,7 +396,7 @@ export default function Home() {
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                className="text-center space-y-4 group"
+                className="text-center space-y-2 md:space-y-4 group"
                 variants={fadeInUp}
                 whileHover={{ y: -5 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -408,10 +408,10 @@ export default function Home() {
                 >
                   {feature.icon}
                 </motion.div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-amber-600 transition-colors duration-300">
+                <h3 className="text-sm md:text-lg font-semibold text-gray-900 group-hover:text-amber-600 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+                <p className="text-gray-600 text-xs md:text-sm leading-tight">{feature.description}</p>
               </motion.div>
             ))}
           </motion.div>
