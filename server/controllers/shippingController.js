@@ -36,17 +36,20 @@ exports.calculateShipping = async (req, res, next) => {
       }
     }
 
-    // If no specific rule found, use default rule
-    if (!applicableRule) {
-      const defaultRule = shippingRules.find(
-        (rule) => rule.pincodeType === "all"
-      );
-      if (defaultRule) {
-        applicableRule = defaultRule;
-        shippingCharges = defaultRule.getShippingCharges(orderAmount);
-        estimatedDelivery = defaultRule.estimatedDeliveryDays;
-      }
+  // If no specific rule found, use default rule; otherwise fall back to base policy
+  if (!applicableRule) {
+    const defaultRule = shippingRules.find(
+      (rule) => rule.pincodeType === "all"
+    );
+    if (defaultRule) {
+      applicableRule = defaultRule;
+      shippingCharges = defaultRule.getShippingCharges(orderAmount);
+      estimatedDelivery = defaultRule.estimatedDeliveryDays;
+    } else {
+      shippingCharges = orderAmount >= 1000 ? 0 : 50;
+      estimatedDelivery = { min: 3, max: 5 };
     }
+  }
 
     // Calculate delivery dates
     const currentDate = new Date();
@@ -63,7 +66,7 @@ exports.calculateShipping = async (req, res, next) => {
         pincode,
         orderAmount,
         shippingCharges,
-        freeShippingThreshold: applicableRule?.freeShippingThreshold || 500,
+        freeShippingThreshold: applicableRule?.freeShippingThreshold || 1000,
         estimatedDelivery: {
           min: estimatedDelivery.min,
           max: estimatedDelivery.max,
