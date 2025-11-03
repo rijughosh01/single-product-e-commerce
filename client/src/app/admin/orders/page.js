@@ -154,8 +154,8 @@ export default function AdminOrders() {
   const filteredAndSortedOrders = orders
     .filter((order) => {
       const matchesSearch =
-        order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+        (order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
         order._id.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesFilter =
@@ -244,10 +244,10 @@ export default function AdminOrders() {
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">
-                {order.user.name}
+                {order.user?.name || "Unknown User"}
               </h4>
               <p className="text-xs sm:text-sm text-gray-500 truncate">
-                {order.user.email}
+                {order.user?.email || "N/A"}
               </p>
               <div className="flex items-center text-xs text-gray-500 mt-1">
                 <Phone className="w-3 h-3 mr-1 flex-shrink-0" />

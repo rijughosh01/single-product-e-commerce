@@ -629,13 +629,13 @@ export default function AdminOrderDetail() {
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">
-                    {order.user?.name}
+                    {order.user?.name || "Unknown User"}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">
-                    {order.user?.email}
+                    {order.user?.email || "N/A"}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
