@@ -87,6 +87,10 @@ export default function Products() {
     if (type) {
       setSelectedType(type);
     }
+    const q = searchParams.get("q");
+    if (q) {
+      setSearchQuery(q);
+    }
     fetchProducts();
   }, [searchParams]);
 

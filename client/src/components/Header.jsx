@@ -121,7 +121,7 @@ const Header = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`;
+      window.location.href = `/products?q=${encodeURIComponent(searchQuery)}`;
     }
   };
 
@@ -535,7 +535,9 @@ const Header = () => {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         <Settings className="w-4 h-4 inline mr-2" />
-                        {user?.role === "vendor" ? "Vendor Panel" : "Admin Panel"}
+                        {user?.role === "vendor"
+                          ? "Vendor Panel"
+                          : "Admin Panel"}
                       </Link>
                     )}
                     <button
